@@ -43,9 +43,8 @@ export default function Layout({
               <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
                 {/* <!-- ===== Header Start ===== --> */}
                 <Header
-                  sidebarOpen={sidebarOpen}
-                  setSidebarOpen={setSidebarOpen}
-                />
+                sidebarOpen={sidebarOpen}
+                setSidebarOpen={setSidebarOpen} loggedIn={true}                />
                 
                 {/* <!-- ===== Header End ===== --> */}
 
