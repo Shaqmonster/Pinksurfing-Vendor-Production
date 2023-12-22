@@ -1,0 +1,7 @@
+{
+  "/Stripe/page": "app/Stripe/page.js",
+  "/profile/page": "app/profile/page.js",
+  "/settings/page": "app/settings/page.js",
+  "/inventory/add_products/page": "app/inventory/add_products/page.js",
+  "/inventory/products/page": "app/inventory/products/page.js"
+}
