@@ -1,0 +1,6 @@
+{
+  "/page": "app/page.js",
+  "/Stripe/page": "app/Stripe/page.js",
+  "/settings/page": "app/settings/page.js",
+  "/profile/page": "app/profile/page.js"
+}
