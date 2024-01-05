@@ -5,9 +5,12 @@ import DropdownMessage from "./DropdownMessage";
 import DropdownNotification from "./DropdownNotification";
 import DropdownUser from "./DropdownUser";
 import Image from "next/image";
-import { useContext, useEffect, useState } from "react";
 import { MyContext } from "@/app/providers/context";
 import { usePathname } from "next/navigation";
+import { getProfile, refreshToken } from "@/api/account";
+import { useContext, useEffect, useMemo, useState } from "react";
+import { getProducts } from "@/api/products";
+import { useRouter } from "next/navigation";
 
 
 const Header = (props: {
@@ -17,34 +20,93 @@ const Header = (props: {
 }) => {
   // const { loggedIn } = useContext(MyContext)
   const pathname = usePathname();
+  const router = useRouter()
   const {setAuthpage , authPage , vendor} = useContext(MyContext)
+  const [ profile, setProfile ] = useState()
   const [Logged, setLogged] = useState(false)
-  
+  const [tokens, setTokens] = useState({
+    access:"" || null,
+    "vendor_id":""||null,
+    "refresh":""||null
+  })
   useEffect(()=>{
-    console.log(vendor)
+      
+  },[])
+useEffect(()=>{
   let access : string | null ="", vendor_id: string | null ="";
   if(typeof window !== 'undefined'){
    access = localStorage.getItem('access');
    vendor_id = localStorage.getItem('vendor_id');
-   if(!access || !vendor_id){
-    setLogged(false)
-   }else{
+   if(pathname !== '/' && ['inventory','profile','orders','settings'].includes('pathname')){
     setLogged(true)
+   }else if(pathname === '/'){
+      setLogged(false)
    }
+   if(!access || !vendor_id){
+    router.push('/')
+    setLogged(false)
+    return 
+  }else{
+    setLogged(true)
+    setTokens((token:any)=>{
+     return {...token,
+     access,
+     vendor_id}
+    })
   }
-},[pathname,vendor])
-
+  }
+},[pathname])
+  useMemo(()=>{
+    
+    getProfile(tokens.access)
+    .then((data:any)=>{
+      console.log(data.response.status)
+      if(data && 'response' in data && data.response.status >= 400){
+      //  setLogged(false)
+        try{
+            let refresh = localStorage.getItem('refresh');
+            if(!refresh) {
+              setLogged(false)
+              router.push('/')
+              return null
+            }
+            refreshToken(String(tokens.access), refresh)
+            .then(token=>{
+              localStorage.setItem('access', token?.access)
+              setTokens((_token)=>{return {
+                ..._token,
+                access:token.access
+              }})
+              setLogged(true)
+            })
+        }catch(e){
+          setLogged(false)
+          router.push('/')
+        }
+      }
+      if(data && 'data' in data){
+      let Profile = data.data;
+      console.log(Profile)
+        if(typeof Profile == 'object'){
+            
+            setProfile(Profile)
+        }
+      }
+    })
+    
+  },[tokens.access, tokens.vendor_id])
   
 
   return (
     <header className="sticky top-0 z-999 flex w-full bg-white drop-shadow-1 dark:bg-boxdark dark:drop-shadow-none">
       <div className="flex flex-grow items-center justify-between px-4 py-4 shadow-2 md:px-6 2xl:px-11">
-        <div className="flex items-center gap-2 sm:gap-4 ">
-
           {/* <!-- Hamburger Toggle BTN --> */}
           {
           Logged? 
           (
+            <>
+        <div className="flex items-center gap-2 sm:gap-4 ">
+
           <button
             aria-controls="sidebar"
             onClick={(e) => {
@@ -85,10 +147,9 @@ const Header = (props: {
               </span>
             </span>
           </button>
-          ):null
-                }
-          {/* <!-- Hamburger Toggle BTN --> */}
-      {!props.sidebarOpen ?
+          
+      {
+        !props.sidebarOpen ?
           (<>
           <Link className="block flex flex-row lg:hidden" href="/">
             <Image
@@ -102,10 +163,6 @@ const Header = (props: {
         </>):null
       }
         </div>
-        {
-          Logged ? 
-          (
-            <>
         <div className="hidden sm:block">
           <form>
             <div className="relative">
@@ -155,20 +212,23 @@ const Header = (props: {
           </ul>
 
           {/* <!-- User Area --> */}
-          <DropdownUser />
+          <DropdownUser setLogged={setLogged} />
           {/* <!-- User Area --> */}
         </div>
         </>
-        ):
-          (
-            (authPage === 'signin' ?
-            <a className="font-bold text-primary" href="#" onClick={()=>setAuthpage('signup')}>Signup</a>
-            :
-            <a className="font-bold text-primary" href="#" onClick={()=>setAuthpage('signin')}>Sign in</a>
-            )
-          )
-            
-      }
+         ) : (
+         <div className="flex w-full flex-grow justify-end gap-2 sm:gap-4 ">
+           {authPage === 'signin' ? (
+             <Link className="font-bold text-primary self-end" href="/" onClick={() => setAuthpage('signup')}>
+               Signup
+             </Link>
+           ) : (
+             <Link className="font-bold text-primary self-end" href="/" onClick={() => setAuthpage('signin')}>
+               Sign in
+             </Link>
+           )}
+         </div>
+       )}
       </div>
     </header>
   );

@@ -289,11 +289,16 @@ const AddProducts = () => {
                           onChange={(event) => {
                             const selectedFiles = event?.target?.files;
                             if (selectedFiles) {
+                              if(selectedFiles.length + files.length > 4){
+                                toast.error("Cannot Uplaod more than 4 images")
+                                return
+                              }
                               const newFiles = Array.from(selectedFiles);
                               newFiles.forEach((file) => updateFile(file));
                             }
                           }}
                           multiple  // Add this attribute to allow selecting multiple files
+                          
                         />
                         <div className="flex flex-col items-center justify-center space-y-3">
                           {files.map((file, index) => (
@@ -365,7 +370,7 @@ const AddProducts = () => {
 
                     <div className="col-span-3 row-span-2 flex flex-col justify-between gap-2">
                       <label className="block uppercase tracking-wide text-xs font-bold mb-2 text-black dark:text-white" htmlFor="grid-state">
-                        Attributes
+                        Variants 'different sizes of the same or main item for sale'
                       </label>
                       {
                         attribute.map((atrributes, j) => {
@@ -377,7 +382,7 @@ const AddProducts = () => {
                                   type="text"
                                   name="attributeName"
                                   id="attributeName"
-                                  placeholder="Attribute Name"
+                                  placeholder="Variant Name"
                                   onChange={(e: any) => {
                                     setAttribute(i => {
                                       i[j]['name'] = e.target.value
@@ -390,7 +395,7 @@ const AddProducts = () => {
                                   type="text"
                                   name="attributeValue"
                                   id="attributeValue"
-                                  placeholder="Attribute Value"
+                                  placeholder="Variant Value"
                                   onChange={(e: any) => {
                                     setAttribute(i => {
                                       i[j]['value'] = e.target.value
@@ -403,7 +408,7 @@ const AddProducts = () => {
                                   type="number"
                                   name="attributeValue"
                                   id="attributeValue"
-                                  placeholder="Additional Price"
+                                  placeholder="Variant Price"
                                   onChange={(e: any) => {
                                     setAttribute(i => {
                                       i[j]['additional_price'] = e.target.value
@@ -431,13 +436,10 @@ const AddProducts = () => {
                             setAttribute((i) => [...i, { name: "", value: "", additional_price: 0 }]);
                           }}
                         >
-                          Add another Attribute
+                          Add another Variant
                         </button>
                       </div>
                     </div>
-
-
-
 
                     <div className="my-5.5 flex flex-col gap-5.5 sm:flex-row">
                       <div className="w-full xl:w-1/2">

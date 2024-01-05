@@ -35,7 +35,7 @@ const Profile = () => {
       console.log(data.response.status)
       if(data && 'response' in data && data.response.status >= 400){
         setIsLoggedIn(false)
-        router.push('/vendors/')
+        router.push('/')
       }
       if(data && 'data' in data){
       let Profile = data.data;

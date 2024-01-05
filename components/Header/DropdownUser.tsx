@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { MyContext } from "@/app/providers/context";
 import { getVendorProfile } from '@/api/products';
 
-const DropdownUser = () => {
+const DropdownUser = (setLogged:any) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const {setIsLoggedIn} = useContext(MyContext)
   const vendor:any = JSON.parse(`${localStorage.getItem("store")}`)
@@ -48,8 +48,9 @@ const DropdownUser = () => {
     }
     
     setIsLoggedIn(false)
+    setLogged(false)
     router.push('/')
-    router.refresh()
+    
   }
 
   // close on click outside

@@ -2,9 +2,27 @@ import axios from 'axios';
 
 const BASE_URL = 'https://ecommerceapi.pinksurfing.com/api';
 
+
 export async function getOnboardingUrl(token: string) {
   try {
     const response = await axios.get(`${BASE_URL}/vendor/get-onboarding-url/`, {
+      headers: {
+        Authorization: `Bearer ${token.replaceAll('"', '')}`,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching onboarding URL:', error);
+    throw error; 
+  }
+}
+
+export async function refreshToken(token: string, refresh: string) {
+  try {
+    const response = await axios.post(`${BASE_URL}/token/refresh`, {
+        refresh
+    },{
       headers: {
         Authorization: `Bearer ${token.replaceAll('"', '')}`,
       },

@@ -1,6 +1,7 @@
 import { Product } from '@/types/product';
 import axios from 'axios';
-import { Blob } from 'buffer';
+
+
 
 const BASE_URL = 'https://ecommerceapi.pinksurfing.com/api'
 
