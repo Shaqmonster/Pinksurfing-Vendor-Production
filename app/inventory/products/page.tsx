@@ -12,6 +12,7 @@ const Products = () => {
     name:"",
     unit_price:"",
     category:"",
+    brand_name:"",
     subcategory:"",
     image:"",
     quantity:"",

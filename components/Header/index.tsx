@@ -56,45 +56,47 @@ useEffect(()=>{
   }
   }
 },[pathname])
-  useMemo(()=>{
-    
-    getProfile(tokens.access)
-    .then((data:any)=>{
-      console.log(data.response.status)
-      if(data && 'response' in data && data.response.status >= 400){
-      //  setLogged(false)
-        try{
-            let refresh = localStorage.getItem('refresh');
-            if(!refresh) {
-              setLogged(false)
-              router.push('/')
-              return null
-            }
-            refreshToken(String(tokens.access), refresh)
-            .then(token=>{
-              localStorage.setItem('access', token?.access)
-              setTokens((_token)=>{return {
-                ..._token,
-                access:token.access
-              }})
-              setLogged(true)
-            })
-        }catch(e){
-          setLogged(false)
-          router.push('/')
+useMemo(() => {
+  getProfile(tokens.access)
+    .then((data: any) => {
+      if (data && 'response' in data && data.response && data.response.status >= 400) {
+        // setLogged(false)
+        try {
+          let refresh = localStorage.getItem('refresh');
+          if (!refresh) {
+            setLogged(false);
+            router.push('/');
+            return null;
+          }
+          refreshToken(String(tokens.access), refresh)
+            .then(token => {
+              localStorage.setItem('access', token?.access);
+              setTokens((_token) => {
+                return {
+                  ..._token,
+                  access: token.access,
+                };
+              });
+              setLogged(true);
+            });
+        } catch (e) {
+          setLogged(false);
+          router.push('/');
         }
       }
-      if(data && 'data' in data){
-      let Profile = data.data;
-      console.log(Profile)
-        if(typeof Profile == 'object'){
-            
-            setProfile(Profile)
+      if (data && 'data' in data) {
+        let Profile = data.data;
+        console.log(Profile);
+        if (typeof Profile == 'object') {
+          setProfile(Profile);
         }
       }
     })
-    
-  },[tokens.access, tokens.vendor_id])
+    .catch(error => {
+      console.error("Error fetching profile:", error);
+    });
+}, [tokens.access, tokens.vendor_id]);
+
   
 
   return (

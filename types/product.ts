@@ -3,6 +3,7 @@ export type Product = {
   name:string,
   unit_price: string | number,
   category:string,
+  brand_name: string | number,
   subcategory:string,
   tags:string,
   quantity:string | number,
