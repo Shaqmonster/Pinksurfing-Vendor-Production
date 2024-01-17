@@ -544,12 +544,6 @@ const AddProducts = () => {
                             files
                           );
                           console.log(res);
-                          if (res.status >= 400) {
-                            alert(res.data.status || res.data.Status);
-                          } else {
-                            window.location.reload();
-                            window.alert("Product added successfully");
-                          }
                         }
                       }}
                     >

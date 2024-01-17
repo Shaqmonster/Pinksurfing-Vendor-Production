@@ -1,10 +1,10 @@
 {
   "pages": {
-    "/inventory/add_products/page": [
+    "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/css/app/inventory/add_products/page.css",
-      "static/chunks/app/inventory/add_products/page.js"
+      "static/css/app/layout.css",
+      "static/chunks/app/layout.js"
     ],
     "/page": [
       "static/chunks/webpack.js",
@@ -16,21 +16,25 @@
       "static/chunks/main-app.js",
       "static/chunks/app/inventory/products/page.js"
     ],
-    "/layout": [
+    "/orders/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/css/app/layout.css",
-      "static/chunks/app/layout.js"
+      "static/chunks/app/orders/page.js"
+    ],
+    "/auth/signup/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/auth/signup/page.js"
     ],
     "/profile/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/profile/page.js"
     ],
-    "/settings/page": [
+    "/auth/signin/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/settings/page.js"
+      "static/chunks/app/auth/signin/page.js"
     ]
   }
 }

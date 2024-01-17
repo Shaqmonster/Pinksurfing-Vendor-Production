@@ -12,8 +12,7 @@ import { Product } from "@/types/product";
 import { redirect } from "next/navigation";
 import { data } from "autoprefixer";
 import { deleteProduct } from "@/api/products";
-import React from 'react';
-
+import React from "react";
 
 const ProductsTable = (props: { Products: Product[] }) => {
   const rowRef = useRef<any>(null);
@@ -24,7 +23,6 @@ const ProductsTable = (props: { Products: Product[] }) => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [updateProductData, setUpdateProductData] = useState({});
   const [products, setProducts] = useState(props.Products);
-
 
   const handleDelete = async (productId: string) => {
     if (typeof window !== "undefined") {
@@ -58,7 +56,6 @@ const ProductsTable = (props: { Products: Product[] }) => {
       }
     }
   };
-  
 
   const updateData = (key: string, value: any) => {
     setUpdateProductData((payload: any) => {
@@ -90,8 +87,6 @@ const ProductsTable = (props: { Products: Product[] }) => {
     }
   };
 
-
-
   const openEditor = (event: any) => {
     let { target } = event;
     console.log(target?.dataset?.id);
@@ -106,14 +101,14 @@ const ProductsTable = (props: { Products: Product[] }) => {
   }, []);
 
   useMemo(() => {
-    categories.forEach((category, index)=>{
-      console.log("the category")
-      console.log("the category",category)
+    categories.forEach((category, index) => {
+      console.log("the category");
+      console.log("the category", category);
       getSubcategories().then((data) => {
         setSubcategories(data);
         console.log(data);
       });
-    })
+    });
   }, []);
 
   useEffect(() => {
@@ -136,40 +131,36 @@ const ProductsTable = (props: { Products: Product[] }) => {
         </h4>
       </div>
 
-
-      <div className="grid grid-cols-12 md:grid-cols-10 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 sm:bg-red md:px-4 2xl:px-7.5">
-        <div className="col-span-3 flex items-center">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-4 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:bg-red md:px-4 2xl:px-7.5">
+        <div className=" flex items-center">
           <p className="font-medium ">Product Name</p>
         </div>
-        <div className="col-span-2 hidden items-center sm:flex ">
+        <div className=" hidden items-center sm:flex ">
           <p className="font-medium">Category</p>
         </div>
-        <div className="col-span-2 flex items-center ">
+        <div className=" hidden sm:flex items-center ">
           <p className="font-medium pr-2">Description</p>
         </div>
-        <div className="col-span-1 flex items-center">
+        <div className=" hidden sm:flex items-center">
           <p className="font-medium">Stock</p>
         </div>
-        <div className="col-span-1 flex items-center">
+        <div className=" flex items-center m-auto">
           <p className="font-medium">Price</p>
         </div>
-        <div className="col-span-1 flex items-center">
-          <p className="font-medium">Action</p>
+        <div className=" flex items-center">
+          <p className="font-medium m-auto">Action</p>
         </div>
       </div>
 
       {props.Products.map((product: any, key) => (
         <>
           <div
-            className="grid grid-cols-9 md:grid-cols-10 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8  2xl:px-7.5"
+            className="grid grid-cols-3 sm:grid-cols-6  border-t border-stroke py-4.5 px-4 dark:border-strokedark  2xl:px-7.5"
             key={key}
             data-id={product.id}
           >
-            <div
-              className="col-span-3 md:col-span-3 flex items-center"
-              ref={rowRef}
-            >
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="flex items-center" ref={rowRef}>
+              <div className="flex  gap-4 flex-row items-center">
                 <div className="h-12.5 w-15 rounded-md">
                   <Image
                     src={product.image1}
@@ -184,7 +175,7 @@ const ProductsTable = (props: { Products: Product[] }) => {
                 </p>
               </div>
             </div>
-            <div className="col-span-2 hidden items-center sm:flex">
+            <div className=" hidden items-center sm:flex">
               <p className="text-sm text-black dark:text-white">
                 {product.category}
                 <br />
@@ -192,20 +183,20 @@ const ProductsTable = (props: { Products: Product[] }) => {
                 {" " + product.subcategory}
               </p>
             </div>
-            <div className="col-span-2 flex items-center">
+            <div className=" hidden sm:flex items-center">
               <p className="text-sm text-black dark:text-white pr-4">
                 {product.description}
               </p>
             </div>
-            <div className="col-span-1 flex items-center">
+            <div className=" hidden sm:flex items-center m-auto">
               <p className="text-sm text-black dark:text-white px-4">
                 {product.quantity}
               </p>
             </div>
-            <div className="col-span-1 flex items-center gap-2">
+            <div className=" flex items-center gap-2 m-auto">
               <p className="text-sm text-meta-3">${product.unit_price}</p>
             </div>
-            <div className="col-span-1 flex items-center justify-between">
+            <div className=" flex items-center justify-between m-auto">
               <div className="flex flex-row justify-between">
                 <div
                   className="hover:bg-amber-200 w-1/2"
@@ -226,7 +217,7 @@ const ProductsTable = (props: { Products: Product[] }) => {
                   >
                     <path
                       d="M12 5H9C7.11438 5 6.17157 5 5.58579 5.58579C5 6.17157 5 7.11438 5 9V15C5 16.8856 5 17.8284 5.58579 18.4142C6.17157 19 7.11438 19 9 19H15C16.8856 19 17.8284 19 18.4142 18.4142C19 17.8284 19 16.8856 19 15V12M9.31899 12.6911L15.2486 6.82803C15.7216 6.36041 16.4744 6.33462 16.9782 6.76876C17.5331 7.24688 17.5723 8.09299 17.064 8.62034L11.2329 14.6702L9 15L9.31899 12.6911Z"
-                      stroke="#464455"
+                      stroke="#3c50e0"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
@@ -235,6 +226,7 @@ const ProductsTable = (props: { Products: Product[] }) => {
                 {/* For Delete */}
                 <svg
                   width="24px"
+                  stroke="red"
                   height="24px"
                   viewBox="0 0 24 24"
                   fill="none"
@@ -264,121 +256,134 @@ const ProductsTable = (props: { Products: Product[] }) => {
               </div>
             </div>
           </div>
+
           <div
-  className={`${
-    selectedKey !== String(product.id) ? 'hidden' : 'sm:flex sm:flex-row sm:gap-4 lg:grid md:grid xl:grid grid-cols-9 grid-rows-2 gap-2 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:grid-cols-8 2xl:px-7.5 bg-black items-baseline'
-  } duration-300 ease-linear`}
-  key={key}
-  data-id={product.id}
->
-  <p
-    className="absolute right-[50px] font-extrabold text-white font-3xl cursor-pointer"
-    onClick={() => setSelectedKey('')}
-  >
-    X
-  </p>
+            className={`${
+              selectedKey !== String(product.id)
+                ? "hidden"
+                : " flex flex-col gap-y-4 border-t box-border border-stroke p-5 dark:border-strokedark  2xl:px-7.5 bg-black items-baseline"
+            } duration-300 ease-linear`}
+            key={key}
+            data-id={product.id}
+          >
+            <p
+              className="absolute right-[50px] font-extrabold text-white font-3xl cursor-pointer"
+              onClick={() => setSelectedKey("")}
+            >
+              X
+            </p>
+            {/* Display selected files */}
+            <div className="flex flex-row items-center gap-4 ">
+              {/* File input */}
+              <div className="flex flex-col sm:flex-row sm:items-center">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="m-0 h-0 w-0 cursor-pointer pl-2 opacity-0 outline-none"
+                />
+                <h3 className="-ml-2 text-white">Choose file</h3>
+              </div>
 
-  {/* Display selected files */}
-  <div className="col-span-4 flex items-center gap-4 sm:gap-2 pl-4">
-    {/* File input */}
-    <div className="flex flex-col sm:flex-row sm:items-center">
-      <input
-        type="file"
-        accept="image/*"
-        className="m-0 h-0 w-0 cursor-pointer pl-2 opacity-0 outline-none"
-      />
-      <h3 className="-ml-6 text-white">Choose file</h3>
-    </div>
+              {/* Display selected files here */}
+              {/* You can use state or any logic to show selected files */}
+              {/* For simplicity, I'm using a placeholder */}
+              <div className="flex flex-col justify-start  mr-2">
+                <span className="text-white">
+                  Selected Files: File1.jpg, File2.png
+                </span>
+              </div>
+            </div>
+            <div className="flex sm:flex-row flex-col  gap-4 w-full">
+              <div className="flex-col flex flex-1">
+                <label
+                  className="block  tracking-wide text-xs font-bold mb-2 text-white"
+                  htmlFor="product-title"
+                >
+                  Product Title
+                </label>
+                <input
+                  id="product-title"
+                  type="text"
+                  placeholder="Title"
+                  defaultValue={product.name}
+                  className="w-full rounded border border-stroke py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary px-4"
+                  onChange={(e) => {
+                    updateData("name", e.target.value);
+                  }}
+                />
+              </div>
+              <div className="flex-col flex flex-1">
+                <label
+                  className="block  tracking-wide text-xs font-bold mb-2 text-white"
+                  htmlFor="bio"
+                >
+                  Product Description
+                </label>
+                <textarea
+                  className="w-full rounded border border-stroke bg-gray py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary px-4"
+                  name="bio"
+                  id="bio"
+                  rows={2}
+                  placeholder="Describe your product"
+                  defaultValue={product.description}
+                  onChange={(e) => {
+                    updateData("description", e.target.value);
+                  }}
+                ></textarea>
+              </div>
+            </div>
+            {/* Stock and Price */}
+            <div className="flex flex-col sm:flex-row  items-center gap-4  w-full">
+              {/* Stock */}
+              <div className="w-full sm:w-40">
+                <label
+                  className="block uppercase tracking-wide text-xs font-bold mb-2 text-white"
+                  htmlFor="grid-state"
+                >
+                  Stock
+                </label>
+                <input
+                  className="w-full rounded border border-stroke py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                  type="number"
+                  name="stock"
+                  id="stock"
+                  defaultValue={product.quantity}
+                  onChange={(e) => {
+                    updateData("quantity", e.target.value);
+                  }}
+                />
+              </div>
 
-    {/* Display selected files here */}
-    {/* You can use state or any logic to show selected files */}
-    {/* For simplicity, I'm using a placeholder */}
-    <div className="flex flex-col justify-start w-2/3 mr-2">
-      <span className="text-white">Selected Files: File1.jpg, File2.png</span>
-    </div>
-  </div>
-
-  {/* Product Title */}
-  <div className="col-span-4 row-span-2 flex items-center">
-    <input
-      type="text"
-      placeholder="Title"
-      defaultValue={product.name}
-      className="w-full rounded border border-stroke py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary px-4"
-      onChange={(e) => {
-        updateData('name', e.target.value);
-      }}
-    />
-  </div>
-
-  {/* Product Description */}
-  <div className="col-span-4 row-span-2 flex items-center">
-    <textarea
-      className="w-full rounded border border-stroke bg-gray py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary px-4"
-      name="bio"
-      id="bio"
-      rows={2}
-      placeholder="Describe your product"
-      defaultValue={product.description}
-      onChange={(e) => {
-        updateData('description', e.target.value);
-      }}
-    ></textarea>
-  </div>
-
-  {/* Stock and Price */}
-  <div className="col-span-3 flex items-center justify-between gap-2">
-    {/* Stock */}
-    <div>
-      <label
-        className="block uppercase tracking-wide text-xs font-bold mb-2 text-white"
-        htmlFor="grid-state"
-      >
-        Stock
-      </label>
-      <input
-        className="w-20 rounded border border-stroke py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-        type="number"
-        name="stock"
-        id="stock"
-        defaultValue={product.quantity}
-        onChange={(e) => {
-          updateData('quantity', e.target.value);
-        }}
-      />
-    </div>
-
-    {/* Price */}
-    <div>
-      <label
-        className="block uppercase tracking-wide text-xs font-bold mb-2 text-white"
-        htmlFor="grid-state"
-      >
-        Price
-      </label>
-      <input
-        className="w-20 rounded border border-stroke py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-        type="text"
-        name="price"
-        id="price"
-        defaultValue={parseInt(product.unit_price)}
-        onChange={(e) => {
-          updateData('unit_price', e.target.value);
-        }}
-      />
-    </div>
-  </div>
-
-  {/* Save Button */}
-  <div className="col-span-1 flex items-center justify-between ml-4">
-    <button
-      className="flex justify-center rounded bg-primary py-2 px-6 mr-2 font-medium text-gray hover:bg-opacity-95"
-      onClick={() => sendUpdate()}
-    >
-      Save
-    </button>
-  </div>
-</div>;
+              {/* Price */}
+              <div className="w-full sm:w-40">
+                <label
+                  className="block uppercase tracking-wide text-xs font-bold mb-2 text-white"
+                  htmlFor="grid-state"
+                >
+                  Price
+                </label>
+                <input
+                  className="w-full rounded border border-stroke py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                  type="text"
+                  name="price"
+                  id="price"
+                  defaultValue={parseInt(product.unit_price)}
+                  onChange={(e) => {
+                    updateData("unit_price", e.target.value);
+                  }}
+                />
+              </div>
+            </div>
+            {/* Save Button */}
+            <div className="flex items-center justify-end w-full">
+              <button
+                className="flex justify-center rounded bg-primary py-2 px-6 mr-2 font-medium text-gray hover:bg-opacity-95"
+                onClick={() => sendUpdate()}
+              >
+                Save
+              </button>
+            </div>
+          </div>
         </>
       ))}
     </div>
