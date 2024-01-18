@@ -141,7 +141,7 @@ const ProductsTable = (props: { Products: Product[] }) => {
         <div className=" hidden sm:flex items-center ">
           <p className="font-medium pr-2">Description</p>
         </div>
-        <div className=" hidden sm:flex items-center">
+        <div className=" hidden sm:flex items-center  m-auto">
           <p className="font-medium">Stock</p>
         </div>
         <div className=" flex items-center m-auto">

@@ -1,70 +1,75 @@
-"use client"
-import React , {useState, Dispatch, SetStateAction , useContext, use} from "react";
+"use client";
+import React, {
+  useState,
+  Dispatch,
+  SetStateAction,
+  useContext,
+  use,
+} from "react";
 import Link from "next/link";
 import Image from "next/image";
 
 import { signIn } from "@/api/account";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 import { MyContext } from "@/app/providers/context";
 
-const SignIn:React.FC = () => {
-  const [username, setusername] = useState("")
-  const [password, setpassword] = useState("")
-  const [error, setError] = useState("")
-  const {setIsLoggedIn , setVendor} = useContext(MyContext)
-  
-  const router = useRouter()
+const SignIn: React.FC = () => {
+  const [username, setusername] = useState("");
+  const [password, setpassword] = useState("");
+  const [error, setError] = useState("");
+  const { setIsLoggedIn, setVendor } = useContext(MyContext);
 
-  const login = async()=>{
-    setError("")
-    if(username && password){
-    let data = await signIn({username, password})
-    .then(res=>res)
-    .catch(e=>{
-      console.log(e.response.status)
-      if(e.response.status == 401){
-        setError("Invalid username or password")
-      }else{
-        setError("Cannot connect to server")
+  const router = useRouter();
+
+  const login = async () => {
+    setError("");
+    if (username && password) {
+      let data = await signIn({ username, password })
+        .then((res) => res)
+        .catch((e) => {
+          console.log(e.response.status);
+          if (e.response.status == 401) {
+            setError("Invalid username or password");
+          } else {
+            setError("Cannot connect to server");
+          }
+        });
+      // console.log(data.response.status)
+      if (data && "token" in data) {
+        console.log(data);
+        let { token, refresh } = data;
+        if (typeof window !== "undefined") {
+          localStorage.setItem("access", token);
+          localStorage.setItem("refresh", refresh);
+          localStorage.setItem("vendor_id", data.data.id);
+          setIsLoggedIn(true);
+        }
+        // setError("Logged In")
+        // setIsLoggedIn(true)
+        if ("data" in data) {
+          console.log(data);
+          localStorage.setItem("store", JSON.stringify(data.data));
+          setVendor(data?.data);
+        }
+        router.push("/inventory/products");
+        // router.refresh()
+      } else {
+        if ("response" in data && data.response.status > 399) {
+          setError("Invalid username or password");
+        } else {
+          setError("Cannot connect to server");
+        }
       }
-    })
-    // console.log(data.response.status)
-    if(data && 'token' in data){
-      console.log(data)
-    let { token, refresh } = data
-    if(typeof window !== 'undefined'){
-    localStorage.setItem( "access" ,token)
-    localStorage.setItem( "refresh" ,refresh)
-    localStorage.setItem( "vendor_id" ,data.data.id)
-    setIsLoggedIn(true)
+    } else {
+      username.length
+        ? setError("Username cannot be empty")
+        : setError("Password cannot be empty");
     }
-    // setError("Logged In")
-    // setIsLoggedIn(true)
-    if('data' in  data){
-      console.log(data)
-      localStorage.setItem('store',JSON.stringify(data.data))
-      setVendor(data?.data)
-    }
-    router.push('/inventory/products')
-    // router.refresh()
-  }else{
-    if('response' in data && data.response.status > 399){
-      setError("Invalid username or password")
-    }else{
-      setError("Cannot connect to server")
-    }
-  }
-  }else{
-    username.length ? setError("Username cannot be empty") : setError("Password cannot be empty")
-  }
-  
-  return false
 
-}
+    return false;
+  };
   return (
     <>
-      
-
       <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
         <div className="flex flex-wrap items-center">
           <div className="hidden w-full xl:block xl:w-1/2">
@@ -86,9 +91,7 @@ const SignIn:React.FC = () => {
                 />
               </Link>
 
-              <p className="2xl:px-20">
-          
-              </p>
+              <p className="2xl:px-20"></p>
 
               <span className="mt-15 inline-block">
                 <svg
@@ -215,20 +218,21 @@ const SignIn:React.FC = () => {
             </div>
           </div>
 
-          <div className="w-full border-stroke dark:border-strokedark xl:w-1/2 xl:border-l-2"
-          onKeyDown={async event=>{
-            if(event.key === 'Enter'){
-              
+          <div
+            className="w-full border-stroke dark:border-strokedark xl:w-1/2 xl:border-l-2"
+            onKeyDown={async (event) => {
+              if (event.key === "Enter") {
                 let loggedIn = await login();
-                console.log({loggedIn})
-                if(!loggedIn){
-                  return
+                console.log({ loggedIn });
+                if (!loggedIn) {
+                  return;
                 }
-                setIsLoggedIn(true)
-                router.push('/inventory/products');
+                setIsLoggedIn(true);
+                router.push("/inventory/products");
                 router.refresh();
-            }
-          }}>
+              }
+            }}
+          >
             <div className="w-full p-4 sm:p-12.5 xl:p-17.5">
               <h2 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
                 Sign In to PinkSurfing
@@ -244,7 +248,7 @@ const SignIn:React.FC = () => {
                       type="text"
                       placeholder="Enter your username"
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event)=>setusername(event.target.value)}
+                      onChange={(event) => setusername(event.target.value)}
                     />
 
                     <span className="absolute right-4 top-4">
@@ -276,7 +280,7 @@ const SignIn:React.FC = () => {
                       type="password"
                       placeholder="Enter password"
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event)=>setpassword(event.target.value)}
+                      onChange={(event) => setpassword(event.target.value)}
                     />
 
                     <span className="absolute right-4 top-4">
@@ -302,31 +306,38 @@ const SignIn:React.FC = () => {
                     </span>
                   </div>
                 </div>
-                {
-                    error ? 
-                    (
-                      <>
-            <span className="inline-flex text-sm text-red-700 mb-4">{error}
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg></span>
-
-                      </>
-                    ) : null
-                }
+                {error ? (
+                  <>
+                    <span className="inline-flex text-sm text-red-700 mb-4">
+                      {error}
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-6 h-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </span>
+                  </>
+                ) : null}
                 <div className="mb-5">
                   <input
                     type="button"
                     value="Sign In"
                     className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
-                    onClick={async(e)=>{
-                        let loggedIn = await login();
-                        
+                    onClick={async (e) => {
+                      let loggedIn = await login();
                     }}
                   />
                 </div>
-{/*
+                {/*
                 <button className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50">
                   <span>
                     <svg
@@ -364,6 +375,13 @@ const SignIn:React.FC = () => {
                   Sign in with Google
                 </button>
   */}
+                <div className="mt-6 text-right">
+                  <p>
+                    <Link href="/auth/reset-password" className="text-primary">
+                      Forgot Password?
+                    </Link>
+                  </p>
+                </div>
                 <div className="mt-6 text-center">
                   <p>
                     Don’t have any account?{" "}
