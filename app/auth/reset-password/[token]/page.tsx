@@ -20,7 +20,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loader, { Loader2 } from "@/components/common/Loader";
 import { useSearchParams } from "next/navigation";
-
+// react toasters added for intimation
 interface FormValues {
   password: string | null;
   confirmPassword: string | null;
