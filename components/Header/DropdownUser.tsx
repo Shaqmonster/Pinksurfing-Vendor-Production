@@ -1,57 +1,55 @@
-"use client"
+"use client";
 import { useContext, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MyContext } from "@/app/providers/context";
-import { getVendorProfile } from '@/api/products';
+import { getVendorProfile } from "@/api/products";
 
-const DropdownUser = (setLogged:any) => {
+const DropdownUser = ({ setLogged }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const {setIsLoggedIn} = useContext(MyContext)
-  const vendor:any = JSON.parse(`${localStorage.getItem("store")}`)
+  const { setIsLoggedIn } = useContext(MyContext);
+  const vendor: any = JSON.parse(`${localStorage.getItem("store")}`);
   const router = useRouter();
   const trigger = useRef<any>(null);
   const dropdown = useRef<any>(null);
 
   const tokenFromLocalStorage =
-  typeof window !== 'undefined' ? localStorage.getItem('access') : null;
+    typeof window !== "undefined" ? localStorage.getItem("access") : null;
   const [token, setToken] = useState<string | null>(tokenFromLocalStorage);
 
-  const [Name, setName] = useState('');
-  const [storeName, setStorename] = useState('');
+  const [Name, setName] = useState("");
+  const [storeName, setStorename] = useState("");
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const { data, error } = await getVendorProfile(token);
         if (!error) {
-          console.log('Profile Data:', data);
+          console.log("Profile Data:", data);
           setName(data.contact_person_name);
           setStorename(data.store_name);
         } else {
-          console.error('Error fetching profile:', error);
+          console.error("Error fetching profile:", error);
         }
       } catch (error) {
-        console.error('Unexpected error:', error);
+        console.error("Unexpected error:", error);
       }
     };
 
     fetchProfile();
   }, [token]);
 
-
-  const signout = ()=>{
-    if(typeof window !== 'undefined'){
-    localStorage.removeItem('access')
-    localStorage.removeItem('vendor_id')
+  const signout = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("access");
+      localStorage.removeItem("vendor_id");
     }
-    
-    setIsLoggedIn(false)
-    setLogged(false)
-    router.push('/')
-    
-  }
+
+    setIsLoggedIn(false);
+    setLogged(false);
+    window.location.href = "/";
+  };
 
   // close on click outside
   useEffect(() => {
@@ -203,10 +201,10 @@ const DropdownUser = (setLogged:any) => {
             </Link>
           </li>
         </ul>
-        <button className="flex items-center gap-3.5 py-4 px-6 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
-        onClick={()=>signout()}
+        <button
+          className="flex items-center gap-3.5 py-4 px-6 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
+          onClick={() => signout()}
         >
-
           <svg
             className="fill-current"
             width="22"

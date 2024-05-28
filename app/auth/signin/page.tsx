@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import { MyContext } from "@/app/providers/context";
 
 const SignIn: React.FC = () => {
-  const [username, setusername] = useState("");
+  const [email, setemail] = useState("");
   const [password, setpassword] = useState("");
   const [error, setError] = useState("");
   const { setIsLoggedIn, setVendor } = useContext(MyContext);
@@ -23,13 +23,13 @@ const SignIn: React.FC = () => {
 
   const login = async () => {
     setError("");
-    if (username && password) {
-      let data = await signIn({ username, password })
+    if (email && password) {
+      let data = await signIn({ email, password })
         .then((res) => res)
         .catch((e) => {
           console.log(e.response.status);
           if (e.response.status == 401) {
-            setError("Invalid username or password");
+            setError("Invalid email or password");
           } else {
             setError("Cannot connect to server");
           }
@@ -55,14 +55,14 @@ const SignIn: React.FC = () => {
         // router.refresh()
       } else {
         if ("response" in data && data.response.status > 399) {
-          setError("Invalid username or password");
+          setError("Invalid email or password");
         } else {
           setError("Cannot connect to server");
         }
       }
     } else {
-      username.length
-        ? setError("Username cannot be empty")
+      email.length
+        ? setError("email cannot be empty")
         : setError("Password cannot be empty");
     }
 
@@ -241,14 +241,14 @@ const SignIn: React.FC = () => {
               <form>
                 <div className="mb-4">
                   <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Username
+                    Email
                   </label>
                   <div className="relative">
                     <input
                       type="text"
-                      placeholder="Enter your username"
+                      placeholder="Enter your email"
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event) => setusername(event.target.value)}
+                      onChange={(event) => setemail(event.target.value)}
                     />
 
                     <span className="absolute right-4 top-4">

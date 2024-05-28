@@ -1,7 +1,6 @@
 import axios from 'axios';
-const BASE_URL = 'https://ecommerceapi.pinksurfing.com/api'
 
-
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
     
 export async function getOrders(token:string | null){
     let res = await axios.get(`${BASE_URL}/vendor/all-orders/`,{

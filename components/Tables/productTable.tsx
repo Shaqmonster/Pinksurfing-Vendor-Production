@@ -152,7 +152,7 @@ const ProductsTable = (props: { Products: Product[] }) => {
         </div>
       </div>
 
-      {props.Products.map((product: any, key) => (
+      {props?.Products?.map((product: any, key) => (
         <>
           <div
             className="grid grid-cols-3 sm:grid-cols-6  border-t border-stroke py-4.5 px-4 dark:border-strokedark  2xl:px-7.5"

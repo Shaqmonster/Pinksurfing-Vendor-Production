@@ -1,7 +1,6 @@
 import axios from 'axios';
-const BASE_URL = 'https://ecommerceapi.pinksurfing.com'
 
-
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
     
 export async function emailResetLink(email:string){
     return await axios.post(`${BASE_URL}/password_reset/`,{

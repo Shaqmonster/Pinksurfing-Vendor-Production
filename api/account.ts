@@ -1,7 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://ecommerceapi.pinksurfing.com/api';
-
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 export async function getOnboardingUrl(token: string) {
   try {
@@ -57,13 +56,13 @@ export async function signUp(payload:any){
 console.log(res)
 return res;
 }
-export async function signIn(payload:any){
-    let res = await axios.post(`${BASE_URL}/token/`,
+export async function signIn(payload:any){  
+    let res = await axios.post(`https://auth.pinksurfing.com/api/token/`,
     payload
     ).then(async (response: any)=>{
     let data = {}
     if(response.status < 205 && response.data.access){
-        let {access , refresh} = response.data;
+        let {access , refresh} = response.data;        
             let vendor = await axios.get(`${BASE_URL}/vendor/profile/`,{
                 headers:{
                     "Authorization" : "Bearer "+access

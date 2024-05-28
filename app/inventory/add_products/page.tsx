@@ -303,253 +303,251 @@ const AddProducts = () => {
                     </div>
                   </div>
                 </div>
-                <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
-                  <div className="p-7 bg-gray-2">
-                    <form action="#" className="relative">
-                      <h2 className="font-medium text-gray-700 font-bold text-center dark:text-black">
-                        Upload Product Image
-                      </h2>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="absolute inset-0 z-50 m-0 h-full w-full cursor-pointer p-0 opacity-0 outline-none"
-                        onChange={(event) => {
-                          const selectedFiles = event?.target?.files;
-                          if (selectedFiles) {
-                            if (selectedFiles.length + files.length > 4) {
-                              toast.error("Cannot Uplaod more than 4 images");
-                              return;
-                            }
-                            const newFiles = Array.from(selectedFiles);
-                            newFiles.forEach((file) => updateFile(file));
+                <div className="p-7 bg-gray-2">
+                  <form action="#" className="relative">
+                    <h2 className="font-medium text-gray-700 font-bold text-center dark:text-black">
+                      Upload Product Image
+                    </h2>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="absolute inset-0 z-50 m-0 h-full w-full cursor-pointer p-0 opacity-0 outline-none"
+                      onChange={(event) => {
+                        const selectedFiles = event?.target?.files;
+                        if (selectedFiles) {
+                          if (selectedFiles.length + files.length > 4) {
+                            toast.error("Cannot Uplaod more than 4 images");
+                            return;
                           }
-                        }}
-                        multiple // Add this attribute to allow selecting multiple files
-                      />
-                      <div className="flex flex-col items-center justify-center space-y-3">
-                        {files.map((file, index) => (
-                          <div key={index} className="relative">
-                            <img
-                              src={URL.createObjectURL(file)}
-                              alt={file.name}
-                              className="h-20 w-20 object-cover rounded-md"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeFile(index)}
-                              className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full"
-                            >
-                              X
-                            </button>
-                          </div>
-                        ))}
-                        {!files.length ? (
-                          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-stroke bg-white dark:border-strokedark dark:bg-boxdark">
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 16 16"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              {/* Your SVG paths for the icon */}
-                            </svg>
-                          </span>
-                        ) : null}
-                        <p>
-                          <span className="text-primary">Click to upload</span>
-                        </p>
-                        {files.length ? (
-                          files.map((file, index) => (
-                            <p key={index}>{file.name}</p>
-                          ))
-                        ) : (
-                          <>
-                            <p className="mt-1.5">SVG, PNG, JPG, or GIF</p>
-                            <p>(max, 800 X 800px)</p>
-                          </>
-                        )}
-                      </div>
-                    </form>
-                  </div>
-
-                  <div className="my-5.5">
-                    <label
-                      className="mb-3 block text-sm font-medium text-black dark:text-white"
-                      htmlFor="description"
-                    >
-                      Description
-                    </label>
-                    <div className="relative">
-                      <textarea
-                        className="w-full rounded border border-stroke bg-gray py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                        name="bio"
-                        id="bio"
-                        rows={6}
-                        placeholder="Describe your product"
-                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                          updateProductData("description", e.target?.value)
-                        }
-                      ></textarea>
-                    </div>
-                  </div>
-
-                  <div className="col-span-3 row-span-2 flex flex-col justify-between gap-2">
-                    <label
-                      className="block uppercase tracking-wide text-xs font-bold mb-2 text-black dark:text-white"
-                      htmlFor="grid-state"
-                    >
-                      Variants 'different sizes of the same or main
-                      item for sale'
-                    </label>
-                    {attribute.map((atrributes, j) => {
-                      return (
-                        <React.Fragment key={j}>
-                          <div
-                            className="col-span-4 flex justify-between gap-2"
-                            key={j}
-                          >
-                            <input
-                              className="w-10 rounded flex-1 border border-stroke ml-2 py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary ml-4"
-                              type="text"
-                              name="attributeName"
-                              id="attributeName"
-                              placeholder="Variant Name"
-                              onChange={(e: any) => {
-                                setAttribute((i) => {
-                                  i[j]["name"] = e.target.value;
-                                  return i;
-                                });
-                              }}
-                            />
-                            <input
-                              className="w-10 rounded flex-1 border border-stroke py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary ml-4"
-                              type="text"
-                              name="attributeValue"
-                              id="attributeValue"
-                              placeholder="Variant Value"
-                              onChange={(e: any) => {
-                                setAttribute((i) => {
-                                  i[j]["value"] = e.target.value;
-                                  return i;
-                                });
-                              }}
-                            />
-                            <input
-                              className="w-10 rounded border flex-1 border-stroke py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary ml-4"
-                              type="number"
-                              name="attributeValue"
-                              id="attributeValue"
-                              placeholder="Variant Price"
-                              onChange={(e: any) => {
-                                setAttribute((i) => {
-                                  i[j]["additional_price"] = e.target.value;
-                                  return i;
-                                });
-                              }}
-                            />
-                            <button
-                              className="bg-red-500 hover:bg-red-700 text-black dark:text-white font-medium py-2 px-4 rounded"
-                              onClick={() => {
-                                setAttribute((i) =>
-                                  i.filter((_, index) => index !== j)
-                                );
-                              }}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </React.Fragment>
-                      );
-                    })}
-                    <div className="flex justify-end">
-                      <button
-                        className="bg-primary hover:bg-blue-700 text-white font-medium py-2 px-4 rounded ml-auto"
-                        onClick={() => {
-                          setAttribute((i) => [
-                            ...i,
-                            { name: "", value: "", additional_price: 0 },
-                          ]);
-                        }}
-                      >
-                        Add another Variant
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="my-5.5 flex flex-col gap-5.5 sm:flex-row">
-                    <div className="w-full xl:w-1/2">
-                      <label
-                        className="mb-3 font-medium text-black dark:text-white block uppercase tracking-wide text-xs font-bold mb-2"
-                        htmlFor="Tags"
-                      >
-                        Tags
-                      </label>
-                      <div className="relative">
-                        <input
-                          className="w-full rounded border border-stroke  py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                          type="text"
-                          name="tags"
-                          id="tags"
-                          placeholder="Tags seperated by spaces"
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            updateProductData("tags", e.target?.value)
-                          }
-                        />
-                      </div>
-                    </div>
-
-                    <div className="w-full xl:w-1/2">
-                      <label
-                        className="block uppercase tracking-wide text-xs font-bold mb-2"
-                        htmlFor="grid-state"
-                      >
-                        Stock
-                      </label>
-                      <div className="relative">
-                        <input
-                          className="w-full rounded border border-stroke  py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
-                          type="number"
-                          name="stock"
-                          placeholder="0"
-                          id="stock"
-                          // defaultValue={0}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            updateProductData("quantity", e.target?.value)
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-4.5">
-                    <button className="flex justify-center rounded border border-stroke py-2 px-6 font-medium text-black hover:shadow-1 dark:border-strokedark dark:text-white">
-                      <Link href="/inventory/products">Cancel</Link>
-                    </button>
-                    <button
-                      className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-gray hover:bg-opacity-95"
-                      onClick={async (e) => {
-                        if (typeof window !== "undefined") {
-                          console.log(
-                            "Product Data before sending:",
-                            productData
-                          );
-                          let access = localStorage.getItem("access");
-                          let vendor_id = localStorage.getItem("vendor_id");
-                          const res = await saveProducts(
-                            access,
-                            vendor_id,
-                            productData,
-                            attribute,
-                            files
-                          );
-                          console.log(res);
+                          const newFiles = Array.from(selectedFiles);
+                          newFiles.forEach((file) => updateFile(file));
                         }
                       }}
+                      multiple // Add this attribute to allow selecting multiple files
+                    />
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      {files.map((file, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={file.name}
+                            className="h-20 w-20 object-cover rounded-md"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeFile(index)}
+                            className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full"
+                          >
+                            X
+                          </button>
+                        </div>
+                      ))}
+                      {!files.length ? (
+                        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-stroke bg-white dark:border-strokedark dark:bg-boxdark">
+                          <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 16 16"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            {/* Your SVG paths for the icon */}
+                          </svg>
+                        </span>
+                      ) : null}
+                      <p>
+                        <span className="text-primary">Click to upload</span>
+                      </p>
+                      {files.length ? (
+                        files.map((file, index) => (
+                          <p key={index}>{file.name}</p>
+                        ))
+                      ) : (
+                        <>
+                          <p className="mt-1.5">SVG, PNG, JPG, or GIF</p>
+                          <p>(max, 800 X 800px)</p>
+                        </>
+                      )}
+                    </div>
+                  </form>
+                </div>
+                <div />
+
+                <div className="my-5.5">
+                  <label
+                    className="mb-3 block text-sm font-medium text-black dark:text-white"
+                    htmlFor="description"
+                  >
+                    Description
+                  </label>
+                  <div className="relative">
+                    <textarea
+                      className="w-full rounded border border-stroke bg-gray py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                      name="bio"
+                      id="bio"
+                      rows={6}
+                      placeholder="Describe your product"
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        updateProductData("description", e.target?.value)
+                      }
+                    ></textarea>
+                  </div>
+                </div>
+
+                <div className="col-span-3 row-span-2 flex flex-col justify-between gap-2">
+                  <label
+                    className="block uppercase tracking-wide text-xs font-bold mb-2 text-black dark:text-white"
+                    htmlFor="grid-state"
+                  >
+                    Variants 'different sizes of the same or main item for sale'
+                  </label>
+                  {attribute.map((atrributes, j) => {
+                    return (
+                      <React.Fragment key={j}>
+                        <div
+                          className="col-span-4 flex justify-between gap-2"
+                          key={j}
+                        >
+                          <input
+                            className="w-10 rounded flex-1 border border-stroke ml-2 py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary ml-4"
+                            type="text"
+                            name="attributeName"
+                            id="attributeName"
+                            placeholder="Variant Name"
+                            onChange={(e: any) => {
+                              setAttribute((i) => {
+                                i[j]["name"] = e.target.value;
+                                return i;
+                              });
+                            }}
+                          />
+                          <input
+                            className="w-10 rounded flex-1 border border-stroke py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary ml-4"
+                            type="text"
+                            name="attributeValue"
+                            id="attributeValue"
+                            placeholder="Variant Value"
+                            onChange={(e: any) => {
+                              setAttribute((i) => {
+                                i[j]["value"] = e.target.value;
+                                return i;
+                              });
+                            }}
+                          />
+                          <input
+                            className="w-10 rounded border flex-1 border-stroke py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary ml-4"
+                            type="number"
+                            name="attributeValue"
+                            id="attributeValue"
+                            placeholder="Variant Price"
+                            onChange={(e: any) => {
+                              setAttribute((i) => {
+                                i[j]["additional_price"] = e.target.value;
+                                return i;
+                              });
+                            }}
+                          />
+                          <button
+                            className="bg-red-500 hover:bg-red-700 text-black dark:text-white font-medium py-2 px-4 rounded"
+                            onClick={() => {
+                              setAttribute((i) =>
+                                i.filter((_, index) => index !== j)
+                              );
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </React.Fragment>
+                    );
+                  })}
+                  <div className="flex justify-end">
+                    <button
+                      className="bg-primary hover:bg-blue-700 text-white font-medium py-2 px-4 rounded ml-auto"
+                      onClick={() => {
+                        setAttribute((i) => [
+                          ...i,
+                          { name: "", value: "", additional_price: 0 },
+                        ]);
+                      }}
                     >
-                      Save
+                      Add another Variant
                     </button>
                   </div>
+                </div>
+
+                <div className="my-5.5 flex flex-col gap-5.5 sm:flex-row">
+                  <div className="w-full xl:w-1/2">
+                    <label
+                      className="mb-3 font-medium text-black dark:text-white block uppercase tracking-wide text-xs font-bold mb-2"
+                      htmlFor="Tags"
+                    >
+                      Tags
+                    </label>
+                    <div className="relative">
+                      <input
+                        className="w-full rounded border border-stroke  py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                        type="text"
+                        name="tags"
+                        id="tags"
+                        placeholder="Tags seperated by spaces"
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          updateProductData("tags", e.target?.value)
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="w-full xl:w-1/2">
+                    <label
+                      className="block uppercase tracking-wide text-xs font-bold mb-2"
+                      htmlFor="grid-state"
+                    >
+                      Stock
+                    </label>
+                    <div className="relative">
+                      <input
+                        className="w-full rounded border border-stroke  py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                        type="number"
+                        name="stock"
+                        placeholder="0"
+                        id="stock"
+                        // defaultValue={0}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          updateProductData("quantity", e.target?.value)
+                        }
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-4.5">
+                  <button className="flex justify-center rounded border border-stroke py-2 px-6 font-medium text-black hover:shadow-1 dark:border-strokedark dark:text-white">
+                    <Link href="/inventory/products">Cancel</Link>
+                  </button>
+                  <button
+                    className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-gray hover:bg-opacity-95"
+                    onClick={async (e) => {
+                      if (typeof window !== "undefined") {
+                        console.log(
+                          "Product Data before sending:",
+                          productData
+                        );
+                        let access = localStorage.getItem("access");
+                        let vendor_id = localStorage.getItem("vendor_id");
+                        const res = await saveProducts(
+                          access,
+                          vendor_id,
+                          productData,
+                          attribute,
+                          files
+                        );
+                        console.log(res);
+                      }
+                    }}
+                  >
+                    Save
+                  </button>
                 </div>
               </div>
             </div>
