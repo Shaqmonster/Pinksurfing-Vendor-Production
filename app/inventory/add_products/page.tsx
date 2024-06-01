@@ -28,6 +28,7 @@ const AddProducts = () => {
   interface ProductData {
     name: string;
     unit_price: string;
+    mrp: string;
     category: string;
     brand_name: string;
     subcategory: string;
@@ -41,6 +42,7 @@ const AddProducts = () => {
   const [productData, setProductData] = useState<ProductData>({
     name: "",
     unit_price: "",
+    mrp:"",
     category: "",
     subcategory: "",
     brand_name: "",
@@ -51,7 +53,8 @@ const AddProducts = () => {
     id: "",
   });
 
-  const notify = () => toast.success("Product added successfully");
+  const notifySuccess = (success: string) => toast.success(success);
+  const notifyError = (message: string) => toast.error(`Error: ${message}`);
 
   useMemo(() => {
     getCategories().then((data) => {
@@ -87,7 +90,6 @@ const AddProducts = () => {
   ) => {
     setProductData((data: any) => {
       let returnable = { ...data };
-
       if (key === "image" && Array.isArray(value)) {
         returnable[key] = value;
       } else {
@@ -117,6 +119,31 @@ const AddProducts = () => {
     );
   };
 
+  const handleSave = async () => {
+    if (typeof window !== "undefined") {
+      let token = localStorage.getItem("access");
+      let vendor_id = localStorage.getItem("vendor_id");
+      try {
+        const res = await saveProducts(
+          token,
+          vendor_id,
+          productData,
+          attribute,
+          files
+        );
+        console.log(res);
+        
+        if (res.error) {
+          notifyError(res.message || "Error adding product");
+        } else {
+          notifySuccess(res.Status);
+        }
+      } catch (error) {
+        notifyError(error.message || "Unexpected error occurred");
+      }
+    }
+  };
+
   return (
     <div className="mx-auto max-w-270">
       <div className="grid grid-cols-5 gap-8">
@@ -131,21 +158,7 @@ const AddProducts = () => {
               <div
                 onKeyDown={async (e) => {
                   if (e.key === "Enter") {
-                    if (typeof window !== "undefined") {
-                      let access = localStorage.getItem("access");
-                      let vendor_id = localStorage.getItem("vendor_id");
-                      const res = await saveProducts(
-                        access,
-                        vendor_id,
-                        productData,
-                        attribute,
-                        files
-                      );
-                      console.log(res);
-                      if (res.status >= 400) {
-                        alert(res.data.status || res.data.Status);
-                      }
-                    }
+                    await handleSave();
                   }
                 }}
               >
@@ -192,7 +205,10 @@ const AddProducts = () => {
                     </div>
                   </div>
 
-                  <div className="w-full xl:w-1/2">
+                  
+                </div>
+                <div className="mb-5.5 flex flex-col gap-5.5 sm:flex-row">
+                <div className="w-full xl:w-1/2">
                     <label
                       className="mb-3 font-medium text-black dark:text-white block uppercase tracking-wide text-xs font-bold mb-2"
                       htmlFor="Unit Price"
@@ -208,6 +224,26 @@ const AddProducts = () => {
                         placeholder="Unit Price"
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                           updateProductData("unit_price", e.target?.value)
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="w-full xl:w-1/2">
+                    <label
+                      className="mb-3 font-medium text-black dark:text-white block uppercase tracking-wide text-xs font-bold mb-2"
+                      htmlFor="MRP"
+                    >
+                      MRP
+                    </label>
+                    <div className="relative">
+                      <input
+                        className="w-full rounded border border-stroke  py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
+                        type="number"
+                        name="mrp"
+                        id="mrp"
+                        placeholder="MRP"
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          updateProductData("mrp", e.target?.value)
                         }
                       />
                     </div>
@@ -270,6 +306,7 @@ const AddProducts = () => {
                           updateProductData("subcategory", e.target?.value);
                         }}
                       >
+                        <option value="0">Choose</option>
                         {filteredSubcategories.length && selectedCategory ? (
                           filteredSubcategories.map(
                             (
@@ -306,7 +343,7 @@ const AddProducts = () => {
                 <div className="p-7 bg-gray-2">
                   <form action="#" className="relative">
                     <h2 className="font-medium text-gray-700 font-bold text-center dark:text-black">
-                      Upload Product Image
+                      Upload Product Image.
                     </h2>
                     <input
                       type="file"
@@ -527,24 +564,7 @@ const AddProducts = () => {
                   </button>
                   <button
                     className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-gray hover:bg-opacity-95"
-                    onClick={async (e) => {
-                      if (typeof window !== "undefined") {
-                        console.log(
-                          "Product Data before sending:",
-                          productData
-                        );
-                        let access = localStorage.getItem("access");
-                        let vendor_id = localStorage.getItem("vendor_id");
-                        const res = await saveProducts(
-                          access,
-                          vendor_id,
-                          productData,
-                          attribute,
-                          files
-                        );
-                        console.log(res);
-                      }
-                    }}
+                    onClick={handleSave}
                   >
                     Save
                   </button>

@@ -12,6 +12,7 @@ import MyProvider from "./providers/ContextProvider";
 import { MyContext } from "./providers/context";
 import SignIn from "./auth/signin/page";
 import { redirect , usePathname } from "next/navigation";
+import { ToastContainer } from "react-toastify";
 
 export default function RootLayout({
   children,
@@ -94,6 +95,7 @@ export default function RootLayout({
           }
         </div>
         </MyProvider>
+        <ToastContainer />
       </body>
     </html>
   );
