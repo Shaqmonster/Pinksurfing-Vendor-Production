@@ -17,7 +17,7 @@ const SignIn: React.FC = () => {
   const [email, setemail] = useState("");
   const [password, setpassword] = useState("");
   const [error, setError] = useState("");
-  const { setIsLoggedIn, setVendor } = useContext(MyContext);
+  const { setIsLoggedIn, setVendor, setAuthpage } = useContext(MyContext);
 
   const router = useRouter();
 
@@ -385,8 +385,12 @@ const SignIn: React.FC = () => {
                 <div className="mt-6 text-center">
                   <p>
                     Don’t have any account?{" "}
-                    <Link href="/auth/signup" className="text-primary">
-                      Sign Up
+                    <Link
+                      className=" text-primary self-end"
+                      href="/"
+                      onClick={() => setAuthpage("signup")}
+                    >
+                      Signup
                     </Link>
                   </p>
                 </div>
