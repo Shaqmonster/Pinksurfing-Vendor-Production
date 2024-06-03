@@ -41,13 +41,13 @@ export default function Home() {
             }
           } else {
             setIsLoggedIn(false);
-            redirect("/");
+            router.push("/")
           }
         })
         .catch((err) => {
           console.error(err);
           setIsLoggedIn(false);
-          redirect("/");
+          router.push("/")
         })
         .finally(() => setLoading(false));
     }

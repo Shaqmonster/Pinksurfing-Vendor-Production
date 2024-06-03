@@ -28,16 +28,14 @@ const Header = (props: {
     vendor_id: "" || null,
     refresh: "" || null,
   });
-  useEffect(() => {}, []);
+
   useEffect(() => {
-    let access: string | null = "",
-      vendor_id: string | null = "";
     if (typeof window !== "undefined") {
-      access = localStorage.getItem("access");
-      vendor_id = localStorage.getItem("vendor_id");
+      let access = localStorage.getItem("access");
+      let vendor_id = localStorage.getItem("vendor_id");
       if (
         pathname !== "/" &&
-        ["inventory", "profile", "orders", "settings"].includes("pathname")
+        ["inventory", "profile", "orders", "settings"].includes(pathname)
       ) {
         setLogged(true);
       } else if (pathname === "/") {
@@ -55,6 +53,7 @@ const Header = (props: {
       }
     }
   }, [pathname]);
+  
   useMemo(() => {
     getProfile(tokens.access)
       .then((data: any) => {
@@ -64,27 +63,30 @@ const Header = (props: {
           data.response &&
           data.response.status >= 400
         ) {
-          // setLogged(false)
           try {
-            let refresh = localStorage.getItem("refresh");
-            if (!refresh) {
+            if (typeof window !== "undefined") { 
+              let refresh = localStorage.getItem("refresh");
+              if (!refresh) {
+                setLogged(false);
+                router.push("/");
+                return null;
+              }
+              refreshToken(String(tokens.access), refresh).then((token) => {
+                localStorage.setItem("access", token?.access);
+                setTokens((_token) => {
+                  return {
+                    ..._token,
+                    access: token.access,
+                  };
+                });
+                setLogged(true);
+              });
+            }
+          } catch (e) {
+            if (typeof window !== "undefined") { 
               setLogged(false);
               router.push("/");
-              return null;
             }
-            refreshToken(String(tokens.access), refresh).then((token) => {
-              localStorage.setItem("access", token?.access);
-              setTokens((_token) => {
-                return {
-                  ..._token,
-                  access: token.access,
-                };
-              });
-              setLogged(true);
-            });
-          } catch (e) {
-            setLogged(false);
-            router.push("/");
           }
         }
         if (data && "data" in data) {
@@ -98,7 +100,7 @@ const Header = (props: {
       .catch((error) => {
         console.error("Error fetching profile:", error);
       });
-  }, [tokens.access, tokens.vendor_id]);
+  }, [tokens.access, tokens.vendor_id]);  
 
   return (
     <header className="sticky top-0 z-999 flex w-full bg-white drop-shadow-1 dark:bg-boxdark dark:drop-shadow-none">
