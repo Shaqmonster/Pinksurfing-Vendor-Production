@@ -1,6 +1,5 @@
-"use client"
+"use client";
 import Image from "next/image";
-
 
 import { getProfile } from "@/api/account";
 import { useContext, useEffect, useMemo, useState } from "react";
@@ -9,68 +8,65 @@ import { getOrders } from "@/api/orders";
 import { MyContext } from "../providers/context";
 import { redirect, useRouter } from "next/navigation";
 
-
 const Profile = () => {
   const [Profile, setProfile] = useState({
-    name:"",
-    username:"",
-    contact_person_name:"",
-    profile_pic:"",
-    bio:"",
-    store_name:""
-  })
-  const [products, setProducts] = useState([])
-  const [orders, setOrders] = useState([])
+    name: "",
+    username: "",
+    contact_person_name: "",
+    profile_pic: "",
+    bio: "",
+    store_name: "",
+  });
+  const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
 
-  const { setIsLoggedIn } = useContext(MyContext)
-  let access : string | null ="", vendor_id: string | null ="";
-  if(typeof window !== 'undefined'){
-   access = localStorage.getItem('access');
-   vendor_id = localStorage.getItem('vendor_id');
+  const { setIsLoggedIn } = useContext(MyContext);
+  let access: string | null = "",
+    vendor_id: string | null = "";
+  if (typeof window !== "undefined") {
+    access = localStorage.getItem("access");
+    vendor_id = localStorage.getItem("vendor_id");
   }
-  let router = useRouter()
-  useMemo(()=>{
-    getProfile(access)
-    .then((data:any)=>{
-      console.log(data.response.status)
-      if(data && 'response' in data && data.response.status >= 400){
-        setIsLoggedIn(false)
-        router.push('/')
-      }
-      if(data && 'data' in data){
-      let Profile = data.data;
-      console.log(Profile)
-        if(typeof Profile == 'object'){
-            
-            setProfile(Profile)
+  let router = useRouter();
+  useMemo(() => {
+    if (typeof window !== "undefined") {
+      getProfile(access).then((data: any) => {
+        console.log(data.response.status);
+        if (data && "response" in data && data.response.status >= 400) {
+          setIsLoggedIn(false);
+          router.push("/");
         }
-      }
-    })
-    getProducts(access, vendor_id)
-    .then((data:any)=>{
-      if(data && 'data' in data && 'Products' in data.data){
-      let {Products} = data.data;
-        if(typeof Products == 'object' && Products.length){
-            setProducts(Products.length)
+        if (data && "data" in data) {
+          let Profile = data.data;
+          console.log(Profile);
+          if (typeof Profile == "object") {
+            setProfile(Profile);
+          }
         }
-      }
-    })
-    getOrders(access)
-    .then((data:any)=>{
-      if(data && 'data' in data && "Order Request" in data.data){
-      let Orders = data.data["Order Request"];
-            setOrders(Orders.length)
-      }
-    })
-  },[access, router, setIsLoggedIn, vendor_id])
-  
+      });
+      getProducts(access, vendor_id).then((data: any) => {
+        if (data && "data" in data && "Products" in data.data) {
+          let { Products } = data.data;
+          if (typeof Products == "object" && Products.length) {
+            setProducts(Products.length);
+          }
+        }
+      });
+      getOrders(access).then((data: any) => {
+        if (data && "data" in data && "Order Request" in data.data) {
+          let Orders = data.data["Order Request"];
+          setOrders(Orders.length);
+        }
+      });
+    }
+  }, [access, setIsLoggedIn, vendor_id]);  
+
   return (
     <>
-
       <div className="overflow-hidden rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
         <div className="relative z-20 h-35 md:h-65">
           <Image
-            src={ "/images/cover/cover-01.png"}
+            src={"/images/cover/cover-01.png"}
             alt="profile cover"
             className="h-full w-full rounded-tl-sm rounded-tr-sm object-cover object-center"
             width={970}
@@ -154,13 +150,21 @@ const Profile = () => {
           </div>
           <div className="mt-4">
             <h3 className="mb-1.5 text-2xl font-semibold text-black dark:text-white">
-              {
-              (typeof Profile === 'object' &&  'contact_person_name' in Profile ? Profile.contact_person_name : null) || 
-              (typeof Profile === 'object' &&  'name' in Profile ? Profile.name : null ) ||
-              ( typeof Profile === 'object' &&  'username' in Profile ? Profile.username : null)
-            }
+              {(typeof Profile === "object" && "contact_person_name" in Profile
+                ? Profile.contact_person_name
+                : null) ||
+                (typeof Profile === "object" && "name" in Profile
+                  ? Profile.name
+                  : null) ||
+                (typeof Profile === "object" && "username" in Profile
+                  ? Profile.username
+                  : null)}
             </h3>
-            <p className="font-medium">{typeof Profile === 'object' &&  'store_name' in Profile ? Profile.store_name : null}</p>
+            <p className="font-medium">
+              {typeof Profile === "object" && "store_name" in Profile
+                ? Profile.store_name
+                : null}
+            </p>
             <div className="mx-auto mt-4.5 mb-5.5 grid max-w-94 grid-cols-2 rounded-md border border-stroke py-2.5 shadow-1 dark:border-strokedark dark:bg-[#37404F]">
               <div className="flex flex-col items-center justify-center gap-1 border-r border-stroke px-4 dark:border-strokedark xsm:flex-row">
                 <span className="font-semibold text-black dark:text-white">
@@ -180,14 +184,8 @@ const Profile = () => {
               <h4 className="font-semibold text-black dark:text-white">
                 About Me
               </h4>
-              <p className="mt-4.5">
-            
-                  {Profile.bio}
-                
-       
-              </p>
+              <p className="mt-4.5">{Profile.bio}</p>
             </div>
-
           </div>
         </div>
       </div>
