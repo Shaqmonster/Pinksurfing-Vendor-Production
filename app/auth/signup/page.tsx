@@ -28,7 +28,7 @@ const SignUp: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [visible, setVisible] = useState(false);
   const [visible2, setVisible2] = useState(false);
-  const { setIsLoggedIn } = useContext(MyContext);
+  const { setIsLoggedIn , setAuthpage} = useContext(MyContext);
   const [Payload, setPayload] = useState({
     username: "",
     name: "",
@@ -894,8 +894,12 @@ const SignUp: React.FC = () => {
                 <div className="mt-6 text-center">
                   <p>
                     Already have an account?{" "}
-                    <Link href="/auth/signin" className="text-primary">
-                      Sign in
+                    <Link
+                      className=" text-primary self-end"
+                      href="/"
+                      onClick={() => setAuthpage("signin")}
+                    >
+                      Sign In
                     </Link>
                   </p>
                 </div>
