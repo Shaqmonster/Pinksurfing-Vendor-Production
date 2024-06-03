@@ -28,38 +28,34 @@ const Profile = () => {
     vendor_id = localStorage.getItem("vendor_id");
   }
   let router = useRouter();
-  useMemo(() => {
-    if (typeof window !== "undefined") {
-      getProfile(access).then((data: any) => {
-        console.log(data.response.status);
+  useEffect(() => {
+    let access = localStorage.getItem("access");
+    let vendor_id = localStorage.getItem("vendor_id");
+
+    if (access) {
+      getProfile(access).then((data) => {
         if (data && "response" in data && data.response.status >= 400) {
           setIsLoggedIn(false);
           router.push("/");
         }
         if (data && "data" in data) {
-          let Profile = data.data;
-          console.log(Profile);
-          if (typeof Profile == "object") {
-            setProfile(Profile);
-          }
+          setProfile(data.data);
         }
       });
-      getProducts(access, vendor_id).then((data: any) => {
+
+      getProducts(access, vendor_id).then((data) => {
         if (data && "data" in data && "Products" in data.data) {
-          let { Products } = data.data;
-          if (typeof Products == "object" && Products.length) {
-            setProducts(Products.length);
-          }
+          setProducts(data.data.Products.length);
         }
       });
-      getOrders(access).then((data: any) => {
+
+      getOrders(access).then((data) => {
         if (data && "data" in data && "Order Request" in data.data) {
-          let Orders = data.data["Order Request"];
-          setOrders(Orders.length);
+          setOrders(data.data["Order Request"].length);
         }
       });
     }
-  }, [access, setIsLoggedIn, vendor_id]);  
+  }, [setIsLoggedIn, router]); 
 
   return (
     <>
