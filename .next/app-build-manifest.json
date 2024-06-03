@@ -50,7 +50,7 @@
       "static/chunks/main-app-c2752de154837356.js",
       "static/chunks/580-a230841cb85a8c2b.js",
       "static/chunks/758-40a9b0e05c94ea3c.js",
-      "static/chunks/app/profile/page-6ca327bb8c681f34.js"
+      "static/chunks/app/profile/page-c97774f475a271be.js"
     ],
     "/settings/page": [
       "static/chunks/webpack-cf57abcd26913624.js",
@@ -84,14 +84,6 @@
       "static/chunks/424-fac8a8c4de9f3277.js",
       "static/chunks/app/auth/signin/page-26ede801d49b3820.js"
     ],
-    "/forms/form-elements/page": [
-      "static/chunks/webpack-cf57abcd26913624.js",
-      "static/chunks/fd9d1056-60fb16f2e8d5f4de.js",
-      "static/chunks/596-f49304eb86c518fb.js",
-      "static/chunks/main-app-c2752de154837356.js",
-      "static/chunks/685-cbe76b9b5e30eca7.js",
-      "static/chunks/app/forms/form-elements/page-66da536db188d8b3.js"
-    ],
     "/auth/signup/page": [
       "static/chunks/webpack-cf57abcd26913624.js",
       "static/chunks/fd9d1056-60fb16f2e8d5f4de.js",
@@ -104,13 +96,15 @@
       "static/chunks/296-4eef7e2784ae773b.js",
       "static/chunks/app/auth/signup/page-0f7935ccd7a095b5.js"
     ],
-    "/forms/form-layout/page": [
+    "/inventory/products/page": [
       "static/chunks/webpack-cf57abcd26913624.js",
       "static/chunks/fd9d1056-60fb16f2e8d5f4de.js",
       "static/chunks/596-f49304eb86c518fb.js",
       "static/chunks/main-app-c2752de154837356.js",
-      "static/chunks/685-cbe76b9b5e30eca7.js",
-      "static/chunks/app/forms/form-layout/page-dc2b71acebc5be2f.js"
+      "static/chunks/580-a230841cb85a8c2b.js",
+      "static/chunks/758-40a9b0e05c94ea3c.js",
+      "static/chunks/25-208ca673506a0538.js",
+      "static/chunks/app/inventory/products/page-e9ed86b5224e78a1.js"
     ],
     "/inventory/add_products/page": [
       "static/chunks/webpack-cf57abcd26913624.js",
@@ -122,15 +116,21 @@
       "static/css/fb9a9af3f6f81ba5.css",
       "static/chunks/app/inventory/add_products/page-3638d12fda112b63.js"
     ],
-    "/inventory/products/page": [
+    "/forms/form-elements/page": [
       "static/chunks/webpack-cf57abcd26913624.js",
       "static/chunks/fd9d1056-60fb16f2e8d5f4de.js",
       "static/chunks/596-f49304eb86c518fb.js",
       "static/chunks/main-app-c2752de154837356.js",
-      "static/chunks/580-a230841cb85a8c2b.js",
-      "static/chunks/758-40a9b0e05c94ea3c.js",
-      "static/chunks/25-208ca673506a0538.js",
-      "static/chunks/app/inventory/products/page-e9ed86b5224e78a1.js"
+      "static/chunks/685-cbe76b9b5e30eca7.js",
+      "static/chunks/app/forms/form-elements/page-582588763e4d1aa5.js"
+    ],
+    "/forms/form-layout/page": [
+      "static/chunks/webpack-cf57abcd26913624.js",
+      "static/chunks/fd9d1056-60fb16f2e8d5f4de.js",
+      "static/chunks/596-f49304eb86c518fb.js",
+      "static/chunks/main-app-c2752de154837356.js",
+      "static/chunks/685-cbe76b9b5e30eca7.js",
+      "static/chunks/app/forms/form-layout/page-dc2b71acebc5be2f.js"
     ],
     "/orders/[id]/page": [
       "static/chunks/webpack-cf57abcd26913624.js",
