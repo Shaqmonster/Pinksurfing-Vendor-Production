@@ -13,6 +13,7 @@ import { MyContext } from "./providers/context";
 import SignIn from "./auth/signin/page";
 import { redirect , usePathname } from "next/navigation";
 import { ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function RootLayout({
   children,

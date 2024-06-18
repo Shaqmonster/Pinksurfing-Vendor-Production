@@ -8,6 +8,7 @@ import { getProducts } from "@/api/products";
 import SignUp from "./auth/signup/page";
 import Products from "./inventory/products/page";
 import { Product } from "@/types/product";
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function Home() {
   const { loggedIn, setIsLoggedIn, authPage } = useContext(MyContext);
