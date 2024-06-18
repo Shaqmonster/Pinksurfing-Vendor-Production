@@ -11,7 +11,7 @@ import { redirect, useRouter } from "next/navigation";
 const Profile = () => {
   const [Profile, setProfile] = useState({
     name: "",
-    username: "",
+    first_name: "",
     contact_person_name: "",
     profile_pic: "",
     bio: "",
@@ -152,8 +152,8 @@ const Profile = () => {
                 (typeof Profile === "object" && "name" in Profile
                   ? Profile.name
                   : null) ||
-                (typeof Profile === "object" && "username" in Profile
-                  ? Profile.username
+                (typeof Profile === "object" && "first_name" in Profile
+                  ? Profile.first_name
                   : null)}
             </h3>
             <p className="font-medium">

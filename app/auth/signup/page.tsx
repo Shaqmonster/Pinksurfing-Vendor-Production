@@ -2,15 +2,29 @@
 import React, { useState, Dispatch, SetStateAction, useContext } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { getOnboardingUrl } from '@/api/account'; // Adjust the import path based on your file structure
-import { useRouter } from 'next/navigation';
+import { getOnboardingUrl, sendOtp } from "@/api/account"; // Adjust the import path based on your file structure
+import { useRouter } from "next/navigation";
 
 import { signUp } from "@/api/account";
 import { MyContext } from "@/app/providers/context";
 import { redirect } from "next/navigation";
-import CountryCodeSelector from '../../../components/CountryCodeSelector/countrycode';
-
-
+import CountryCodeSelector from "../../../components/CountryCodeSelector/countrycode";
+import PinInput from "react-pin-input";
+import {
+  FaEnvelope,
+  FaEye,
+  FaEyeSlash,
+  FaGlobe,
+  FaGlobeAmericas,
+  FaHome,
+  FaMapMarkerAlt,
+  FaMapPin,
+  FaPhone,
+  FaSearch,
+  FaStore,
+  FaUser,
+} from "react-icons/fa";
+import { ToastContainer, toast } from "react-toastify";
 
 type SignUpProps = {
   setIsLoggedIn: Dispatch<SetStateAction<boolean>>;
@@ -18,7 +32,6 @@ type SignUpProps = {
 
 const SignUp: React.FC = () => {
   {
-    
     /* 2 for no activity, 1 for password match and 0 for not */
   }
 
@@ -28,10 +41,11 @@ const SignUp: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [visible, setVisible] = useState(false);
   const [visible2, setVisible2] = useState(false);
-  const { setIsLoggedIn , setAuthpage} = useContext(MyContext);
+  const { setIsLoggedIn, setAuthpage } = useContext(MyContext);
   const [Payload, setPayload] = useState({
-    username: "",
-    name: "",
+    first_name: "",
+    last_name: "",
+    bio: "",
     company_name: "",
     email: "",
     phone_number: "",
@@ -41,21 +55,19 @@ const SignUp: React.FC = () => {
     street2: "",
     city: "",
     state: "",
+    website: "",
     country: "",
     zip_code: "",
+    entered_otp: "",
   });
 
-  
+  const router = useRouter();
 
-  const router = useRouter()
-
-
-  const updatePayload = (key: string, value: string | number) => {
-    setPayload((data: any) => {
-      let returnable = { ...data };
-      returnable[key] = value;
-      console.log(returnable);
-      return returnable;
+  const updatePayload = (key: string, value: string) => {
+    setPayload((prevPayload: any) => {
+      let updatedPayload = { ...prevPayload, [key]: value };
+      console.log(updatedPayload);
+      return updatedPayload;
     });
   };
 
@@ -78,7 +90,6 @@ const SignUp: React.FC = () => {
       setErrorMessage(response.message || "Signup failed");
     }
   };
-
 
   return (
     <>
@@ -238,623 +249,452 @@ const SignUp: React.FC = () => {
                 Sign Up as Pinksurfing Vendors
               </h2>
 
-              <form>
-                <div className="mb-4">
+              <div className="mb-4">
+                <label className="mb-2.5 block font-medium text-black dark:text-white">
+                  First Name
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Enter your first name"
+                    className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                      updatePayload("first_name", event.target.value);
+                      updatePayload("contact_person_name", event.target.value);
+                    }}
+                  />
+
+                  <span className="absolute right-4 top-4">
+                    <FaUser size={22} />
+                  </span>
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="mb-2.5 block font-medium text-black dark:text-white">
+                  Last Name
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Enter your last name"
+                    className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                      updatePayload("last_name", event.target.value);
+                    }}
+                  />
+
+                  <span className="absolute right-4 top-4">
+                    <FaUser size={22} />
+                  </span>
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="mb-2.5 block font-medium text-black dark:text-white">
+                  Bio
+                </label>
+                <div className="relative">
+                  <textarea
+                    placeholder="Enter your bio"
+                    className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                    onChange={(
+                      event: React.ChangeEvent<HTMLTextAreaElement>
+                    ) => {
+                      updatePayload("bio", event.target.value);
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="mb-4 ">
+                <label className="mb-2.5 block font-medium text-black dark:text-white">
+                  Email
+                </label>
+                <div className="relative flex">
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      updatePayload("email", event.target.value)
+                    }
+                  />
+
+                  <span className="absolute right-27 top-4">
+                    <FaEnvelope size={22} />
+                  </span>
+                  <button
+                    className="hover:bg-gray-100 text-white font-semibold py-2 px-4 border border-primary bg-primary rounded outline-none shadow m-2"
+                    onClick={async () => {
+                      const res = await sendOtp(Payload.email);
+                      console.log(res);
+
+                      if (res) {
+                        toast.success(res.message);
+                      }
+                    }}
+                  >
+                    Verify
+                  </button>
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="mb-2.5 block font-medium text-black dark:text-white">
+                  Otp
+                </label>
+                <div className="relative">
+                  <PinInput
+                    length={6}
+                    focus
+                    onChange={(otpValue: string) =>
+                      updatePayload("entered_otp", otpValue)
+                    }
+                    inputStyle={{
+                      borderRadius: "5px",
+                      padding: "10px",
+                      fontSize: "16px",
+                      color: "black",
+                      backgroundColor: "transparent",
+                      outline: "none",
+                      border: "1px solid rgba(226, 232, 240, 1)",
+                    }}
+                    containerStyle={{ backgroundColor: "#2d1e5f" }}
+                  />
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="mb-2.5 block font-medium text-black dark:text-white">
+                  Store Name
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Enter your Store's name"
+                    className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      updatePayload("company_name", event.target.value)
+                    }
+                  />
+
+                  <span className="absolute right-4 top-4">
+                    <FaStore size={22} />
+                  </span>
+                </div>
+              </div>
+
+              <div className="mb-4 ">
+                <label className="mb-2.5 block font-medium text-black dark:text-white">
+                  Phone No.
+                </label>
+                <div className="relative">
+                  <input
+                    type="tel"
+                    placeholder="Enter your Phone number"
+                    className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      updatePayload("phone_number", event.target.value)
+                    }
+                  />
+
+                  <span className="absolute right-4 top-4">
+                    <FaPhone size={22} />
+                  </span>
+                </div>
+              </div>
+
+              <div className="mb-4 ">
+                <label className="mb-2.5 block font-medium text-black dark:text-white">
+                  Street 1
+                </label>
+                <div className="relative">
+                  <input
+                    placeholder="Enter your street 1"
+                    className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      updatePayload("street1", event.target.value)
+                    }
+                  />
+
+                  <span className="absolute right-4 top-4">
+                    <FaHome size={22} />
+                  </span>
+                </div>
+              </div>
+
+              <div className="mb-4 ">
+                <label className="mb-2.5 block font-medium text-black dark:text-white">
+                  Street 2
+                </label>
+                <div className="relative">
+                  <input
+                    placeholder="Enter your street 2"
+                    className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      updatePayload("street2", event.target.value)
+                    }
+                  />
+
+                  <span className="absolute right-4 top-4">
+                    <FaHome size={22} />
+                  </span>
+                </div>
+              </div>
+
+              <div className="mb-4 ">
+                <label className="mb-2.5 block font-medium text-black dark:text-white">
+                  City
+                </label>
+                <div className="relative">
+                  <input
+                    placeholder="Enter your City"
+                    className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      updatePayload("city", event.target.value)
+                    }
+                  />
+
+                  <span className="absolute right-4 top-4">
+                    <FaMapMarkerAlt size={22} />
+                  </span>
+                </div>
+              </div>
+
+              <div className="mb-4 ">
+                <label className="mb-2.5 block font-medium text-black dark:text-white">
+                  State
+                </label>
+                <div className="relative">
+                  <input
+                    placeholder="Enter your state"
+                    className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      updatePayload("state", event.target.value)
+                    }
+                  />
+
+                  <span className="absolute right-4 top-4">
+                    <FaMapPin />
+                  </span>
+                </div>
+              </div>
+
+              <div className="mb-4 ">
+                <label className="mb-2.5 block font-medium text-black dark:text-white">
+                  Country
+                </label>
+                <div className="relative">
+                  <CountryCodeSelector
+                    onSelect={(selectedCountryCode: string) =>
+                      updatePayload("country", selectedCountryCode)
+                    }
+                  />
+
+                  <span className="absolute right-4 top-4">
+                    <FaGlobeAmericas />
+                  </span>
+                </div>
+              </div>
+
+              <div className="mb-4 ">
+                <label className="mb-2.5 block font-medium text-black dark:text-white">
+                  Zip Code
+                </label>
+                <div className="relative">
+                  <input
+                    type="tel"
+                    placeholder="Enter your zip code"
+                    className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      updatePayload("zip_code", event.target.value)
+                    }
+                  />
+
+                  <span className="absolute right-4 top-4 text-gray-500">
+                    <FaSearch />
+                  </span>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="mb-2.5 block font-medium text-black dark:text-white">
+                  Website URL
+                </label>
+                <div className="relative">
+                  <input
+                    type="url"
+                    placeholder="Enter your website URL"
+                    className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      updatePayload("website", event.target.value)
+                    }
+                  />
+                  <span className="absolute right-4 top-4 text-gray-500">
+                    <FaGlobe size={22} />
+                  </span>
+                </div>
+              </div>
+
+              <div className="w-full flex">
+                <div className="relative mb-4 w-1/2 mr-4">
                   <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Username
+                    Password
                   </label>
                   <div className="relative">
                     <input
-                      type="text"
-                      placeholder="Enter your full name"
+                      type={visible ? "text" : "password"}
+                      placeholder="Enter your password"
+                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                        updatePayload("password", event.target.value)
+                      }
+                    />
+
+                    <span
+                      className="absolute right-4 top-4"
+                      onClick={() => setVisible(!visible)}
+                    >
+                      {!visible ? (
+                        <FaEyeSlash size={22} />
+                      ) : (
+                        <FaEye size={22} />
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mb-6 relative w-1/2">
+                  <label className="mb-2.5 block font-medium text-black dark:text-white">
+                    Re-type Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={visible2 ? "text" : "password"}
+                      placeholder="Re-enter your password"
                       className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
                       onChange={(
                         event: React.ChangeEvent<HTMLInputElement>
                       ) => {
-                        updatePayload("username", event.target.value);
-                        updatePayload("name", event.target.value);
-                        updatePayload(
-                          "contact_person_name",
-                          event.target.value
-                        );
+                        setConfirmPassword(event.target.value);
+                        if (event.target.value === Payload.password) {
+                          setPasswordCheck(1);
+                        }
                       }}
                     />
 
-                    <span className="absolute right-4 top-4">
-                      <svg
-                        className="fill-current"
-                        width="22"
-                        height="22"
-                        viewBox="0 0 22 22"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <g opacity="0.5">
-                          <path
-                            d="M11.0008 9.52185C13.5445 9.52185 15.607 7.5281 15.607 5.0531C15.607 2.5781 13.5445 0.584351 11.0008 0.584351C8.45703 0.584351 6.39453 2.5781 6.39453 5.0531C6.39453 7.5281 8.45703 9.52185 11.0008 9.52185ZM11.0008 2.1656C12.6852 2.1656 14.0602 3.47185 14.0602 5.08748C14.0602 6.7031 12.6852 8.00935 11.0008 8.00935C9.31641 8.00935 7.94141 6.7031 7.94141 5.08748C7.94141 3.47185 9.31641 2.1656 11.0008 2.1656Z"
-                            fill=""
-                          />
-                          <path
-                            d="M13.2352 11.0687H8.76641C5.08828 11.0687 2.09766 14.0937 2.09766 17.7719V20.625C2.09766 21.0375 2.44141 21.4156 2.88828 21.4156C3.33516 21.4156 3.67891 21.0719 3.67891 20.625V17.7719C3.67891 14.9531 5.98203 12.6156 8.83516 12.6156H13.2695C16.0883 12.6156 18.4258 14.9187 18.4258 17.7719V20.625C18.4258 21.0375 18.7695 21.4156 19.2164 21.4156C19.6633 21.4156 20.007 21.0719 20.007 20.625V17.7719C19.9039 14.0937 16.9133 11.0687 13.2352 11.0687Z"
-                            fill=""
-                          />
-                        </g>
-                      </svg>
+                    <span
+                      className="absolute right-4 top-4"
+                      onClick={() => setVisible2(!visible2)}
+                    >
+                      {!visible2 ? (
+                        <FaEyeSlash size={22} />
+                      ) : (
+                        <FaEye size={22} />
+                      )}
                     </span>
                   </div>
                 </div>
-
-                <div className="mb-4 ">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Email
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      placeholder="Enter your email"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updatePayload("email", event.target.value)
-                      }
-                    />
-
-                    <span className="absolute right-4 top-4">
-                      <svg
-                        className="fill-current"
-                        width="22"
-                        height="22"
-                        viewBox="0 0 22 22"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <g opacity="0.5">
-                          <path
-                            d="M19.2516 3.30005H2.75156C1.58281 3.30005 0.585938 4.26255 0.585938 5.46567V16.6032C0.585938 17.7719 1.54844 18.7688 2.75156 18.7688H19.2516C20.4203 18.7688 21.4172 17.8063 21.4172 16.6032V5.4313C21.4172 4.26255 20.4203 3.30005 19.2516 3.30005ZM19.2516 4.84692C19.2859 4.84692 19.3203 4.84692 19.3547 4.84692L11.0016 10.2094L2.64844 4.84692C2.68281 4.84692 2.71719 4.84692 2.75156 4.84692H19.2516ZM19.2516 17.1532H2.75156C2.40781 17.1532 2.13281 16.8782 2.13281 16.5344V6.35942L10.1766 11.5157C10.4172 11.6875 10.6922 11.7563 10.9672 11.7563C11.2422 11.7563 11.5172 11.6875 11.7578 11.5157L19.8016 6.35942V16.5688C19.8703 16.9125 19.5953 17.1532 19.2516 17.1532Z"
-                            fill=""
-                          />
-                        </g>
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Store Name
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Enter your Store's name"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updatePayload("company_name", event.target.value)
-                      }
-                    />
-
-                    <span className="absolute right-4 top-4">
-                      <svg
-                        width="22px"
-                        height="22px"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        opacity={0.5}
-                      >
-                        <path
-                          d="M11 20H21V10C21 8.89543 20.1046 8 19 8H15M11 16H11.01M17 16H17.01M7 16H7.01M11 12H11.01M17 12H17.01M7 12H7.01M11 8H11.01M7 8H7.01M15 20V6C15 4.89543 14.1046 4 13 4H5C3.89543 4 3 4.89543 3 6V20H15Z"
-                          stroke="#000000"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-4 ">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Phone No.
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="tel"
-                      placeholder="Enter your Phone number"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updatePayload("phone_number", event.target.value)
-                      }
-                    />
-
-                    
-
-                    <span className="absolute right-4 top-4">
-                      <svg
-                        width="22px"
-                        height="22px"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        opacity={0.5}
-                      >
-                        <path
-                          d="M13 19C13 19.5523 12.5523 20 12 20C11.4477 20 11 19.5523 11 19C11 18.4477 11.4477 18 12 18C12.5523 18 13 18.4477 13 19Z"
-                          fill="#0F1729"
-                        />
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M9.23417 1L9.28281 1.00001C9.2904 1 9.298 1 9.30559 1.00001H14.6944C14.702 1 14.7096 1 14.7172 1.00001L14.7658 1C14.7898 1 14.813 0.999997 14.8357 1.00001H15C15.0164 1.00001 15.0327 1.0004 15.0489 1.00118C15.1351 1.00243 15.2118 1.00496 15.2841 1.01011C17.2693 1.15145 18.8486 2.73075 18.9899 4.71593C19.0001 4.85862 19 5.01839 19 5.23416L19 17.212C19 18.0305 19 18.7061 18.9544 19.2561C18.9069 19.8274 18.805 20.3523 18.5497 20.8439C18.1702 21.5745 17.5745 22.1702 16.8439 22.5497C16.3523 22.805 15.8274 22.9069 15.2561 22.9544C14.7061 23 14.0306 23 13.2121 23H10.7879C9.96946 23 9.29391 23 8.74394 22.9544C8.17259 22.9069 7.64775 22.805 7.15611 22.5497C6.42554 22.1702 5.82986 21.5745 5.45035 20.8439C5.19497 20.3523 5.09311 19.8274 5.04566 19.2561C4.99998 18.7061 4.99999 18.0305 5.00001 17.212L5 5.23417C4.99997 5.0184 4.99995 4.85862 5.01011 4.71593C5.15145 2.73075 6.73075 1.15145 8.71593 1.01011C8.78824 1.00496 8.86493 1.00243 8.95107 1.00118C8.96729 1.0004 8.9836 1.00001 9.00001 1.00001H9.16434C9.18696 0.999997 9.21023 1 9.23417 1ZM9.27151 3.00001C9.00219 3.00001 8.91996 3.00064 8.85797 3.00506C7.86538 3.07573 7.07573 3.86538 7.00506 4.85797C7.00064 4.91996 7.00001 5.00219 7.00001 5.27151V17.17C7.00001 18.041 7.00081 18.6331 7.0388 19.0906C7.07579 19.536 7.1428 19.7634 7.22518 19.922C7.41493 20.2872 7.71277 20.5851 8.07806 20.7748C8.23664 20.8572 8.46402 20.9242 8.90946 20.9612C9.36687 20.9992 9.95899 21 10.83 21H13.17C14.041 21 14.6331 20.9992 15.0906 20.9612C15.536 20.9242 15.7634 20.8572 15.922 20.7748C16.2872 20.5851 16.5851 20.2872 16.7748 19.922C16.8572 19.7634 16.9242 19.536 16.9612 19.0906C16.9992 18.6331 17 18.041 17 17.17V5.27151C17 5.00219 16.9994 4.91996 16.995 4.85797C16.9243 3.86538 16.1346 3.07573 15.142 3.00506C15.0801 3.00064 14.9978 3.00001 14.7285 3.00001C14.6616 3.00001 14.6541 3.00017 14.6491 3.00037C14.5206 3.00524 14.3989 3.05943 14.3094 3.15168C14.3058 3.1553 14.3007 3.16075 14.256 3.21046L13.7673 3.75343L13.7548 3.76722C13.7489 3.77362 13.7374 3.78609 13.7227 3.80087C13.6914 3.83231 13.6352 3.88538 13.5553 3.93802C13.4595 4.00108 13.3541 4.04803 13.2432 4.07701C13.1506 4.1012 13.0735 4.10751 13.0293 4.1097C13.0084 4.11073 12.9914 4.11096 12.9828 4.11104L12.9642 4.11112H11.0359L11.0172 4.11104C11.0086 4.11096 10.9916 4.11073 10.9708 4.1097C10.9265 4.10751 10.8494 4.1012 10.7568 4.07701C10.6459 4.04803 10.5405 4.00108 10.4447 3.93802C10.3648 3.88538 10.3086 3.83231 10.2773 3.80087C10.2627 3.78609 10.2511 3.77362 10.2452 3.76722L10.2327 3.75343L9.74405 3.21046C9.69932 3.16075 9.69418 3.1553 9.69066 3.15168C9.60108 3.05943 9.47941 3.00524 9.35092 3.00037C9.34587 3.00017 9.33838 3.00001 9.27151 3.00001Z"
-                          fill="#0F1729"
-                        />
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-4 ">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Street 1
-                  </label>
-                  <div className="relative">
-                    <input
-                      placeholder="Enter your street 1"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updatePayload("street1", event.target.value)
-                      }
-                    />
-
-                    
-
-                    <span className="absolute right-4 top-4">
-                      <svg
-                        width="22px"
-                        height="22px"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        opacity={0.5}
-                      >
-                        <path
-                          d="M13 19C13 19.5523 12.5523 20 12 20C11.4477 20 11 19.5523 11 19C11 18.4477 11.4477 18 12 18C12.5523 18 13 18.4477 13 19Z"
-                          fill="#0F1729"
-                        />
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M9.23417 1L9.28281 1.00001C9.2904 1 9.298 1 9.30559 1.00001H14.6944C14.702 1 14.7096 1 14.7172 1.00001L14.7658 1C14.7898 1 14.813 0.999997 14.8357 1.00001H15C15.0164 1.00001 15.0327 1.0004 15.0489 1.00118C15.1351 1.00243 15.2118 1.00496 15.2841 1.01011C17.2693 1.15145 18.8486 2.73075 18.9899 4.71593C19.0001 4.85862 19 5.01839 19 5.23416L19 17.212C19 18.0305 19 18.7061 18.9544 19.2561C18.9069 19.8274 18.805 20.3523 18.5497 20.8439C18.1702 21.5745 17.5745 22.1702 16.8439 22.5497C16.3523 22.805 15.8274 22.9069 15.2561 22.9544C14.7061 23 14.0306 23 13.2121 23H10.7879C9.96946 23 9.29391 23 8.74394 22.9544C8.17259 22.9069 7.64775 22.805 7.15611 22.5497C6.42554 22.1702 5.82986 21.5745 5.45035 20.8439C5.19497 20.3523 5.09311 19.8274 5.04566 19.2561C4.99998 18.7061 4.99999 18.0305 5.00001 17.212L5 5.23417C4.99997 5.0184 4.99995 4.85862 5.01011 4.71593C5.15145 2.73075 6.73075 1.15145 8.71593 1.01011C8.78824 1.00496 8.86493 1.00243 8.95107 1.00118C8.96729 1.0004 8.9836 1.00001 9.00001 1.00001H9.16434C9.18696 0.999997 9.21023 1 9.23417 1ZM9.27151 3.00001C9.00219 3.00001 8.91996 3.00064 8.85797 3.00506C7.86538 3.07573 7.07573 3.86538 7.00506 4.85797C7.00064 4.91996 7.00001 5.00219 7.00001 5.27151V17.17C7.00001 18.041 7.00081 18.6331 7.0388 19.0906C7.07579 19.536 7.1428 19.7634 7.22518 19.922C7.41493 20.2872 7.71277 20.5851 8.07806 20.7748C8.23664 20.8572 8.46402 20.9242 8.90946 20.9612C9.36687 20.9992 9.95899 21 10.83 21H13.17C14.041 21 14.6331 20.9992 15.0906 20.9612C15.536 20.9242 15.7634 20.8572 15.922 20.7748C16.2872 20.5851 16.5851 20.2872 16.7748 19.922C16.8572 19.7634 16.9242 19.536 16.9612 19.0906C16.9992 18.6331 17 18.041 17 17.17V5.27151C17 5.00219 16.9994 4.91996 16.995 4.85797C16.9243 3.86538 16.1346 3.07573 15.142 3.00506C15.0801 3.00064 14.9978 3.00001 14.7285 3.00001C14.6616 3.00001 14.6541 3.00017 14.6491 3.00037C14.5206 3.00524 14.3989 3.05943 14.3094 3.15168C14.3058 3.1553 14.3007 3.16075 14.256 3.21046L13.7673 3.75343L13.7548 3.76722C13.7489 3.77362 13.7374 3.78609 13.7227 3.80087C13.6914 3.83231 13.6352 3.88538 13.5553 3.93802C13.4595 4.00108 13.3541 4.04803 13.2432 4.07701C13.1506 4.1012 13.0735 4.10751 13.0293 4.1097C13.0084 4.11073 12.9914 4.11096 12.9828 4.11104L12.9642 4.11112H11.0359L11.0172 4.11104C11.0086 4.11096 10.9916 4.11073 10.9708 4.1097C10.9265 4.10751 10.8494 4.1012 10.7568 4.07701C10.6459 4.04803 10.5405 4.00108 10.4447 3.93802C10.3648 3.88538 10.3086 3.83231 10.2773 3.80087C10.2627 3.78609 10.2511 3.77362 10.2452 3.76722L10.2327 3.75343L9.74405 3.21046C9.69932 3.16075 9.69418 3.1553 9.69066 3.15168C9.60108 3.05943 9.47941 3.00524 9.35092 3.00037C9.34587 3.00017 9.33838 3.00001 9.27151 3.00001Z"
-                          fill="#0F1729"
-                        />
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-4 ">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Street 2
-                  </label>
-                  <div className="relative">
-                    <input
-                  
-                      placeholder="Enter your street 2"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updatePayload("street2", event.target.value)
-                      }
-                    />
-
-                    
-
-                    <span className="absolute right-4 top-4">
-                      <svg
-                        width="22px"
-                        height="22px"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        opacity={0.5}
-                      >
-                        <path
-                          d="M13 19C13 19.5523 12.5523 20 12 20C11.4477 20 11 19.5523 11 19C11 18.4477 11.4477 18 12 18C12.5523 18 13 18.4477 13 19Z"
-                          fill="#0F1729"
-                        />
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M9.23417 1L9.28281 1.00001C9.2904 1 9.298 1 9.30559 1.00001H14.6944C14.702 1 14.7096 1 14.7172 1.00001L14.7658 1C14.7898 1 14.813 0.999997 14.8357 1.00001H15C15.0164 1.00001 15.0327 1.0004 15.0489 1.00118C15.1351 1.00243 15.2118 1.00496 15.2841 1.01011C17.2693 1.15145 18.8486 2.73075 18.9899 4.71593C19.0001 4.85862 19 5.01839 19 5.23416L19 17.212C19 18.0305 19 18.7061 18.9544 19.2561C18.9069 19.8274 18.805 20.3523 18.5497 20.8439C18.1702 21.5745 17.5745 22.1702 16.8439 22.5497C16.3523 22.805 15.8274 22.9069 15.2561 22.9544C14.7061 23 14.0306 23 13.2121 23H10.7879C9.96946 23 9.29391 23 8.74394 22.9544C8.17259 22.9069 7.64775 22.805 7.15611 22.5497C6.42554 22.1702 5.82986 21.5745 5.45035 20.8439C5.19497 20.3523 5.09311 19.8274 5.04566 19.2561C4.99998 18.7061 4.99999 18.0305 5.00001 17.212L5 5.23417C4.99997 5.0184 4.99995 4.85862 5.01011 4.71593C5.15145 2.73075 6.73075 1.15145 8.71593 1.01011C8.78824 1.00496 8.86493 1.00243 8.95107 1.00118C8.96729 1.0004 8.9836 1.00001 9.00001 1.00001H9.16434C9.18696 0.999997 9.21023 1 9.23417 1ZM9.27151 3.00001C9.00219 3.00001 8.91996 3.00064 8.85797 3.00506C7.86538 3.07573 7.07573 3.86538 7.00506 4.85797C7.00064 4.91996 7.00001 5.00219 7.00001 5.27151V17.17C7.00001 18.041 7.00081 18.6331 7.0388 19.0906C7.07579 19.536 7.1428 19.7634 7.22518 19.922C7.41493 20.2872 7.71277 20.5851 8.07806 20.7748C8.23664 20.8572 8.46402 20.9242 8.90946 20.9612C9.36687 20.9992 9.95899 21 10.83 21H13.17C14.041 21 14.6331 20.9992 15.0906 20.9612C15.536 20.9242 15.7634 20.8572 15.922 20.7748C16.2872 20.5851 16.5851 20.2872 16.7748 19.922C16.8572 19.7634 16.9242 19.536 16.9612 19.0906C16.9992 18.6331 17 18.041 17 17.17V5.27151C17 5.00219 16.9994 4.91996 16.995 4.85797C16.9243 3.86538 16.1346 3.07573 15.142 3.00506C15.0801 3.00064 14.9978 3.00001 14.7285 3.00001C14.6616 3.00001 14.6541 3.00017 14.6491 3.00037C14.5206 3.00524 14.3989 3.05943 14.3094 3.15168C14.3058 3.1553 14.3007 3.16075 14.256 3.21046L13.7673 3.75343L13.7548 3.76722C13.7489 3.77362 13.7374 3.78609 13.7227 3.80087C13.6914 3.83231 13.6352 3.88538 13.5553 3.93802C13.4595 4.00108 13.3541 4.04803 13.2432 4.07701C13.1506 4.1012 13.0735 4.10751 13.0293 4.1097C13.0084 4.11073 12.9914 4.11096 12.9828 4.11104L12.9642 4.11112H11.0359L11.0172 4.11104C11.0086 4.11096 10.9916 4.11073 10.9708 4.1097C10.9265 4.10751 10.8494 4.1012 10.7568 4.07701C10.6459 4.04803 10.5405 4.00108 10.4447 3.93802C10.3648 3.88538 10.3086 3.83231 10.2773 3.80087C10.2627 3.78609 10.2511 3.77362 10.2452 3.76722L10.2327 3.75343L9.74405 3.21046C9.69932 3.16075 9.69418 3.1553 9.69066 3.15168C9.60108 3.05943 9.47941 3.00524 9.35092 3.00037C9.34587 3.00017 9.33838 3.00001 9.27151 3.00001Z"
-                          fill="#0F1729"
-                        />
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-4 ">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    City
-                  </label>
-                  <div className="relative">
-                    <input
-                      placeholder="Enter your City"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updatePayload("city", event.target.value)
-                      }
-                    />
-
-                    
-
-                    <span className="absolute right-4 top-4">
-                      <svg
-                        width="22px"
-                        height="22px"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        opacity={0.5}
-                      >
-                        <path
-                          d="M13 19C13 19.5523 12.5523 20 12 20C11.4477 20 11 19.5523 11 19C11 18.4477 11.4477 18 12 18C12.5523 18 13 18.4477 13 19Z"
-                          fill="#0F1729"
-                        />
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M9.23417 1L9.28281 1.00001C9.2904 1 9.298 1 9.30559 1.00001H14.6944C14.702 1 14.7096 1 14.7172 1.00001L14.7658 1C14.7898 1 14.813 0.999997 14.8357 1.00001H15C15.0164 1.00001 15.0327 1.0004 15.0489 1.00118C15.1351 1.00243 15.2118 1.00496 15.2841 1.01011C17.2693 1.15145 18.8486 2.73075 18.9899 4.71593C19.0001 4.85862 19 5.01839 19 5.23416L19 17.212C19 18.0305 19 18.7061 18.9544 19.2561C18.9069 19.8274 18.805 20.3523 18.5497 20.8439C18.1702 21.5745 17.5745 22.1702 16.8439 22.5497C16.3523 22.805 15.8274 22.9069 15.2561 22.9544C14.7061 23 14.0306 23 13.2121 23H10.7879C9.96946 23 9.29391 23 8.74394 22.9544C8.17259 22.9069 7.64775 22.805 7.15611 22.5497C6.42554 22.1702 5.82986 21.5745 5.45035 20.8439C5.19497 20.3523 5.09311 19.8274 5.04566 19.2561C4.99998 18.7061 4.99999 18.0305 5.00001 17.212L5 5.23417C4.99997 5.0184 4.99995 4.85862 5.01011 4.71593C5.15145 2.73075 6.73075 1.15145 8.71593 1.01011C8.78824 1.00496 8.86493 1.00243 8.95107 1.00118C8.96729 1.0004 8.9836 1.00001 9.00001 1.00001H9.16434C9.18696 0.999997 9.21023 1 9.23417 1ZM9.27151 3.00001C9.00219 3.00001 8.91996 3.00064 8.85797 3.00506C7.86538 3.07573 7.07573 3.86538 7.00506 4.85797C7.00064 4.91996 7.00001 5.00219 7.00001 5.27151V17.17C7.00001 18.041 7.00081 18.6331 7.0388 19.0906C7.07579 19.536 7.1428 19.7634 7.22518 19.922C7.41493 20.2872 7.71277 20.5851 8.07806 20.7748C8.23664 20.8572 8.46402 20.9242 8.90946 20.9612C9.36687 20.9992 9.95899 21 10.83 21H13.17C14.041 21 14.6331 20.9992 15.0906 20.9612C15.536 20.9242 15.7634 20.8572 15.922 20.7748C16.2872 20.5851 16.5851 20.2872 16.7748 19.922C16.8572 19.7634 16.9242 19.536 16.9612 19.0906C16.9992 18.6331 17 18.041 17 17.17V5.27151C17 5.00219 16.9994 4.91996 16.995 4.85797C16.9243 3.86538 16.1346 3.07573 15.142 3.00506C15.0801 3.00064 14.9978 3.00001 14.7285 3.00001C14.6616 3.00001 14.6541 3.00017 14.6491 3.00037C14.5206 3.00524 14.3989 3.05943 14.3094 3.15168C14.3058 3.1553 14.3007 3.16075 14.256 3.21046L13.7673 3.75343L13.7548 3.76722C13.7489 3.77362 13.7374 3.78609 13.7227 3.80087C13.6914 3.83231 13.6352 3.88538 13.5553 3.93802C13.4595 4.00108 13.3541 4.04803 13.2432 4.07701C13.1506 4.1012 13.0735 4.10751 13.0293 4.1097C13.0084 4.11073 12.9914 4.11096 12.9828 4.11104L12.9642 4.11112H11.0359L11.0172 4.11104C11.0086 4.11096 10.9916 4.11073 10.9708 4.1097C10.9265 4.10751 10.8494 4.1012 10.7568 4.07701C10.6459 4.04803 10.5405 4.00108 10.4447 3.93802C10.3648 3.88538 10.3086 3.83231 10.2773 3.80087C10.2627 3.78609 10.2511 3.77362 10.2452 3.76722L10.2327 3.75343L9.74405 3.21046C9.69932 3.16075 9.69418 3.1553 9.69066 3.15168C9.60108 3.05943 9.47941 3.00524 9.35092 3.00037C9.34587 3.00017 9.33838 3.00001 9.27151 3.00001Z"
-                          fill="#0F1729"
-                        />
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-4 ">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    State
-                  </label>
-                  <div className="relative">
-                    <input
-                      placeholder="Enter your state"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updatePayload("state", event.target.value)
-                      }
-                    />
-
-                    
-
-                    <span className="absolute right-4 top-4">
-                      <svg
-                        width="22px"
-                        height="22px"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        opacity={0.5}
-                      >
-                        <path
-                          d="M13 19C13 19.5523 12.5523 20 12 20C11.4477 20 11 19.5523 11 19C11 18.4477 11.4477 18 12 18C12.5523 18 13 18.4477 13 19Z"
-                          fill="#0F1729"
-                        />
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M9.23417 1L9.28281 1.00001C9.2904 1 9.298 1 9.30559 1.00001H14.6944C14.702 1 14.7096 1 14.7172 1.00001L14.7658 1C14.7898 1 14.813 0.999997 14.8357 1.00001H15C15.0164 1.00001 15.0327 1.0004 15.0489 1.00118C15.1351 1.00243 15.2118 1.00496 15.2841 1.01011C17.2693 1.15145 18.8486 2.73075 18.9899 4.71593C19.0001 4.85862 19 5.01839 19 5.23416L19 17.212C19 18.0305 19 18.7061 18.9544 19.2561C18.9069 19.8274 18.805 20.3523 18.5497 20.8439C18.1702 21.5745 17.5745 22.1702 16.8439 22.5497C16.3523 22.805 15.8274 22.9069 15.2561 22.9544C14.7061 23 14.0306 23 13.2121 23H10.7879C9.96946 23 9.29391 23 8.74394 22.9544C8.17259 22.9069 7.64775 22.805 7.15611 22.5497C6.42554 22.1702 5.82986 21.5745 5.45035 20.8439C5.19497 20.3523 5.09311 19.8274 5.04566 19.2561C4.99998 18.7061 4.99999 18.0305 5.00001 17.212L5 5.23417C4.99997 5.0184 4.99995 4.85862 5.01011 4.71593C5.15145 2.73075 6.73075 1.15145 8.71593 1.01011C8.78824 1.00496 8.86493 1.00243 8.95107 1.00118C8.96729 1.0004 8.9836 1.00001 9.00001 1.00001H9.16434C9.18696 0.999997 9.21023 1 9.23417 1ZM9.27151 3.00001C9.00219 3.00001 8.91996 3.00064 8.85797 3.00506C7.86538 3.07573 7.07573 3.86538 7.00506 4.85797C7.00064 4.91996 7.00001 5.00219 7.00001 5.27151V17.17C7.00001 18.041 7.00081 18.6331 7.0388 19.0906C7.07579 19.536 7.1428 19.7634 7.22518 19.922C7.41493 20.2872 7.71277 20.5851 8.07806 20.7748C8.23664 20.8572 8.46402 20.9242 8.90946 20.9612C9.36687 20.9992 9.95899 21 10.83 21H13.17C14.041 21 14.6331 20.9992 15.0906 20.9612C15.536 20.9242 15.7634 20.8572 15.922 20.7748C16.2872 20.5851 16.5851 20.2872 16.7748 19.922C16.8572 19.7634 16.9242 19.536 16.9612 19.0906C16.9992 18.6331 17 18.041 17 17.17V5.27151C17 5.00219 16.9994 4.91996 16.995 4.85797C16.9243 3.86538 16.1346 3.07573 15.142 3.00506C15.0801 3.00064 14.9978 3.00001 14.7285 3.00001C14.6616 3.00001 14.6541 3.00017 14.6491 3.00037C14.5206 3.00524 14.3989 3.05943 14.3094 3.15168C14.3058 3.1553 14.3007 3.16075 14.256 3.21046L13.7673 3.75343L13.7548 3.76722C13.7489 3.77362 13.7374 3.78609 13.7227 3.80087C13.6914 3.83231 13.6352 3.88538 13.5553 3.93802C13.4595 4.00108 13.3541 4.04803 13.2432 4.07701C13.1506 4.1012 13.0735 4.10751 13.0293 4.1097C13.0084 4.11073 12.9914 4.11096 12.9828 4.11104L12.9642 4.11112H11.0359L11.0172 4.11104C11.0086 4.11096 10.9916 4.11073 10.9708 4.1097C10.9265 4.10751 10.8494 4.1012 10.7568 4.07701C10.6459 4.04803 10.5405 4.00108 10.4447 3.93802C10.3648 3.88538 10.3086 3.83231 10.2773 3.80087C10.2627 3.78609 10.2511 3.77362 10.2452 3.76722L10.2327 3.75343L9.74405 3.21046C9.69932 3.16075 9.69418 3.1553 9.69066 3.15168C9.60108 3.05943 9.47941 3.00524 9.35092 3.00037C9.34587 3.00017 9.33838 3.00001 9.27151 3.00001Z"
-                          fill="#0F1729"
-                        />
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-4 ">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Country
-                  </label>
-                  <div className="relative">
-          <CountryCodeSelector
-            onSelect={(selectedCountryCode: string) => updatePayload("country", selectedCountryCode)}
-          />
-
-                    
-
-                    <span className="absolute right-4 top-4">
-                      <svg
-                        width="22px"
-                        height="22px"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        opacity={0.5}
-                      >
-                        <path
-                          d="M13 19C13 19.5523 12.5523 20 12 20C11.4477 20 11 19.5523 11 19C11 18.4477 11.4477 18 12 18C12.5523 18 13 18.4477 13 19Z"
-                          fill="#0F1729"
-                        />
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M9.23417 1L9.28281 1.00001C9.2904 1 9.298 1 9.30559 1.00001H14.6944C14.702 1 14.7096 1 14.7172 1.00001L14.7658 1C14.7898 1 14.813 0.999997 14.8357 1.00001H15C15.0164 1.00001 15.0327 1.0004 15.0489 1.00118C15.1351 1.00243 15.2118 1.00496 15.2841 1.01011C17.2693 1.15145 18.8486 2.73075 18.9899 4.71593C19.0001 4.85862 19 5.01839 19 5.23416L19 17.212C19 18.0305 19 18.7061 18.9544 19.2561C18.9069 19.8274 18.805 20.3523 18.5497 20.8439C18.1702 21.5745 17.5745 22.1702 16.8439 22.5497C16.3523 22.805 15.8274 22.9069 15.2561 22.9544C14.7061 23 14.0306 23 13.2121 23H10.7879C9.96946 23 9.29391 23 8.74394 22.9544C8.17259 22.9069 7.64775 22.805 7.15611 22.5497C6.42554 22.1702 5.82986 21.5745 5.45035 20.8439C5.19497 20.3523 5.09311 19.8274 5.04566 19.2561C4.99998 18.7061 4.99999 18.0305 5.00001 17.212L5 5.23417C4.99997 5.0184 4.99995 4.85862 5.01011 4.71593C5.15145 2.73075 6.73075 1.15145 8.71593 1.01011C8.78824 1.00496 8.86493 1.00243 8.95107 1.00118C8.96729 1.0004 8.9836 1.00001 9.00001 1.00001H9.16434C9.18696 0.999997 9.21023 1 9.23417 1ZM9.27151 3.00001C9.00219 3.00001 8.91996 3.00064 8.85797 3.00506C7.86538 3.07573 7.07573 3.86538 7.00506 4.85797C7.00064 4.91996 7.00001 5.00219 7.00001 5.27151V17.17C7.00001 18.041 7.00081 18.6331 7.0388 19.0906C7.07579 19.536 7.1428 19.7634 7.22518 19.922C7.41493 20.2872 7.71277 20.5851 8.07806 20.7748C8.23664 20.8572 8.46402 20.9242 8.90946 20.9612C9.36687 20.9992 9.95899 21 10.83 21H13.17C14.041 21 14.6331 20.9992 15.0906 20.9612C15.536 20.9242 15.7634 20.8572 15.922 20.7748C16.2872 20.5851 16.5851 20.2872 16.7748 19.922C16.8572 19.7634 16.9242 19.536 16.9612 19.0906C16.9992 18.6331 17 18.041 17 17.17V5.27151C17 5.00219 16.9994 4.91996 16.995 4.85797C16.9243 3.86538 16.1346 3.07573 15.142 3.00506C15.0801 3.00064 14.9978 3.00001 14.7285 3.00001C14.6616 3.00001 14.6541 3.00017 14.6491 3.00037C14.5206 3.00524 14.3989 3.05943 14.3094 3.15168C14.3058 3.1553 14.3007 3.16075 14.256 3.21046L13.7673 3.75343L13.7548 3.76722C13.7489 3.77362 13.7374 3.78609 13.7227 3.80087C13.6914 3.83231 13.6352 3.88538 13.5553 3.93802C13.4595 4.00108 13.3541 4.04803 13.2432 4.07701C13.1506 4.1012 13.0735 4.10751 13.0293 4.1097C13.0084 4.11073 12.9914 4.11096 12.9828 4.11104L12.9642 4.11112H11.0359L11.0172 4.11104C11.0086 4.11096 10.9916 4.11073 10.9708 4.1097C10.9265 4.10751 10.8494 4.1012 10.7568 4.07701C10.6459 4.04803 10.5405 4.00108 10.4447 3.93802C10.3648 3.88538 10.3086 3.83231 10.2773 3.80087C10.2627 3.78609 10.2511 3.77362 10.2452 3.76722L10.2327 3.75343L9.74405 3.21046C9.69932 3.16075 9.69418 3.1553 9.69066 3.15168C9.60108 3.05943 9.47941 3.00524 9.35092 3.00037C9.34587 3.00017 9.33838 3.00001 9.27151 3.00001Z"
-                          fill="#0F1729"
-                        />
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-4 ">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Zip Code
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="tel"
-                      placeholder="Enter your zip code"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updatePayload("zip_code", event.target.value)
-                      }
-                    />
-
-                    
-
-                    <span className="absolute right-4 top-4">
-                      <svg
-                        width="22px"
-                        height="22px"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        opacity={0.5}
-                      >
-                        <path
-                          d="M13 19C13 19.5523 12.5523 20 12 20C11.4477 20 11 19.5523 11 19C11 18.4477 11.4477 18 12 18C12.5523 18 13 18.4477 13 19Z"
-                          fill="#0F1729"
-                        />
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M9.23417 1L9.28281 1.00001C9.2904 1 9.298 1 9.30559 1.00001H14.6944C14.702 1 14.7096 1 14.7172 1.00001L14.7658 1C14.7898 1 14.813 0.999997 14.8357 1.00001H15C15.0164 1.00001 15.0327 1.0004 15.0489 1.00118C15.1351 1.00243 15.2118 1.00496 15.2841 1.01011C17.2693 1.15145 18.8486 2.73075 18.9899 4.71593C19.0001 4.85862 19 5.01839 19 5.23416L19 17.212C19 18.0305 19 18.7061 18.9544 19.2561C18.9069 19.8274 18.805 20.3523 18.5497 20.8439C18.1702 21.5745 17.5745 22.1702 16.8439 22.5497C16.3523 22.805 15.8274 22.9069 15.2561 22.9544C14.7061 23 14.0306 23 13.2121 23H10.7879C9.96946 23 9.29391 23 8.74394 22.9544C8.17259 22.9069 7.64775 22.805 7.15611 22.5497C6.42554 22.1702 5.82986 21.5745 5.45035 20.8439C5.19497 20.3523 5.09311 19.8274 5.04566 19.2561C4.99998 18.7061 4.99999 18.0305 5.00001 17.212L5 5.23417C4.99997 5.0184 4.99995 4.85862 5.01011 4.71593C5.15145 2.73075 6.73075 1.15145 8.71593 1.01011C8.78824 1.00496 8.86493 1.00243 8.95107 1.00118C8.96729 1.0004 8.9836 1.00001 9.00001 1.00001H9.16434C9.18696 0.999997 9.21023 1 9.23417 1ZM9.27151 3.00001C9.00219 3.00001 8.91996 3.00064 8.85797 3.00506C7.86538 3.07573 7.07573 3.86538 7.00506 4.85797C7.00064 4.91996 7.00001 5.00219 7.00001 5.27151V17.17C7.00001 18.041 7.00081 18.6331 7.0388 19.0906C7.07579 19.536 7.1428 19.7634 7.22518 19.922C7.41493 20.2872 7.71277 20.5851 8.07806 20.7748C8.23664 20.8572 8.46402 20.9242 8.90946 20.9612C9.36687 20.9992 9.95899 21 10.83 21H13.17C14.041 21 14.6331 20.9992 15.0906 20.9612C15.536 20.9242 15.7634 20.8572 15.922 20.7748C16.2872 20.5851 16.5851 20.2872 16.7748 19.922C16.8572 19.7634 16.9242 19.536 16.9612 19.0906C16.9992 18.6331 17 18.041 17 17.17V5.27151C17 5.00219 16.9994 4.91996 16.995 4.85797C16.9243 3.86538 16.1346 3.07573 15.142 3.00506C15.0801 3.00064 14.9978 3.00001 14.7285 3.00001C14.6616 3.00001 14.6541 3.00017 14.6491 3.00037C14.5206 3.00524 14.3989 3.05943 14.3094 3.15168C14.3058 3.1553 14.3007 3.16075 14.256 3.21046L13.7673 3.75343L13.7548 3.76722C13.7489 3.77362 13.7374 3.78609 13.7227 3.80087C13.6914 3.83231 13.6352 3.88538 13.5553 3.93802C13.4595 4.00108 13.3541 4.04803 13.2432 4.07701C13.1506 4.1012 13.0735 4.10751 13.0293 4.1097C13.0084 4.11073 12.9914 4.11096 12.9828 4.11104L12.9642 4.11112H11.0359L11.0172 4.11104C11.0086 4.11096 10.9916 4.11073 10.9708 4.1097C10.9265 4.10751 10.8494 4.1012 10.7568 4.07701C10.6459 4.04803 10.5405 4.00108 10.4447 3.93802C10.3648 3.88538 10.3086 3.83231 10.2773 3.80087C10.2627 3.78609 10.2511 3.77362 10.2452 3.76722L10.2327 3.75343L9.74405 3.21046C9.69932 3.16075 9.69418 3.1553 9.69066 3.15168C9.60108 3.05943 9.47941 3.00524 9.35092 3.00037C9.34587 3.00017 9.33838 3.00001 9.27151 3.00001Z"
-                          fill="#0F1729"
-                        />
-                      </svg>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="w-full flex">
-                  <div className="relative mb-4 w-1/2 mr-4">
-                    <label className="mb-2.5 block font-medium text-black dark:text-white">
-                      Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={visible ? "text" : "password"}
-                        placeholder="Enter your password"
-                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                        onChange={(
-                          event: React.ChangeEvent<HTMLInputElement>
-                        ) => updatePayload("password", event.target.value)}
+              </div>
+              {PasswordCheck === 1 && !isError ? (
+                <>
+                  <span className="inline-flex text-sm text-green-700 mb-4">
+                    Password Matches
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-6 h-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M5 13l4 4L19 7"
                       />
-
-                      <span
-                        className="absolute right-4 top-4"
-                        onClick={() => setVisible(!visible)}
-                      >
-                        {!visible ? (             
-                          <svg
-                            width="22px"
-                            height="22px"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            opacity={0.5}
-                          >
-                            <path
-                              fill-rule="evenodd"
-                              clip-rule="evenodd"
-                              d="M1.60603 6.08062C2.11366 5.86307 2.70154 6.09822 2.9191 6.60585L1.99995 6.99977C2.9191 6.60585 2.91924 6.60618 2.9191 6.60585L2.91858 6.60465C2.9183 6.604 2.91851 6.60447 2.91858 6.60465L2.9225 6.61351C2.92651 6.62253 2.93339 6.63785 2.94319 6.65905C2.96278 6.70147 2.99397 6.76735 3.03696 6.85334C3.12302 7.02546 3.25594 7.27722 3.43737 7.58203C3.80137 8.19355 4.35439 9.00801 5.10775 9.81932C5.28532 10.0105 5.47324 10.2009 5.67173 10.3878C5.68003 10.3954 5.68823 10.4031 5.69633 10.4109C7.18102 11.8012 9.25227 12.9998 12 12.9998C13.2089 12.9998 14.2783 12.769 15.2209 12.398C16.4469 11.9154 17.4745 11.1889 18.3156 10.3995C19.2652 9.50815 19.9627 8.54981 20.4232 7.81076C20.6526 7.44268 20.8207 7.13295 20.9299 6.91886C20.9844 6.81192 21.0241 6.72919 21.0491 6.67538C21.0617 6.64848 21.0706 6.62884 21.0758 6.61704L21.0808 6.60585C21.2985 6.0985 21.8864 5.86312 22.3939 6.08062C22.9015 6.29818 23.1367 6.88606 22.9191 7.39369L22 6.99977C22.9191 7.39369 22.9192 7.39346 22.9191 7.39369L22.9169 7.39871L22.9134 7.40693L22.9019 7.43278C22.8924 7.4541 22.879 7.48354 22.8618 7.52048C22.8274 7.59434 22.7774 7.69831 22.7115 7.8275C22.5799 8.08566 22.384 8.44584 22.1206 8.86844C21.718 9.5146 21.152 10.316 20.4096 11.1241L21.2071 11.9215C21.5976 12.312 21.5976 12.9452 21.2071 13.3357C20.8165 13.7262 20.1834 13.7262 19.7928 13.3357L18.9527 12.4955C18.3884 12.9513 17.757 13.3811 17.0558 13.752L17.8381 14.9544C18.1393 15.4173 18.0083 16.0367 17.5453 16.338C17.0824 16.6392 16.463 16.5081 16.1618 16.0452L15.1763 14.5306C14.4973 14.7388 13.772 14.8863 13 14.9554V16.4998C13 17.0521 12.5522 17.4998 12 17.4998C11.4477 17.4998 11 17.0521 11 16.4998V14.9556C10.2253 14.8864 9.50014 14.7386 8.82334 14.531L7.83814 16.0452C7.53693 16.5081 6.91748 16.6392 6.45457 16.338C5.99165 16.0367 5.86056 15.4173 6.16177 14.9544L6.94417 13.7519C6.24405 13.3814 5.61245 12.9515 5.04746 12.4953L4.20706 13.3357C3.81654 13.7262 3.18337 13.7262 2.79285 13.3357C2.40232 12.9452 2.40232 12.312 2.79285 11.9215L3.59029 11.1241C2.74529 10.2043 2.12772 9.292 1.71879 8.605C1.5096 8.25356 1.35345 7.95845 1.2481 7.74776C1.19539 7.64234 1.15529 7.55783 1.12752 7.49771C1.11363 7.46765 1.10282 7.44366 1.09505 7.42618L1.08566 7.4049L1.08267 7.39801L1.0816 7.39553L1.08117 7.39453C1.08098 7.39409 1.08081 7.39369 1.99995 6.99977L1.08117 7.39453C0.863613 6.8869 1.0984 6.29818 1.60603 6.08062Z"
-                              fill="#1C274C"
-                            />
-                          </svg>
-                        ) : (
-                          <svg
-                            width="22px"
-                            height="22px"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            opacity={0.5}
-                          >
-                            <path
-                              d="M15.0007 12C15.0007 13.6569 13.6576 15 12.0007 15C10.3439 15 9.00073 13.6569 9.00073 12C9.00073 10.3431 10.3439 9 12.0007 9C13.6576 9 15.0007 10.3431 15.0007 12Z"
-                              stroke="#000000"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                            <path
-                              d="M12.0012 5C7.52354 5 3.73326 7.94288 2.45898 12C3.73324 16.0571 7.52354 19 12.0012 19C16.4788 19 20.2691 16.0571 21.5434 12C20.2691 7.94291 16.4788 5 12.0012 5Z"
-                              stroke="#000000"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>)
-                        }
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="mb-6 relative w-1/2">
-                    <label className="mb-2.5 block font-medium text-black dark:text-white">
-                      Re-type Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={visible2 ? "text" : "password"}
-                        placeholder="Re-enter your password"
-                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                        onChange={(
-                          event: React.ChangeEvent<HTMLInputElement>
-                        ) => {
-                          setConfirmPassword(event.target.value);
-                          if (event.target.value === Payload.password) {
-                            setPasswordCheck(1);
-                          }
-                        }}
+                    </svg>
+                  </span>
+                </>
+              ) : null}
+              {PasswordCheck === 0 ? (
+                <>
+                  <span className="inline-flex text-sm text-red-700 mb-4">
+                    Password Does not match
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-6 h-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M6 18L18 6M6 6l12 12"
                       />
+                    </svg>
+                  </span>
+                </>
+              ) : null}
+              {isError ? (
+                <>
+                  <span className="inline-flex text-sm text-red-700 mb-4">
+                    {errorMessage}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-6 h-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </span>
+                </>
+              ) : null}
+              <div className="mb-5">
+                <input
+                  type="button"
+                  value="Create account"
+                  className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
+                  onClick={async (event) => {
+                    event.preventDefault();
+                    setIsError(false);
+                    setErrorMessage("");
+                    if (Payload.password !== confirmPassword) {
+                      setPasswordCheck(0);
+                      return;
+                    }
+                    let response: any = await signUp(Payload);
+                    console.log(response);
+                    console.log(response.data);
+                    if (response?.status < 205 && response.data.access) {
+                      toast.success("Registration Successfull!")
+                      if (typeof window !== "undefined") {
+                        localStorage.setItem("access", response.data.access);
+                        localStorage.setItem("vendor_id", response.vendor_id);
+                        setIsLoggedIn(true);
 
-                      <span
-                        className="absolute right-4 top-4"
-                        onClick={() => setVisible2(!visible2)}
-                      >
-                        {!visible2 ? (
-                          <svg
-                            width="22px"
-                            height="22px"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            opacity={0.5}
-                          >
-                            <path
-                              fill-rule="evenodd"
-                              clip-rule="evenodd"
-                              d="M1.60603 6.08062C2.11366 5.86307 2.70154 6.09822 2.9191 6.60585L1.99995 6.99977C2.9191 6.60585 2.91924 6.60618 2.9191 6.60585L2.91858 6.60465C2.9183 6.604 2.91851 6.60447 2.91858 6.60465L2.9225 6.61351C2.92651 6.62253 2.93339 6.63785 2.94319 6.65905C2.96278 6.70147 2.99397 6.76735 3.03696 6.85334C3.12302 7.02546 3.25594 7.27722 3.43737 7.58203C3.80137 8.19355 4.35439 9.00801 5.10775 9.81932C5.28532 10.0105 5.47324 10.2009 5.67173 10.3878C5.68003 10.3954 5.68823 10.4031 5.69633 10.4109C7.18102 11.8012 9.25227 12.9998 12 12.9998C13.2089 12.9998 14.2783 12.769 15.2209 12.398C16.4469 11.9154 17.4745 11.1889 18.3156 10.3995C19.2652 9.50815 19.9627 8.54981 20.4232 7.81076C20.6526 7.44268 20.8207 7.13295 20.9299 6.91886C20.9844 6.81192 21.0241 6.72919 21.0491 6.67538C21.0617 6.64848 21.0706 6.62884 21.0758 6.61704L21.0808 6.60585C21.2985 6.0985 21.8864 5.86312 22.3939 6.08062C22.9015 6.29818 23.1367 6.88606 22.9191 7.39369L22 6.99977C22.9191 7.39369 22.9192 7.39346 22.9191 7.39369L22.9169 7.39871L22.9134 7.40693L22.9019 7.43278C22.8924 7.4541 22.879 7.48354 22.8618 7.52048C22.8274 7.59434 22.7774 7.69831 22.7115 7.8275C22.5799 8.08566 22.384 8.44584 22.1206 8.86844C21.718 9.5146 21.152 10.316 20.4096 11.1241L21.2071 11.9215C21.5976 12.312 21.5976 12.9452 21.2071 13.3357C20.8165 13.7262 20.1834 13.7262 19.7928 13.3357L18.9527 12.4955C18.3884 12.9513 17.757 13.3811 17.0558 13.752L17.8381 14.9544C18.1393 15.4173 18.0083 16.0367 17.5453 16.338C17.0824 16.6392 16.463 16.5081 16.1618 16.0452L15.1763 14.5306C14.4973 14.7388 13.772 14.8863 13 14.9554V16.4998C13 17.0521 12.5522 17.4998 12 17.4998C11.4477 17.4998 11 17.0521 11 16.4998V14.9556C10.2253 14.8864 9.50014 14.7386 8.82334 14.531L7.83814 16.0452C7.53693 16.5081 6.91748 16.6392 6.45457 16.338C5.99165 16.0367 5.86056 15.4173 6.16177 14.9544L6.94417 13.7519C6.24405 13.3814 5.61245 12.9515 5.04746 12.4953L4.20706 13.3357C3.81654 13.7262 3.18337 13.7262 2.79285 13.3357C2.40232 12.9452 2.40232 12.312 2.79285 11.9215L3.59029 11.1241C2.74529 10.2043 2.12772 9.292 1.71879 8.605C1.5096 8.25356 1.35345 7.95845 1.2481 7.74776C1.19539 7.64234 1.15529 7.55783 1.12752 7.49771C1.11363 7.46765 1.10282 7.44366 1.09505 7.42618L1.08566 7.4049L1.08267 7.39801L1.0816 7.39553L1.08117 7.39453C1.08098 7.39409 1.08081 7.39369 1.99995 6.99977L1.08117 7.39453C0.863613 6.8869 1.0984 6.29818 1.60603 6.08062Z"
-                              fill="#1C274C"
-                            />
-                          </svg>
-                        ) : (
-                          <svg
-                            width="22px"
-                            height="22px"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            opacity={0.5}
-                          >
-                            <path
-                              d="M15.0007 12C15.0007 13.6569 13.6576 15 12.0007 15C10.3439 15 9.00073 13.6569 9.00073 12C9.00073 10.3431 10.3439 9 12.0007 9C13.6576 9 15.0007 10.3431 15.0007 12Z"
-                              stroke="#000000"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                            <path
-                              d="M12.0012 5C7.52354 5 3.73326 7.94288 2.45898 12C3.73324 16.0571 7.52354 19 12.0012 19C16.4788 19 20.2691 16.0571 21.5434 12C20.2691 7.94291 16.4788 5 12.0012 5Z"
-                              stroke="#000000"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                {PasswordCheck === 1 && !isError ? (
-                  <>
-                    <span className="inline-flex text-sm text-green-700 mb-4">
-                      Password Matches
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="w-6 h-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    </span>
-                  </>
-                ) : null}
-                {PasswordCheck === 0 ? (
-                  <>
-                    <span className="inline-flex text-sm text-red-700 mb-4">
-                      Password Does not match
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="w-6 h-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </span>
-                  </>
-                ) : null}
-                {isError ? (
-                  <>
-                    <span className="inline-flex text-sm text-red-700 mb-4">
-                      {errorMessage}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="w-6 h-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </span>
-                  </>
-                ) : null}
-                <div className="mb-5">
-                  <input
-                    type="button"
-                    value="Create account"
-                    className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
-                    onClick={async (event) => {
-                      event.preventDefault();
-                      setIsError(false);
-                      setErrorMessage("");
-                      if (Payload.password !== confirmPassword) {
-                        setPasswordCheck(0);
-                        return;
+                        router.push("/Stripe");
                       }
-                      let response: any = await signUp(Payload);
-                      console.log(response);
-                      console.log(response.data);
-                      if (response?.status < 205 && response.data.access) {
-                        if (typeof window !== "undefined") {
-                          localStorage.setItem("access", response.data.access);
-                          localStorage.setItem("vendor_id", response.vendor_id);
-                          setIsLoggedIn(true);
+                    } else {
+                      let { data } = response;
+                      setIsError(true);
+                      console.log(data);
+                      setErrorMessage(
+                        "An unknown error occurred during signup."
+                      );
+                    }
+                  }}
+                />
+              </div>
 
-                          router.push('/Stripe');
-
-                                        }
-                       
-                      } else {
-                        let { data } = response;
-                        setIsError(true);
-                        console.log(data)
-                        setErrorMessage("An unknown error occurred during signup.");                      }
-                    }}
-                  />
-                </div>
-
-                {/* <button className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50 cursor-not-allowed">
+              {/* <button className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50 cursor-not-allowed">
                   <span>
                     <svg
                       width="20"
@@ -891,22 +731,22 @@ const SignUp: React.FC = () => {
                   Sign up with Google
                 </button> */}
 
-                <div className="mt-6 text-center">
-                  <p>
-                    Already have an account?{" "}
-                    <Link
-                      className=" text-primary self-end"
-                      href="/"
-                      onClick={() => setAuthpage("signin")}
-                    >
-                      Sign In
-                    </Link>
-                  </p>
-                </div>
-              </form>
+              <div className="mt-6 text-center">
+                <p>
+                  Already have an account?{" "}
+                  <Link
+                    className=" text-primary self-end"
+                    href="/"
+                    onClick={() => setAuthpage("signin")}
+                  >
+                    Sign In
+                  </Link>
+                </p>
+              </div>
             </div>
           </div>
         </div>
+        <ToastContainer />
       </div>
     </>
   );
