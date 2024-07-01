@@ -1,5 +1,4 @@
 "use client";
-
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -97,28 +96,32 @@ const ProductsTable = (props: { Products: Product[] }) => {
     setSelectedKey(target?.dataset?.id);
   };
 
-  useMemo(() => {
-    getCategories().then((data) => {
-      setCategories(data);
-      console.log(data);
-    });
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      getCategories().then((data) => {
+        setCategories(data);
+        console.log(data);
+      });
+    }
   }, []);
 
   useMemo(() => {
-    const token: string | null = localStorage.getItem("access");
-    const store: string | null = localStorage.getItem("store");
+    if (typeof window !== "undefined") {
+      const token: string | null = localStorage.getItem("access");
+      const store: string | null = localStorage.getItem("store");
 
-    if (store) {
-      const storeObject = JSON.parse(store);
-      const store_name = storeObject.store_name;
+      if (store) {
+        const storeObject = JSON.parse(store);
+        const store_name = storeObject.store_name;
 
-      if (token && store_name) {
-        setLoading(true);
-        getProducts(token, store_name).then((data) => {
-          console.log(data.data.Products)
-          setProducts(data.data.Products);
-          setLoading(false);
-        });
+        if (token && store_name) {
+          setLoading(true);
+          getProducts(token, store_name).then((data) => {
+            console.log(data.data.Products);
+            setProducts(data.data.Products);
+            setLoading(false);
+          });
+        }
       }
     }
   }, []);
