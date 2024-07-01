@@ -32,6 +32,10 @@ const DropdownUser = ({ setLogged }) => {
         const { data, error } = await getVendorProfile(token);
         if (!error) {
           console.log("Profile Data:", data);
+          const storedData = localStorage.getItem("store");
+          if (!storedData) {
+            localStorage.setItem("store", JSON.stringify(data));
+          }
           setUser({
             contact_person_name: data.contact_person_name,
             store_name: data.store_name,
@@ -52,8 +56,8 @@ const DropdownUser = ({ setLogged }) => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("access");
       localStorage.removeItem("vendor_id");
+      localStorage.removeItem("store");
     }
-
     setIsLoggedIn(false);
     setLogged(false);
     window.location.href = "/";
