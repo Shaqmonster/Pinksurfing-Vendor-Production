@@ -40,23 +40,37 @@ export async function refreshToken(token: string, refresh: string) {
 }
 
 export async function signUp(payload: any) {
+  const formData = new FormData();
+  Object.keys(payload).forEach((key) => {
+    if (key === 'shop_image' || key === 'profile_pic') {
+      formData.append(key, payload[key]);
+    } else {
+      formData.append(key, payload[key]);
+    }
+  });
+
   let res = await axios
-    .post(`${BASE_URL}/vendor/create-account/`, payload)
+    .post(`${BASE_URL}/vendor/create-account/`, formData)
     .then(async (response: any) => {
-      let data = {};
+      let data: any = {};
       if (response.status < 205 && response.data.vendor_id) {
-        let { email, password } = payload;
-        let token = await axios.post(`https://auth.pinksurfing.com/api/token/`, {
-          email,
-          password,
-        });
+        const { email, password } = payload;
+        const tokenResponse = await axios.post(
+          `https://auth.pinksurfing.com/api/token/`,
+          { email, password }
+        );
+        const token = tokenResponse.data;
         data = { ...token, vendor_id: response.data.vendor_id };
       } else {
-        data = response;
+        data = response.data; 
       }
       return data;
     })
-    .catch((err) => err);
+    .catch((err) => {
+      console.error('Error during sign up:', err);
+      return err;
+    });
+
   console.log(res);
   return res;
 }

@@ -6,9 +6,9 @@ import SignIn from "./auth/signin/page";
 import { redirect, usePathname, useRouter } from "next/navigation";
 import { getProducts } from "@/api/products";
 import SignUp from "./auth/signup/page";
-import Products from "./inventory/products/page";
 import { Product } from "@/types/product";
 import 'react-toastify/dist/ReactToastify.css';
+import Dashboard from "./dashboard/page";
 
 export default function Home() {
   const { loggedIn, setIsLoggedIn, authPage } = useContext(MyContext);
@@ -58,5 +58,5 @@ export default function Home() {
     setAuthPageState(authPage === "signin" ? <SignIn /> : <SignUp />);
   }, [authPage]);
 
-  return <>{loggedIn ? <Products products={products} loading={loading} /> : authPageState}</>;
+  return <>{loggedIn ? <Dashboard/> : authPageState}</>;
 }
