@@ -108,6 +108,7 @@ export async function getSubcategories() {
   }
   return data;
 }
+
 export async function saveProducts(
   token: string | null,
   vendor: string | null,
@@ -127,31 +128,30 @@ export async function saveProducts(
     }
   }
 
-  for (let image of images) {
-    form.append("file", image);
-    form.append("image", image);
-  }
+  images.forEach((image, index) => {
+    console.log(`Image${index + 1}:`, image);
+    form.append(`image${index + 1}`, image);
+  });
 
   form.append("attributes", JSON.stringify(attribute));
   form.append("vendor", vendor);
-  const res = await axios
-    .post(`${BASE_URL}/product/add-product/`, form, {
-      headers: {
-        Authorization: `Bearer ${token.replaceAll('"', "")}`,
-        "Content-Type": "multipart/form-data",
-      },
-    })
-    .then((response) => {
-      let { status, data } = response;
-      return { status, data, error: false };
-    })
-    .catch((error) => {
-      let { status, message, response } = error;
-      return { status, data: response, message, error: true };
-    });
 
-  const { data } = res;
-  return data;
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/product/add-product/`,
+      form,
+      {
+        headers: {
+          Authorization: `Bearer ${token.replaceAll('"', "")}`,
+        },
+      }
+    );
+    const { status, data } = response;
+    return { status, data, error: false };
+  } catch (error) {
+    const { status, message, response } = error;
+    return { status, data: response, message, error: true };
+  }
 }
 
 export async function updateProducts(
@@ -219,10 +219,10 @@ export async function getSingleOrder(token: string | null, orderId: string) {
   }
 }
 
-export async function getProducts(token: string | null, vendor: string | null) {
+export async function getProducts(token: string | null, store_name: string | null) {
   let res = await axios
     .get(
-      `${BASE_URL}/product/vendor-products/${vendor?.replaceAll('"', "")}/`,
+      `${BASE_URL}/product/vendor-products/${store_name}/`,
       {
         headers: {
           Authorization: `Bearer ${token?.replaceAll('"', "")}`,
