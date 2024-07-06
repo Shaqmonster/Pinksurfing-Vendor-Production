@@ -7,6 +7,7 @@ import { MyContext } from "@/app/providers/context";
 import {
   FaBox,
   FaClipboardList,
+  FaCog,
   FaPlus,
   FaTachometerAlt,
   FaUser,
@@ -165,9 +166,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                 <Link
                   href="/orders"
                   className={`group relative flex items-center gap-2.5 rounded-sm py-2 px-4 font-medium text-black duration-300 ease-in-out hover:bg-gray dark:hover:bg-primary dark:text-white ${
-                    pathname.includes("orders")
-                      ? "bg-gray dark:bg-primary"
-                      : ""
+                    pathname.includes("orders") ? "bg-gray dark:bg-primary" : ""
                   }`}
                 >
                   <FaClipboardList className="fill-current" size={18} />
@@ -197,7 +196,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                       : ""
                   }`}
                 >
-                  <FiSettings className="fill-current" size={18} />
+                  <FaCog className="fill-current" size={18} />
                   Settings
                 </Link>
               </li>
