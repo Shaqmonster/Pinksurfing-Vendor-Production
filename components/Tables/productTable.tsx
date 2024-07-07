@@ -13,6 +13,7 @@ import { data } from "autoprefixer";
 import { deleteProduct } from "@/api/products";
 import React from "react";
 import Loader from "../common/Loader";
+import Link from "next/link";
 
 const ProductsTable = (props: { Products: Product[] }) => {
   const rowRef = useRef<any>(null);
@@ -162,6 +163,13 @@ const ProductsTable = (props: { Products: Product[] }) => {
     setFiles(newFiles);
   };
 
+  function truncateAndConvertToText(htmlString, maxLength = 40) {
+    let truncatedText = htmlString.substring(0, maxLength);
+    let tempElement = document.createElement("div");
+    tempElement.innerHTML = truncatedText;
+    return tempElement.textContent || tempElement.innerText || "";
+  }
+
   return (
     <>
       {loading ? (
@@ -233,7 +241,7 @@ const ProductsTable = (props: { Products: Product[] }) => {
                 </div>
                 <div className=" hidden sm:flex items-center">
                   <p className="text-sm text-black dark:text-white pr-4">
-                    {product.short_description}
+                    {truncateAndConvertToText(product.short_description)}
                   </p>
                 </div>
                 <div className=" hidden sm:flex items-center m-auto">
@@ -246,14 +254,11 @@ const ProductsTable = (props: { Products: Product[] }) => {
                 </div>
                 <div className=" flex items-center justify-between m-auto">
                   <div className="flex flex-row justify-between">
-                    <div
+                    <Link
                       className="hover:bg-amber-200 w-1/2"
                       data-id={product.id}
                       key={key}
-                      onClick={(e: any) => {
-                        openEditor(e);
-                        updateData("id", e.target?.dataset?.id);
-                      }}
+                      href={`/inventory/editProduct/${product.id}`}
                     >
                       <svg
                         className="mx-2 pointer-events-none"
@@ -270,7 +275,7 @@ const ProductsTable = (props: { Products: Product[] }) => {
                           strokeLinejoin="round"
                         />
                       </svg>
-                    </div>
+                    </Link>
                     {/* For Delete */}
                     <svg
                       width="24px"

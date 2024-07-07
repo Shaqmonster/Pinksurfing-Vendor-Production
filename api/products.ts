@@ -129,7 +129,6 @@ export async function saveProducts(
   }
 
   images.forEach((image, index) => {
-    console.log(`Image${index + 1}:`, image);
     form.append(`image${index + 1}`, image);
   });
 
@@ -157,7 +156,8 @@ export async function saveProducts(
 export async function updateProducts(
   token: string | null,
   vendor: string | null,
-  payload: any
+  payload: any,
+  images: File[]
 ) {
   if (!token || !vendor) {
     return false;
@@ -171,10 +171,11 @@ export async function updateProducts(
       form.append(key, `${value}`);
     }
   }
-  if ("image" in payload) {
-    form.append("file", payload["image"]);
-    form.append("image", payload["image"]);
-  }
+
+  images.forEach((image, index) => {
+    form.append(`image${index + 1}`, image);
+  });
+  
   if (!("id" in payload)) {
     return false;
   }
@@ -232,6 +233,28 @@ export async function getProducts(token: string | null, store_name: string | nul
     .then((response) => response)
     .catch((error) => error);
   return res;
+}
+
+export async function getSingleProduct(token: string | null, productId: string) {
+  if (!token || !productId) {
+    return { error: true, data: null };
+  }
+
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/product/product/${productId}/`,
+      {
+        headers: {
+          Authorization: `Bearer ${token.replaceAll('"', "")}`,
+        },
+      }
+    );
+
+    const { status, data } = response;
+    return { status, data, error: false };
+  } catch (error) {
+    return { error: true, data: null };
+  }
 }
 
 export async function changeOrderStatus(
