@@ -2,7 +2,12 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { getCategories, getSubcategories, saveProducts } from "@/api/products";
+import {
+  getCategories,
+  getSingleProduct,
+  getSubcategories,
+  updateProducts,
+} from "@/api/products";
 import { Product } from "@/types/product";
 import { redirect } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
@@ -11,10 +16,9 @@ import Loader from "@/components/common/Loader";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 
-const AddProducts = () => {
+export default function EditProduct({ params }: { params: { id: string } }) {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
-  const [brandName, setBrandName] = useState("");
   const [filteredSubcategories, setFilteredSubcategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
@@ -86,11 +90,9 @@ const AddProducts = () => {
   useMemo(() => {
     getCategories().then((data) => {
       setCategories(data);
-      console.log(data);
     });
     getSubcategories().then((data) => {
       setSubcategories(data);
-      console.log(data);
     });
   }, []);
 
@@ -105,6 +107,21 @@ const AddProducts = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("access");
+    if (token) {
+      getSingleProduct(token, params.id).then((data) => {
+        console.log("Fetched Product:", data.data.Products);
+        setAttribute(data.data.Products.attributes);
+        setProductData(data.data.Products);
+        setSelectedCategory(data.data.Products.category);
+        setHasDiscount(!!data.data.Products.unit_price);
+      });
+    } else {
+      notifyError("No access token found");
+    }
+  }, [params.id]);
 
   const updateSubCategory = (value: string) => {
     setSelectedCategory(value);
@@ -150,15 +167,15 @@ const AddProducts = () => {
       const updatedProductData = {
         ...productData,
         unit_price: finalUnitPrice,
+        attributes: attribute,
       };
       console.log(updatedProductData);
       setLoading(true);
       try {
-        const res = await saveProducts(
+        const res = await updateProducts(
           token,
           vendor_id,
           updatedProductData,
-          attribute,
           files
         );
         console.log(res);
@@ -176,6 +193,12 @@ const AddProducts = () => {
     }
   };
 
+  const removeProductImage = (imageKey) => {
+    const updatedProductData = { ...productData };
+    delete updatedProductData[`image${imageKey}`];
+    setProductData(updatedProductData);
+  };
+
   return (
     <div className="mx-auto max-w-270">
       {loading ? (
@@ -184,7 +207,7 @@ const AddProducts = () => {
         <form onSubmit={handleSave} className="">
           <div className="flex justify-between border-b border-gray-200 pb-3 mb-6">
             <h1 className="w-full font-semibold text-black dark:text-white text-xl">
-              Add Product
+              Edit Product
             </h1>
             <button
               className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-white dark:text-gray-200 hover:bg-opacity-95 dark:bg-opacity-90 hover:shadow-lg transition duration-300"
@@ -212,6 +235,7 @@ const AddProducts = () => {
                   name="Name"
                   id="Name"
                   placeholder="Product Title"
+                  value={productData.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     updateProductData("name", e.target?.value)
                   }
@@ -253,6 +277,7 @@ const AddProducts = () => {
                   name="BrandName"
                   id="BrandName"
                   placeholder="Brand Name"
+                  value={productData.brand_name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     updateProductData("brand_name", e.target?.value)
                   }
@@ -327,7 +352,7 @@ const AddProducts = () => {
                     name="stock"
                     placeholder="0"
                     id="stock"
-                    // defaultValue={0}
+                    value={productData.quantity}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       updateProductData("quantity", e.target?.value)
                     }
@@ -367,38 +392,73 @@ const AddProducts = () => {
                       Upload Product Image.
                     </h2>
                     <div className="flex flex-col items-center justify-center space-y-3">
-                      {files.map((file, index) => (
-                        <div key={index} className="relative">
+                      {/* Render product images from productData */}
+                      {productData.image1 && (
+                        <div className="relative">
                           <img
-                            src={URL.createObjectURL(file)}
-                            alt={file.name}
+                            src={productData.image1}
+                            alt="Product Image 1"
                             className="h-20 w-20 object-cover rounded-md"
                           />
                           <button
                             type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeFile(index);
-                            }}
+                            onClick={() => removeProductImage(1)}
                             className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full"
                           >
                             X
                           </button>
                         </div>
-                      ))}
-                      {!files.length ? (
-                        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-none bg-white dark:bg-boxdark">
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
+                      )}
+                      {productData.image2 && (
+                        <div className="relative">
+                          <img
+                            src={productData.image2}
+                            alt="Product Image 2"
+                            className="h-20 w-20 object-cover rounded-md"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeProductImage(2)}
+                            className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full"
                           >
-                            {/* Your SVG paths for the icon */}
-                          </svg>
-                        </span>
-                      ) : null}
+                            X
+                          </button>
+                        </div>
+                      )}
+                      {productData.image3 && (
+                        <div className="relative">
+                          <img
+                            src={productData.image3}
+                            alt="Product Image 3"
+                            className="h-20 w-20 object-cover rounded-md"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeProductImage(3)}
+                            className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full"
+                          >
+                            X
+                          </button>
+                        </div>
+                      )}
+                      {productData.image4 && (
+                        <div className="relative">
+                          <img
+                            src={productData.image4}
+                            alt="Product Image 4"
+                            className="h-20 w-20 object-cover rounded-md"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeProductImage(4)}
+                            className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full"
+                          >
+                            X
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Input for selecting files */}
                       <label>
                         <span className="text-primary cursor-pointer">
                           Click to upload
@@ -421,9 +481,27 @@ const AddProducts = () => {
                           multiple
                         />
                       </label>
-                      {files.length ? (
+
+                      {/* Display file names if files are selected */}
+                      {files.length > 0 ? (
                         files.map((file, index) => (
-                          <p key={index}>{file.name}</p>
+                          <div key={index} className="relative">
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={file.name}
+                              className="h-20 w-20 object-cover rounded-md"
+                            />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeFile(index);
+                              }}
+                              className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full"
+                            >
+                              X
+                            </button>
+                          </div>
                         ))
                       ) : (
                         <>
@@ -548,6 +626,7 @@ const AddProducts = () => {
                     name="meta_title"
                     id="meta_title"
                     placeholder="Meta Title"
+                    value={productData.meta_title}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       updateProductData("meta_title", e.target?.value)
                     }
@@ -566,6 +645,7 @@ const AddProducts = () => {
                     name="tags"
                     id="tags"
                     placeholder="Tags seperated by spaces"
+                    value={productData.tags}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       updateProductData("tags", e.target?.value)
                     }
@@ -585,7 +665,7 @@ const AddProducts = () => {
               >
                 Variants 'different sizes of the same or main item for sale'
               </label>
-              {attribute.map((atrributes, j) => {
+              {attribute.map((singleAttribute, j) => {
                 return (
                   <React.Fragment key={j}>
                     <div
@@ -598,11 +678,15 @@ const AddProducts = () => {
                         name="attributeName"
                         id="attributeName"
                         placeholder="Variant Name"
-                        onChange={(e: any) => {
-                          setAttribute((i) => {
-                            i[j]["name"] = e.target.value;
-                            return i;
-                          });
+                        value={singleAttribute.name}
+                        onChange={(e) => {
+                          setAttribute((prevState) =>
+                            prevState.map((item, index) =>
+                              index === j
+                                ? { ...item, name: e.target.value }
+                                : item
+                            )
+                          );
                         }}
                       />
                       <input
@@ -611,11 +695,15 @@ const AddProducts = () => {
                         name="attributeValue"
                         id="attributeValue"
                         placeholder="Variant Value"
-                        onChange={(e: any) => {
-                          setAttribute((i) => {
-                            i[j]["value"] = e.target.value;
-                            return i;
-                          });
+                        value={singleAttribute.value}
+                        onChange={(e) => {
+                          setAttribute((prevState) =>
+                            prevState.map((item, index) =>
+                              index === j
+                                ? { ...item, value: e.target.value }
+                                : item
+                            )
+                          );
                         }}
                       />
                       <input
@@ -624,20 +712,23 @@ const AddProducts = () => {
                         name="attributeValue"
                         id="attributeValue"
                         placeholder="Variant Price"
-                        onChange={(e: any) => {
-                          setAttribute((i) => {
-                            i[j]["additional_price"] = e.target.value;
-                            return i;
-                          });
+                        value={singleAttribute.additional_price}
+                        onChange={(e) => {
+                          setAttribute((prevState) =>
+                            prevState.map((item, index) =>
+                              index === j
+                                ? { ...item, additional_price: e.target.value }
+                                : item
+                            )
+                          );
                         }}
                       />
                       <button
                         type="button"
                         className="bg-red-500 hover:bg-red-700 text-black dark:text-white font-medium py-2 px-4 rounded"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setAttribute((i) =>
-                            i.filter((_, index) => index !== j)
+                        onClick={() => {
+                          setAttribute((prevState) =>
+                            prevState.filter((_, index) => index !== j)
                           );
                         }}
                       >
@@ -668,6 +759,4 @@ const AddProducts = () => {
       )}
     </div>
   );
-};
-
-export default AddProducts;
+}
