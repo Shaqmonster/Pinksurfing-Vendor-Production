@@ -100,13 +100,21 @@ export async function deleteProduct(
   } catch (error) {}
 }
 
-export async function getSubcategories() {
-  const res = await axios.get(BASE_URL + `/product/subcategories/`);
-  const { data } = res;
-  if (!data) {
+export async function getSubcategories(category_slug: string | null) {
+  if (!category_slug) {
     return { error: true, data: null };
   }
-  return data;
+
+  try {
+    const res = await axios.get(`${BASE_URL}/product/subcategories/${category_slug}/`);
+    const { data } = res;
+    if (!data) {
+      return { error: true, data: null };
+    }
+    return { error: false, data };
+  } catch (error) {
+    return { error: true, data: null };
+  }
 }
 
 export async function saveProducts(
@@ -168,14 +176,18 @@ export async function updateProducts(
 
   for (let [key, value] of Object.entries(payload)) {
     if (key !== "image" && key !== "id") {
-      form.append(key, `${value}`);
+      if (key === "attributes") {
+        form.append(key, JSON.stringify(value));
+      } else {
+        form.append(key, `${value}`);
+      }
     }
   }
 
   images.forEach((image, index) => {
     form.append(`image${index + 1}`, image);
   });
-  
+
   if (!("id" in payload)) {
     return false;
   }
@@ -220,22 +232,25 @@ export async function getSingleOrder(token: string | null, orderId: string) {
   }
 }
 
-export async function getProducts(token: string | null, store_name: string | null) {
+export async function getProducts(
+  token: string | null,
+  store_name: string | null
+) {
   let res = await axios
-    .get(
-      `${BASE_URL}/product/vendor-products/${store_name}/`,
-      {
-        headers: {
-          Authorization: `Bearer ${token?.replaceAll('"', "")}`,
-        },
-      }
-    )
+    .get(`${BASE_URL}/product/vendor-products/${store_name}/`, {
+      headers: {
+        Authorization: `Bearer ${token?.replaceAll('"', "")}`,
+      },
+    })
     .then((response) => response)
     .catch((error) => error);
   return res;
 }
 
-export async function getSingleProduct(token: string | null, productId: string) {
+export async function getSingleProduct(
+  token: string | null,
+  productId: string
+) {
   if (!token || !productId) {
     return { error: true, data: null };
   }
@@ -243,6 +258,28 @@ export async function getSingleProduct(token: string | null, productId: string) 
   try {
     const response = await axios.get(
       `${BASE_URL}/product/product/${productId}/`,
+      {
+        headers: {
+          Authorization: `Bearer ${token.replaceAll('"', "")}`,
+        },
+      }
+    );
+
+    const { status, data } = response;
+    return { status, data, error: false };
+  } catch (error) {
+    return { error: true, data: null };
+  }
+}
+
+export async function getTopSellingProducts(token: string | null) {
+  if (!token) {
+    return { error: true, data: null };
+  }
+
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/vendor/top-selling-products/`,
       {
         headers: {
           Authorization: `Bearer ${token.replaceAll('"', "")}`,

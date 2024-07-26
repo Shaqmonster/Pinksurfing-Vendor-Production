@@ -33,6 +33,7 @@ module.exports = {
         graydark: "#333A48",
         "gray-2": "#F7F9FC",
         "gray-3": "#FAFAFA",
+        "border-b": "#717171",
         whiten: "#F1F5F9",
         whiter: "#F5F7FD",
         boxdark: "#24303F",
@@ -258,7 +259,7 @@ module.exports = {
     },
   },
   plugins: [
-    require('flowbite/plugin')({
+    require("flowbite/plugin")({
       charts: true,
     }),
   ],

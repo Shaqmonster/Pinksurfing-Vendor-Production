@@ -1,23 +1,21 @@
-import axios from 'axios';
+import axios from "axios";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
-    
-export async function emailResetLink(email:string){
-    return await axios.post(`${BASE_URL}/password_reset/`,{
-       email
-    })
+
+export async function emailResetOtp(email: string) {
+  return await axios.post(`https://auth.pinksurfing.com/api/send-otp/`, {
+    email,
+  });
 }
 
-    
-export async function passwordConfirm({password,token}:any){
-    return await axios.post(`${BASE_URL}/password_reset/confirm/`,{
-       password,
-       token
-    })
-}
-    
-export async function validateToken({token}:any){
-    return await axios.post(`${BASE_URL}/password_reset/validate_token/`,{
-       token
-    })
+export async function verifyOtp(
+  email: string,
+  entered_otp: string,
+  new_password: string
+) {
+  return await axios.post(`https://auth.pinksurfing.com/api/password_reset/`, {
+    email,
+    entered_otp,
+    new_password,
+  });
 }

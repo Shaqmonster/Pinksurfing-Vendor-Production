@@ -387,8 +387,9 @@ const SignIn: React.FC = () => {
                   <div className="mt-6 text-right">
                     <p>
                       <Link
-                        href="/auth/reset-password"
+                        href="/"
                         className="text-primary"
+                        onClick={() => setAuthpage("forgot")}
                       >
                         Forgot Password?
                       </Link>

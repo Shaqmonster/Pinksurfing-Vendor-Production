@@ -15,8 +15,8 @@ const AddProducts = () => {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [brandName, setBrandName] = useState("");
-  const [filteredSubcategories, setFilteredSubcategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [allowedAttributes, setAllowedAttributes] = useState([]);
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [hasDiscount, setHasDiscount] = useState(false);
@@ -86,22 +86,15 @@ const AddProducts = () => {
   useMemo(() => {
     getCategories().then((data) => {
       setCategories(data);
-      console.log(data);
-    });
-    getSubcategories().then((data) => {
-      setSubcategories(data);
-      console.log(data);
     });
   }, []);
 
   useEffect(() => {
     if (selectedCategory) {
-      let filteredCategory = subcategories.filter(
-        (i: { slug: string; name: string; category: string }) =>
-          i.category === selectedCategory
-      );
-      setFilteredSubcategories(filteredCategory);
-      console.log(filteredCategory);
+      getSubcategories(selectedCategory).then((data) => {
+        console.log(data.data);
+        setSubcategories(data.data);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
@@ -152,6 +145,7 @@ const AddProducts = () => {
         unit_price: finalUnitPrice,
       };
       console.log(updatedProductData);
+      console.log(attribute);
       setLoading(true);
       try {
         const res = await saveProducts(
@@ -492,13 +486,35 @@ const AddProducts = () => {
                         className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 dark:bg-[#e7e0ec] dark:border-none dark:text-black"
                         id="grid-state"
                         onChange={(e: any) => {
-                          setSelectedSubcategory(e.target.value);
-                          updateProductData("subcategory", e.target?.value);
+                          const selectedSlug = e.target.value;
+                          setSelectedSubcategory(selectedSlug);
+                          updateProductData("subcategory", selectedSlug);
+
+                          const selectedSubcat = subcategories.find(
+                            (subcat) => subcat.slug === selectedSlug
+                          );
+
+                          if (selectedSubcat) {
+                            console.log(selectedSubcat)
+                            setAllowedAttributes(
+                              selectedSubcat?.allowed_attributes
+                            );
+                            const initialAttributes = selectedSubcat?.allowed_attributes?.map(attr => ({
+                              name: attr.name,
+                              value: '',
+                              additional_price: 0,
+                            }));
+                            console.log(initialAttributes)
+                            setAttribute(initialAttributes);
+                          } else {
+                            setAllowedAttributes([]); 
+                            setAttribute([]);
+                          }
                         }}
                       >
                         <option value="0">Choose</option>
-                        {filteredSubcategories.length && selectedCategory ? (
-                          filteredSubcategories.map(
+                        {subcategories.length && selectedCategory ? (
+                          subcategories.map(
                             (
                               cat: {
                                 slug: string;
@@ -585,25 +601,17 @@ const AddProducts = () => {
               >
                 Variants 'different sizes of the same or main item for sale'
               </label>
-              {attribute.map((atrributes, j) => {
+              {allowedAttributes?.map((attributeName, j) => {
                 return (
                   <React.Fragment key={j}>
-                    <div
-                      className="col-span-4 flex justify-between gap-2"
-                      key={j}
-                    >
+                    <div className="col-span-4 flex justify-between gap-2">
                       <input
                         className="w-10 rounded flex-1 border border-gray-300 dark:border-none ml-4 py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
                         type="text"
                         name="attributeName"
                         id="attributeName"
-                        placeholder="Variant Name"
-                        onChange={(e: any) => {
-                          setAttribute((i) => {
-                            i[j]["name"] = e.target.value;
-                            return i;
-                          });
-                        }}
+                        value={attributeName?.name}
+                        readOnly
                       />
                       <input
                         className="w-10 rounded flex-1 border border-gray-300 dark:border-none ml-4 py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
@@ -611,7 +619,7 @@ const AddProducts = () => {
                         name="attributeValue"
                         id="attributeValue"
                         placeholder="Variant Value"
-                        onChange={(e: any) => {
+                        onChange={(e) => {
                           setAttribute((i) => {
                             i[j]["value"] = e.target.value;
                             return i;
@@ -621,47 +629,20 @@ const AddProducts = () => {
                       <input
                         className="w-10 rounded flex-1 border border-gray-300 dark:border-none ml-4 py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
                         type="number"
-                        name="attributeValue"
-                        id="attributeValue"
+                        name="attributePrice"
+                        id="attributePrice"
                         placeholder="Variant Price"
-                        onChange={(e: any) => {
+                        onChange={(e) => {
                           setAttribute((i) => {
                             i[j]["additional_price"] = e.target.value;
                             return i;
                           });
                         }}
                       />
-                      <button
-                        type="button"
-                        className="bg-red-500 hover:bg-red-700 text-black dark:text-white font-medium py-2 px-4 rounded"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setAttribute((i) =>
-                            i.filter((_, index) => index !== j)
-                          );
-                        }}
-                      >
-                        Delete
-                      </button>
                     </div>
                   </React.Fragment>
                 );
               })}
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  className="bg-primary dark:bg-blue-700 text-white font-medium py-2 px-4 rounded ml-auto border-solid"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setAttribute((i) => [
-                      ...i,
-                      { name: "", value: "", additional_price: 0 },
-                    ]);
-                  }}
-                >
-                  Add another Variant
-                </button>
-              </div>
             </div>
           </div>
         </form>

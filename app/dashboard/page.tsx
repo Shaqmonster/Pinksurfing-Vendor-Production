@@ -1,12 +1,27 @@
-import React from "react";
+"use client";
+import React, { useMemo, useState } from "react";
 import { AiOutlineArrowUp } from "react-icons/ai";
 import { BsEye } from "react-icons/bs";
 import { HiOutlineShoppingBag } from "react-icons/hi";
 import GraphSection from "@/components/DashBoard/Graph/page";
 import TotalSales from "@/components/DashBoard/TotalSales/page";
 import IncomeChart from "@/components/DashBoard/BarGraph/page";
+import { getTopSellingProducts } from "@/api/products";
 
 const Dashboard: React.FC = () => {
+  const [topProducts, setTopProducts] = useState([]);
+  useMemo(() => {
+    if (typeof window !== "undefined") {
+      let token = localStorage.getItem("access");
+      if (!token) return;
+      (async () => {
+        const res = await getTopSellingProducts(token);
+        console.log(res);
+        setTopProducts(res.data);
+      })();
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-100 text-black dark:text-white">
       <main className="container mx-auto px-4 py-8">
@@ -36,17 +51,21 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Section 3: Product Performance */}
-          <div className="bg-white dark:bg-gray-700 dark:text-black dark:bg-primary p-4 rounded shadow-lg flex flex-col">
-            <h3 className="text-base font-thin dark:text-white">
+          <div className="bg-white dark:bg-gray-700 dark:text-white dark:bg-primary p-4 rounded shadow-lg flex flex-col">
+            <h3 className="text-base font-thin">
               Product Performance
             </h3>
-            <p className="text-xl font-bold dark:text-white mt-3">
+            <p className="text-xl font-bold mt-3">
               Top Performing Products
             </p>
-            <div className="flex items-center pt-3 text-base font-semibold text-green-500 dark:text-green-500 text-center">
-              View Details <BsEye className="w-3 h-3 ms-1" />
+            <div className="flex flex-col space-y-2">
+              {topProducts?.map((product, index) => (
+                <div key={index} className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-border-b">
+                  <p className="text-md font-semibold">{product.name}</p>
+                  <p className="text-md font-semibold text-green-500 dark:text-green-500">${product.unit_price}</p>
+                </div>
+              ))}
             </div>
-            <GraphSection />
           </div>
 
           {/* Section 4: Total Sales */}
@@ -65,7 +84,7 @@ const Dashboard: React.FC = () => {
                   Latest Transactions
                 </h2>
                 <div className="flex flex-col space-y-4">
-                  <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-border-b">
                     <div className="flex flex-col">
                       <p className="text-lg font-semibold">Smartphone</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -76,7 +95,7 @@ const Dashboard: React.FC = () => {
                       $650.00
                     </p>
                   </div>
-                  <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-border-b">
                     <div className="flex flex-col">
                       <p className="text-lg font-semibold">Laptop</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -87,7 +106,7 @@ const Dashboard: React.FC = () => {
                       -$1,200.00
                     </p>
                   </div>
-                  <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-border-b">
                     <div className="flex flex-col">
                       <p className="text-lg font-semibold">Headphones</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -98,7 +117,7 @@ const Dashboard: React.FC = () => {
                       $150.00
                     </p>
                   </div>
-                  <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between py-3 border-b border-gray-200 dark:border-border-b">
                     <div className="flex flex-col">
                       <p className="text-lg font-semibold">Tablet</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
