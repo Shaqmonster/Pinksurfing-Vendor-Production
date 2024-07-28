@@ -5,91 +5,57 @@ import React, {
   SetStateAction,
   useContext,
   use,
-  useEffect,
 } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
 import { signIn } from "@/api/account";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { MyContext } from "@/app/providers/context";
-import { emailResetLink, passwordConfirm } from "@/api/auth";
-import { Formik, Form, Field } from "formik";
+import { emailResetOtp } from "@/api/auth";
+import { Formik, Form, Field, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Loader, { Loader2 } from "@/components/common/Loader";
-import { useSearchParams } from "next/navigation";
-// react toasters added for intimation
+import { Loader2 } from "@/components/common/Loader";
+
 interface FormValues {
-  password: string | null;
-  confirmPassword: string | null;
+  email: string;
 }
 
-const ConfirmPassword = () => {
+const ForgotPassword = () => {
   const router = useRouter();
-  const params = useParams();
-
   const [loading, setLoading] = useState(false);
-  async function checkTokenValidation(token: string) {
-    setLoading(true);
-    await passwordConfirm({ token })
-      .then((res) => {
-        setLoading(false);
-      })
-      .catch(() => {
-        toast.error("Invalid Link", {
-          position: "top-right",
-          autoClose: 3000, // 3 seconds
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-        setTimeout(() => {
-          router.push("/auth/reset-password");
-        }, 3000);
-      });
-  }
-
-  useEffect(() => {
-    checkTokenValidation(params?.token as string);
-  }, [params.token]);
+  const { setIsLoggedIn, setVendor, setAuthpage, setResetEmail } =
+    useContext(MyContext);
 
   const validationSchema = Yup.object({
-    password: Yup.string()
-      .required("Password is required")
-      .min(6, "Password must be at least 6 characters"),
-    confirmPassword: Yup.string()
-      .oneOf([Yup.ref("password"), ""], "Passwords must match")
-      .required("Confirm Password is required"),
+    email: Yup.string()
+      .email("Invalid email address")
+      .required("Email Required"),
   });
 
-  const onSubmit = async (values: FormValues, { setSubmitting }: any) => {
-    let data = await passwordConfirm({
-      password: values.password,
-      token: params.token,
-    })
-      .then((res) => {
-        toast.success("Reset link sent to your email successfully!", {
-          position: "top-right",
-          autoClose: 3000, // 3 seconds
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-      })
-      .catch((e) => {
-        toast.error("Something went wrong! Kindly check your email", {
-          position: "top-right",
-          autoClose: 3000, // 3 seconds
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
-      });
+  const onSubmit = async (
+    values: FormValues,
+    { setSubmitting }: FormikHelpers<FormValues>
+  ) => {
+    setLoading(true);
+    try {
+      await emailResetOtp(values.email);
+      toast.success("OTP sent to your email successfully!");
+      setResetEmail(values.email);
+      setAuthpage("reset");
+    } catch (e: any) {
+      console.log(e)
+      toast.error(
+        e?.response?.data?.email?.length > 0
+          ? e?.response?.data?.email[0]
+          : "Something went wrong! Kindly check your email"
+      );
+    } finally {
+      setLoading(false);
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -246,67 +212,59 @@ const ConfirmPassword = () => {
           <div className="w-full border-stroke dark:border-strokedark xl:w-1/2 xl:border-l-2">
             <div className="w-full p-4 sm:p-12.5 xl:p-17.5">
               <h2 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
-                Create new password
+                Reset account password
               </h2>
 
               <Formik
-                initialValues={{ password: "", confirmPassword: "" }}
+                initialValues={{ email: "" }}
                 onSubmit={onSubmit}
                 validationSchema={validationSchema}
               >
                 {({ handleChange, handleBlur, values, touched, errors }) => (
                   <Form>
                     <div className="mb-4 ">
-                      <label
-                        className="mb-2.5 block font-medium text-black dark:text-white"
-                        htmlFor="password"
-                      >
-                        Create Password
+                      <label className="mb-2.5 block font-medium text-black dark:text-white">
+                        Email
                       </label>
-                      <input
-                        type="password"
-                        id="password"
-                        placeholder="Enter new password"
-                        name="password"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        value={values.password}
-                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      />
-                      {touched.password && errors.password && (
-                        <div className="text-danger text-red-700 mb-4">
-                          {errors.password}
-                        </div>
-                      )}
-                    </div>
-                    <div className="mb-4 ">
-                      <label
-                        className="mb-2.5 block font-medium text-black dark:text-white"
-                        htmlFor="confirmPassword"
-                      >
-                        Confirm Password
-                      </label>
-                      <input
-                        type="password"
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        placeholder="Confirm password"
-                        value={values.confirmPassword}
-                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      />
-                      {touched.confirmPassword && errors.confirmPassword && (
-                        <div className="text-danger text-red-700 mb-4">
-                          {errors.confirmPassword}
-                        </div>
-                      )}
-                    </div>
+                      <div className="relative">
+                        <input
+                          type="email"
+                          id="email"
+                          placeholder="Enter your email address"
+                          name="email"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          value={values.email}
+                          className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        />
 
+                        <span className="absolute right-4 top-4">
+                          <svg
+                            className="fill-current"
+                            width="22"
+                            height="22"
+                            viewBox="0 0 22 22"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <g opacity="0.5">
+                              <path
+                                d="M19.2516 3.30005H2.75156C1.58281 3.30005 0.585938 4.26255 0.585938 5.46567V16.6032C0.585938 17.7719 1.54844 18.7688 2.75156 18.7688H19.2516C20.4203 18.7688 21.4172 17.8063 21.4172 16.6032V5.4313C21.4172 4.26255 20.4203 3.30005 19.2516 3.30005ZM19.2516 4.84692C19.2859 4.84692 19.3203 4.84692 19.3547 4.84692L11.0016 10.2094L2.64844 4.84692C2.68281 4.84692 2.71719 4.84692 2.75156 4.84692H19.2516ZM19.2516 17.1532H2.75156C2.40781 17.1532 2.13281 16.8782 2.13281 16.5344V6.35942L10.1766 11.5157C10.4172 11.6875 10.6922 11.7563 10.9672 11.7563C11.2422 11.7563 11.5172 11.6875 11.7578 11.5157L19.8016 6.35942V16.5688C19.8703 16.9125 19.5953 17.1532 19.2516 17.1532Z"
+                                fill=""
+                              />
+                            </g>
+                          </svg>
+                        </span>
+                      </div>
+                    </div>
+                    {touched.email && errors.email && (
+                      <div className="text-danger text-red-700 mb-4">
+                        {errors.email}
+                      </div>
+                    )}
                     <div className="mb-5">
                       <button
                         type="submit"
-                        disabled={loading}
                         className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
                       >
                         Submit
@@ -333,4 +291,4 @@ const ConfirmPassword = () => {
   );
 };
 
-export default ConfirmPassword;
+export default ForgotPassword;

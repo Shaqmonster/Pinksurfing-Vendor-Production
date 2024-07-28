@@ -9,6 +9,8 @@ import SignUp from "./auth/signup/page";
 import { Product } from "@/types/product";
 import 'react-toastify/dist/ReactToastify.css';
 import Dashboard from "./dashboard/page";
+import ForgotPassword from "./auth/forgot-password/page";
+import ResetPassword from "./auth/reset-password/page";
 
 export default function Home() {
   const { loggedIn, setIsLoggedIn, authPage } = useContext(MyContext);
@@ -55,7 +57,23 @@ export default function Home() {
   }, [setIsLoggedIn, router]);
 
   useEffect(() => {
-    setAuthPageState(authPage === "signin" ? <SignIn /> : <SignUp />);
+    switch (authPage) {
+      case "signin":
+        setAuthPageState(<SignIn />);
+        break;
+      case "signup":
+        setAuthPageState(<SignUp />);
+        break;
+      case "forgot":
+        setAuthPageState(<ForgotPassword />);
+        break;
+      case "reset":
+        setAuthPageState(<ResetPassword />);
+        break;
+      default:
+        setAuthPageState(<SignIn />);
+        break;
+    }
   }, [authPage]);
 
   return <>{loggedIn ? <Dashboard/> : authPageState}</>;

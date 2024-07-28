@@ -1,10 +1,20 @@
 "use client";
-import { getOrders } from "@/api/orders";
+import { useState, useMemo, useEffect } from "react";
+import { changeStatus, getOrders, getParcelDetails, buyShipmentLabel } from "@/api/orders";
 import { Package } from "@/types/package";
 import Link from "next/link";
-
-import { useMemo, useState } from "react";
 import Loader from "../common/Loader";
+import Parcel from "../Order/Parcel/page";
+import { toast } from "react-toastify";
+
+interface Order {
+  id: string;
+  product: { name: string };
+  quantity: number;
+  total_price: number;
+  order_status: string;
+  date_of_order: string;
+}
 
 const formatDate = (dateString: string) => {
   const options = {
@@ -20,14 +30,29 @@ const formatDate = (dateString: string) => {
 };
 
 const OrderTable = () => {
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
-  let vendor_id: string | null = "";
-  if (typeof window !== "undefined") {
-    vendor_id = localStorage.getItem("access");
-  }
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
+
+  const orderStatuses = [
+    "PENDING",
+    "RECEIVED",
+    "PACKED",
+    "SHIPPED",
+    "DELIVERED",
+    "CANCELED",
+    "RETURN-REQUESTED",
+    "RETURNED",
+    "ERROR",
+  ];
+
+  const vendor_id =
+    typeof window !== "undefined" ? localStorage.getItem("access") : "";
 
   useMemo(() => {
+    if (!vendor_id) return;
+
     setLoading(true);
     getOrders(vendor_id).then((data: any) => {
       if (
@@ -37,14 +62,77 @@ const OrderTable = () => {
       ) {
         setLoading(false);
         let orders = data.data["Order Request"];
-        console.log(orders);
-        if (typeof orders == "object" && orders.length) {
-          let slicedData = orders.slice(0, 10);
-          setOrders(slicedData);
+        if (Array.isArray(orders) && orders.length) {
+          console.log(orders)
+          setOrders(orders.slice(0, 10));
         }
       }
     });
   }, [vendor_id]);
+
+  useEffect(() => {
+    if (orders.length === 0) return;
+
+    orders.forEach((order) => {
+      if (order.order_status === "PACKED") {
+        getParcelDetails(order.id, vendor_id).then((parcelData: any) => {
+          console.log(parcelData.data)
+          if (parcelData && parcelData.data) {
+            buyShipmentLabel(parcelData.data.parcelId, vendor_id)
+              .then(() => {
+                toast.success("Shipment label purchased successfully!");
+              })
+              .catch((error) => {
+                toast.error("Failed to purchase shipment label. Please try again.");
+              });
+          }
+        });
+      }
+    });
+  }, [orders, vendor_id]);
+
+  const handleStatusChange = (order: Order, newStatus: string) => {
+    if (newStatus === "PACKED") {
+      setCurrentOrder(order);
+      setIsModalOpen(true);
+    } else {
+      changeStatus(localStorage.getItem("access"), order.id, newStatus).then(
+        () => {
+          setOrders((prevOrders) =>
+            prevOrders.map((o) =>
+              o.id === order.id ? { ...o, order_status: newStatus } : o
+            )
+          );
+        }
+      );
+    }
+  };
+
+  const handleParcelSubmit = (details: Package) => {
+    if (currentOrder) {
+      changeStatus(
+        localStorage.getItem("access"),
+        currentOrder.id,
+        "PACKED",
+        details.length,
+        details.width,
+        details.height,
+        details.weight
+      )
+        .then(() => {
+          setOrders((prevOrders) =>
+            prevOrders.map((o) =>
+              o.id === currentOrder.id ? { ...o, order_status: "PACKED" } : o
+            )
+          );
+          setIsModalOpen(false);
+          toast.success("Order status updated to PACKED successfully!");
+        })
+        .catch((error) => {
+          toast.error("Failed to update order status. Please try again.");
+        });
+    }
+  };
 
   return (
     <>
@@ -77,8 +165,8 @@ const OrderTable = () => {
                 </tr>
               </thead>
               <tbody>
-                {orders.map((order: any, key) => (
-                  <tr key={key}>
+                {orders.map((order) => (
+                  <tr key={order.id}>
                     <td className="border-b border-[#eee] py-5 px-4 pl-9 dark:border-strokedark xl:pl-11">
                       <Link href={`/orders/${order.id}`}>
                         <h5 className="font-medium text-black dark:text-white">
@@ -98,12 +186,21 @@ const OrderTable = () => {
                     </td>
                     <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                       <div className="flex items-center justify-between">
-                        <p className="text-black dark:text-white">
-                          {order.order_status}
-                        </p>
+                        <select
+                          className="bg-white dark:bg-primary text-black dark:text-white py-2 px-3 rounded"
+                          value={order.order_status}
+                          onChange={(e) =>
+                            handleStatusChange(order, e.target.value)
+                          }
+                        >
+                          {orderStatuses.map((status, index) => (
+                            <option key={index} value={status}>
+                              {status}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </td>
-
                     <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                       <p className="text-black dark:text-white">
                         {formatDate(order.date_of_order)}
@@ -116,6 +213,11 @@ const OrderTable = () => {
           </div>
         </div>
       )}
+      <Parcel
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleParcelSubmit}
+      />
     </>
   );
 };

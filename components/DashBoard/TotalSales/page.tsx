@@ -1,7 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { FaInfoCircle, FaChevronDown, FaFileAlt } from "react-icons/fa";
+import { getMonthlySales } from "@/api/orders";
 
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
@@ -30,7 +31,7 @@ const TotalSales: React.FC = () => {
     {
       name: "series-1",
       data: [30, 50, 35, 60, 45, 70, 40],
-      color: "#ff0000", 
+      color: "#ff0000",
     },
     {
       name: "series-2",
@@ -39,12 +40,21 @@ const TotalSales: React.FC = () => {
       fill: {
         opacity: 1,
       },
-    },    
+    },
   ];
 
   const handlePeriodChange = (period: string) => {
     setSelectedPeriod(period);
   };
+
+  useEffect(() => {
+    let access = localStorage.getItem("access");
+    if (access) {
+      getMonthlySales(access).then((data)=>{
+        console.log(data.data)
+      })
+    }
+  }, []);
 
   return (
     <div className="w-full dark:bg-gray-800 p-4 md:p-6">

@@ -129,11 +129,8 @@ const ProductsTable = (props: { Products: Product[] }) => {
 
   useMemo(() => {
     categories.forEach((category, index) => {
-      console.log("the category");
-      console.log("the category", category);
-      getSubcategories().then((data) => {
-        setSubcategories(data);
-        console.log(data);
+      getSubcategories(category.slug).then((data) => {
+        setSubcategories(data.data);
       });
     });
   }, []);

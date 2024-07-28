@@ -835,9 +835,12 @@ const SignUp: React.FC = () => {
                         let { data } = response;
                         setIsError(true);
                         console.log(data);
-                        setErrorMessage(
-                          "An unknown error occurred during signup."
-                        );
+                        if (data.error) {
+                          setErrorMessage(data.error);
+                        } else
+                          setErrorMessage(
+                            "An unknown error occurred during signup."
+                          );
                       }
                     }}
                   />

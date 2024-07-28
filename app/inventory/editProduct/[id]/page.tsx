@@ -91,19 +91,14 @@ export default function EditProduct({ params }: { params: { id: string } }) {
     getCategories().then((data) => {
       setCategories(data);
     });
-    getSubcategories().then((data) => {
-      setSubcategories(data);
-    });
   }, []);
 
   useEffect(() => {
     if (selectedCategory) {
-      let filteredCategory = subcategories.filter(
-        (i: { slug: string; name: string; category: string }) =>
-          i.category === selectedCategory
-      );
-      setFilteredSubcategories(filteredCategory);
-      console.log(filteredCategory);
+      getSubcategories(selectedCategory).then((data) => {
+        setSubcategories(data.data);
+        setFilteredSubcategories(data.data); 
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
