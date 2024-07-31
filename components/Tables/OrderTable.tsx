@@ -78,8 +78,9 @@ const OrderTable = () => {
         getParcelDetails(order.id, vendor_id).then((parcelData: any) => {
           console.log(parcelData.data)
           if (parcelData && parcelData.data) {
-            buyShipmentLabel(parcelData.data.parcelId, vendor_id)
-              .then(() => {
+            buyShipmentLabel(parcelData.data.parcel_id, vendor_id)
+              .then((res) => {
+                console.log(res)
                 toast.success("Shipment label purchased successfully!");
               })
               .catch((error) => {
