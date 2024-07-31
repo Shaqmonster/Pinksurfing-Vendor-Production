@@ -61,7 +61,7 @@ export async function getParcelDetails(
   token: string | null
 ) {
   let res = await axios
-    .get(`${BASE_URL}/shipping/parcel-details/${orderItemId}/`, {
+    .get(`${BASE_URL}/shipping/parcel-details/${orderItemId}/`, { 
       headers: {
         Authorization: `Bearer ${token?.replaceAll('"', "")}`,
       },
