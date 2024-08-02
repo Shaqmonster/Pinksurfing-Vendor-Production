@@ -21,7 +21,7 @@ const Parcel = ({ isOpen, onClose, onSubmit }) => {
           <label className="block text-sm font-medium mb-2">Length</label>
           <input
             type="number"
-            className="w-full px-4 py-2 border rounded"
+            className="w-full px-4 py-2 border rounded dark:text-black"
             placeholder="Enter length"
             value={length}
             onChange={(e) => setLength(e.target.value)}
@@ -31,7 +31,7 @@ const Parcel = ({ isOpen, onClose, onSubmit }) => {
           <label className="block text-sm font-medium mb-2">Width</label>
           <input
             type="number"
-            className="w-full px-4 py-2 border rounded"
+            className="w-full px-4 py-2 border rounded dark:text-black"
             placeholder="Enter width"
             value={width}
             onChange={(e) => setWidth(e.target.value)}
@@ -41,7 +41,7 @@ const Parcel = ({ isOpen, onClose, onSubmit }) => {
           <label className="block text-sm font-medium mb-2">Height</label>
           <input
             type="number"
-            className="w-full px-4 py-2 border rounded"
+            className="w-full px-4 py-2 border rounded dark:text-black"
             placeholder="Enter height"
             value={height}
             onChange={(e) => setHeight(e.target.value)}
@@ -51,7 +51,7 @@ const Parcel = ({ isOpen, onClose, onSubmit }) => {
           <label className="block text-sm font-medium mb-2">Weight</label>
           <input
             type="number"
-            className="w-full px-4 py-2 border rounded"
+            className="w-full px-4 py-2 border rounded dark:text-black"
             placeholder="Enter weight"
             value={weight}
             onChange={(e) => setWeight(e.target.value)}
