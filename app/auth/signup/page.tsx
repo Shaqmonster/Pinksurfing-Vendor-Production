@@ -40,6 +40,8 @@ const SignUp: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [visible, setVisible] = useState(false);
   const [visible2, setVisible2] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -66,6 +68,10 @@ const SignUp: React.FC = () => {
   });
 
   const router = useRouter();
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const passwordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
   const updatePayload = (key: string, value: string) => {
     setPayload((prevPayload: any) => {
@@ -117,6 +123,41 @@ const SignUp: React.FC = () => {
       ...prevPayload,
       profile_pic: null,
     }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setIsError(false);
+    setErrorMessage("");
+
+    if (Payload.password !== confirmPassword) {
+      setPasswordCheck(0);
+      return;
+    }
+
+    setLoading(true);
+    let response = await signUp(Payload);
+    setLoading(false);
+    console.log(response);
+
+    if (response.access) {
+      toast.success("Registration Successful!");
+      if (typeof window !== "undefined") {
+        localStorage.setItem("access", response.access);
+        localStorage.setItem("vendor_id", response.vendor_id);
+        setIsLoggedIn(true);
+        router.push("/dashboard");
+      }
+    } else {
+      let { data } = response;
+      setIsError(true);
+      console.log(data);
+      if (data.error) {
+        setErrorMessage(data.error);
+      } else {
+        setErrorMessage("An unknown error occurred during signup.");
+      }
+    }
   };
 
   return (
@@ -274,579 +315,593 @@ const SignUp: React.FC = () => {
             </div>
 
             <div className="w-full border-stroke dark:border-strokedark xl:w-1/2 xl:border-l-2">
-              <div className="w-full p-4 sm:p-12.5 xl:p-17.5">
-                <span className="mb-1.5 block font-medium">Start for free</span>
-                <h2 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
-                  Sign Up as Pinksurfing Vendors
-                </h2>
+              <form onSubmit={handleSubmit}>
+                <div className="w-full p-4 sm:p-12.5 xl:p-17.5">
+                  <span className="mb-1.5 block font-medium">
+                    Start for free
+                  </span>
+                  <h2 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
+                    Sign Up as Pinksurfing Vendors
+                  </h2>
 
-                <div className="mb-4">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    First Name
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Enter your first name"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(
-                        event: React.ChangeEvent<HTMLInputElement>
-                      ) => {
-                        updatePayload("first_name", event.target.value);
-                        updatePayload(
-                          "contact_person_name",
-                          event.target.value
-                        );
-                      }}
-                    />
-
-                    <span className="absolute right-4 top-4">
-                      <FaUser size={22} />
-                    </span>
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Last Name
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Enter your last name"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(
-                        event: React.ChangeEvent<HTMLInputElement>
-                      ) => {
-                        updatePayload("last_name", event.target.value);
-                      }}
-                    />
-
-                    <span className="absolute right-4 top-4">
-                      <FaUser size={22} />
-                    </span>
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Bio
-                  </label>
-                  <div className="relative">
-                    <textarea
-                      placeholder="Enter your bio"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(
-                        event: React.ChangeEvent<HTMLTextAreaElement>
-                      ) => {
-                        updatePayload("bio", event.target.value);
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="mb-4 bg-gray-2 rounded-lg p-7">
-                  <form action="#" className="relative">
-                    <h2 className="font-medium text-gray-700 text-center dark:text-black">
-                      Upload Profile Picture
-                    </h2>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="absolute inset-0 z-50 m-0 h-full w-full cursor-pointer p-0 opacity-0 outline-none"
-                      onChange={handleProfilePictureChange}
-                    />
-                    <div className="flex flex-col items-center justify-center space-y-3">
-                      {Payload.profile_pic ? (
-                        <div className="relative rounded-full overflow-hidden h-20 w-20">
-                          <img
-                            src={URL.createObjectURL(Payload.profile_pic)}
-                            alt={Payload.profile_pic.name}
-                            className="h-full w-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleRemoveProfilePicture}
-                            className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full"
-                          >
-                            X
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-stroke bg-white dark:border-strokedark dark:bg-boxdark">
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            {/* Your SVG paths for the icon */}
-                          </svg>
-                        </span>
-                      )}
-                      <p>
-                        <span className="text-primary">Click to upload</span>
-                      </p>
-                      {Payload.profile_pic ? (
-                        <p>{Payload.profile_pic.name}</p>
-                      ) : (
-                        <>
-                          <p className="mt-1.5">SVG, PNG, JPG, or GIF</p>
-                          <p>(max, 800 X 800px)</p>
-                        </>
-                      )}
-                    </div>
-                  </form>
-                </div>
-
-                <div className="mb-4 ">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Email
-                  </label>
-                  <div className="relative flex">
-                    <input
-                      type="email"
-                      placeholder="Enter your email"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updatePayload("email", event.target.value)
-                      }
-                    />
-
-                    <span className="absolute right-27 top-4">
-                      <FaEnvelope size={22} />
-                    </span>
-                    <button
-                      className="hover:bg-gray-100 text-white font-semibold py-2 px-4 border border-primary bg-primary rounded outline-none shadow m-2"
-                      onClick={async () => {
-                        const res = await sendOtp(Payload.email);
-                        console.log(res);
-
-                        if (res) {
-                          toast.success(res.message);
-                        }
-                      }}
-                    >
-                      Verify
-                    </button>
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Otp
-                  </label>
-                  <div className="relative">
-                    <PinInput
-                      length={6}
-                      focus
-                      onChange={(otpValue: string) =>
-                        updatePayload("entered_otp", otpValue)
-                      }
-                      inputStyle={{
-                        borderRadius: "5px",
-                        padding: "10px",
-                        fontSize: "16px",
-                        color: "black",
-                        backgroundColor: "transparent",
-                        outline: "none",
-                        border: "1px solid rgba(226, 232, 240, 1)",
-                      }}
-                      containerStyle={{ backgroundColor: "#2d1e5f" }}
-                    />
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Store Name
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Enter your Store's name"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updatePayload("company_name", event.target.value)
-                      }
-                    />
-
-                    <span className="absolute right-4 top-4">
-                      <FaStore size={22} />
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-4 p-7 bg-gray-2">
-                  <form action="#" className="relative">
-                    <h2 className="font-medium text-gray-700 text-center dark:text-black">
-                      Upload Store Image
-                    </h2>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="absolute inset-0 z-50 m-0 h-full w-full cursor-pointer p-0 opacity-0 outline-none"
-                      onChange={handleStoreFile}
-                    />
-                    <div className="flex flex-col items-center justify-center space-y-3">
-                      {Payload.shop_image ? (
-                        <div className="relative">
-                          <img
-                            src={URL.createObjectURL(Payload.shop_image)}
-                            alt={Payload.shop_image.name}
-                            className="h-20 w-20 object-cover rounded-md"
-                          />
-                          <button
-                            type="button"
-                            onClick={handleRemoveStoreFile}
-                            className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full"
-                          >
-                            X
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-stroke bg-white dark:border-strokedark dark:bg-boxdark">
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            {/* Your SVG paths for the icon */}
-                          </svg>
-                        </span>
-                      )}
-                      <p>
-                        <span className="text-primary">Click to upload</span>
-                      </p>
-                      {Payload.shop_image ? (
-                        <p>{Payload.shop_image.name}</p>
-                      ) : (
-                        <>
-                          <p className="mt-1.5">SVG, PNG, JPG, or GIF</p>
-                          <p>(max, 800 X 800px)</p>
-                        </>
-                      )}
-                    </div>
-                  </form>
-                </div>
-
-                <div className="mb-4 ">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Phone No.
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="tel"
-                      placeholder="Enter your Phone number"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updatePayload("phone_number", event.target.value)
-                      }
-                    />
-
-                    <span className="absolute right-4 top-4">
-                      <FaPhone size={22} />
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-4 ">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Street 1
-                  </label>
-                  <div className="relative">
-                    <input
-                      placeholder="Enter your street 1"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updatePayload("street1", event.target.value)
-                      }
-                    />
-
-                    <span className="absolute right-4 top-4">
-                      <FaHome size={22} />
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-4 ">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Street 2
-                  </label>
-                  <div className="relative">
-                    <input
-                      placeholder="Enter your street 2"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updatePayload("street2", event.target.value)
-                      }
-                    />
-
-                    <span className="absolute right-4 top-4">
-                      <FaHome size={22} />
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-4 ">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    City
-                  </label>
-                  <div className="relative">
-                    <input
-                      placeholder="Enter your City"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updatePayload("city", event.target.value)
-                      }
-                    />
-
-                    <span className="absolute right-4 top-4">
-                      <FaMapMarkerAlt size={22} />
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-4 ">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    State
-                  </label>
-                  <div className="relative">
-                    <input
-                      placeholder="Enter your state"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updatePayload("state", event.target.value)
-                      }
-                    />
-
-                    <span className="absolute right-4 top-4">
-                      <FaMapPin />
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-4 ">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Country
-                  </label>
-                  <div className="relative">
-                    <CountryCodeSelector
-                      onSelect={(selectedCountryCode: string) =>
-                        updatePayload("country", selectedCountryCode)
-                      }
-                    />
-
-                    <span className="absolute right-4 top-4">
-                      <FaGlobeAmericas />
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-4 ">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Zip Code
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="tel"
-                      placeholder="Enter your zip code"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updatePayload("zip_code", event.target.value)
-                      }
-                    />
-
-                    <span className="absolute right-4 top-4 text-gray-500">
-                      <FaSearch />
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <label className="mb-2.5 block font-medium text-black dark:text-white">
-                    Website URL
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="url"
-                      placeholder="Enter your website URL"
-                      className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        updatePayload("website", event.target.value)
-                      }
-                    />
-                    <span className="absolute right-4 top-4 text-gray-500">
-                      <FaGlobe size={22} />
-                    </span>
-                  </div>
-                </div>
-
-                <div className="w-full flex">
-                  <div className="relative mb-4 w-1/2 mr-4">
+                  <div className="mb-4">
                     <label className="mb-2.5 block font-medium text-black dark:text-white">
-                      Password
+                      First Name
                     </label>
                     <div className="relative">
                       <input
-                        type={visible ? "text" : "password"}
-                        placeholder="Enter your password"
-                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                        onChange={(
-                          event: React.ChangeEvent<HTMLInputElement>
-                        ) => updatePayload("password", event.target.value)}
-                      />
-
-                      <span
-                        className="absolute right-4 top-4"
-                        onClick={() => setVisible(!visible)}
-                      >
-                        {!visible ? (
-                          <FaEyeSlash size={22} />
-                        ) : (
-                          <FaEye size={22} />
-                        )}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="mb-6 relative w-1/2">
-                    <label className="mb-2.5 block font-medium text-black dark:text-white">
-                      Re-type Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={visible2 ? "text" : "password"}
-                        placeholder="Re-enter your password"
+                        type="text"
+                        placeholder="Enter your first name"
                         className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
                         onChange={(
                           event: React.ChangeEvent<HTMLInputElement>
                         ) => {
-                          setConfirmPassword(event.target.value);
-                          if (event.target.value === Payload.password) {
-                            setPasswordCheck(1);
-                          }
+                          updatePayload("first_name", event.target.value);
+                          updatePayload(
+                            "contact_person_name",
+                            event.target.value
+                          );
                         }}
+                        required
                       />
 
-                      <span
-                        className="absolute right-4 top-4"
-                        onClick={() => setVisible2(!visible2)}
-                      >
-                        {!visible2 ? (
-                          <FaEyeSlash size={22} />
-                        ) : (
-                          <FaEye size={22} />
-                        )}
+                      <span className="absolute right-4 top-4">
+                        <FaUser size={22} />
                       </span>
                     </div>
                   </div>
-                </div>
-                {PasswordCheck === 1 && !isError ? (
-                  <>
-                    <span className="inline-flex text-sm text-green-700 mb-4">
-                      Password Matches
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="w-6 h-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    </span>
-                  </>
-                ) : null}
-                {PasswordCheck === 0 ? (
-                  <>
-                    <span className="inline-flex text-sm text-red-700 mb-4">
-                      Password Does not match
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="w-6 h-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </span>
-                  </>
-                ) : null}
-                {isError ? (
-                  <>
-                    <span className="inline-flex text-sm text-red-700 mb-4">
-                      {errorMessage}
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="w-6 h-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </span>
-                  </>
-                ) : null}
-                <div className="mb-5">
-                  <input
-                    type="button"
-                    value="Create account"
-                    className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
-                    onClick={async (event) => {
-                      event.preventDefault();
-                      setIsError(false);
-                      setErrorMessage("");
-                      if (Payload.password !== confirmPassword) {
-                        setPasswordCheck(0);
-                        return;
-                      }
-                      setLoading(true);
-                      let response: any = await signUp(Payload);
-                      setLoading(false);
-                      console.log(response);
-                      if (response.access) {
-                        toast.success("Registration Successfull!");
-                        if (typeof window !== "undefined") {
-                          localStorage.setItem("access", response.access);
-                          localStorage.setItem("vendor_id", response.vendor_id);
-                          setIsLoggedIn(true);
+                  <div className="mb-4">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      Last Name
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Enter your last name"
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>
+                        ) => {
+                          updatePayload("last_name", event.target.value);
+                        }}
+                      />
 
-                          router.push("/dashboard");
+                      <span className="absolute right-4 top-4">
+                        <FaUser size={22} />
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      Bio
+                    </label>
+                    <div className="relative">
+                      <textarea
+                        placeholder="Enter your bio"
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(
+                          event: React.ChangeEvent<HTMLTextAreaElement>
+                        ) => {
+                          updatePayload("bio", event.target.value);
+                        }}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mb-4 bg-gray-2 rounded-lg p-7">
+                    <form action="#" className="relative">
+                      <h2 className="font-medium text-gray-700 text-center dark:text-black">
+                        Upload Profile Picture
+                      </h2>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="absolute inset-0 z-50 m-0 h-full w-full cursor-pointer p-0 opacity-0 outline-none"
+                        onChange={handleProfilePictureChange}
+                      />
+                      <div className="flex flex-col items-center justify-center space-y-3">
+                        {Payload.profile_pic ? (
+                          <div className="relative rounded-full overflow-hidden h-20 w-20">
+                            <img
+                              src={URL.createObjectURL(Payload.profile_pic)}
+                              alt={Payload.profile_pic.name}
+                              className="h-full w-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleRemoveProfilePicture}
+                              className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full"
+                            >
+                              X
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-stroke bg-white dark:border-strokedark dark:bg-boxdark">
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 16 16"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              {/* Your SVG paths for the icon */}
+                            </svg>
+                          </span>
+                        )}
+                        <p>
+                          <span className="text-primary">Click to upload</span>
+                        </p>
+                        {Payload.profile_pic ? (
+                          <p>{Payload.profile_pic.name}</p>
+                        ) : (
+                          <>
+                            <p className="mt-1.5">SVG, PNG, JPG, or GIF</p>
+                            <p>(max, 800 X 800px)</p>
+                          </>
+                        )}
+                      </div>
+                    </form>
+                  </div>
+
+                  <div className="mb-4 ">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      Email
+                    </label>
+                    <div className="relative flex">
+                      <input
+                        type="email"
+                        placeholder="Enter your email"
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>
+                        ) => {
+                          updatePayload("email", event.target.value);
+                          if (!emailRegex.test(event.target.value)) {
+                            setEmailError("Invalid email address");
+                          } else {
+                            setEmailError("");
+                          }
+                        }}
+                        required
+                      />
+
+                      <span className="absolute right-27 top-4">
+                        <FaEnvelope size={22} />
+                      </span>
+                      <button
+                        className={`font-semibold py-2 px-4 border rounded outline-none shadow m-2 ${
+                          emailError || !Payload.email
+                            ? "bg-gray-500 border-gray-600 text-gray-300 cursor-not-allowed"
+                            : "bg-primary border-primary text-white hover:bg-gray-100"
+                        }`}
+                        onClick={async () => {
+                          const res = await sendOtp(Payload.email);
+                          console.log(res);
+
+                          if (res) {
+                            toast.success(res.message);
+                          }
+                        }}
+                        disabled={!Payload.email || emailError}
+                      >
+                        Verify
+                      </button>
+                    </div>
+                    {emailError && (
+                      <p className="text-red-500 text-sm mt-1">{emailError}</p>
+                    )}
+                  </div>
+                  <div className="mb-4">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      Otp
+                    </label>
+                    <div className="relative">
+                      <PinInput
+                        length={6}
+                        focus
+                        onChange={(otpValue: string) =>
+                          updatePayload("entered_otp", otpValue)
                         }
-                      } else {
-                        let { data } = response;
-                        setIsError(true);
-                        console.log(data);
-                        if (data.error) {
-                          setErrorMessage(data.error);
-                        } else
-                          setErrorMessage(
-                            "An unknown error occurred during signup."
-                          );
-                      }
-                    }}
-                  />
-                </div>
+                        inputStyle={{
+                          borderRadius: "5px",
+                          padding: "10px",
+                          fontSize: "16px",
+                          color: "black",
+                          backgroundColor: "transparent",
+                          outline: "none",
+                          border: "1px solid rgba(226, 232, 240, 1)",
+                        }}
+                        containerStyle={{ backgroundColor: "#2d1e5f" }}
+                      />
+                    </div>
+                  </div>
 
-                {/* <button className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50 cursor-not-allowed">
+                  <div className="mb-4">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      Store Name
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Enter your Store's name"
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>
+                        ) => updatePayload("company_name", event.target.value)}
+                        required
+                      />
+
+                      <span className="absolute right-4 top-4">
+                        <FaStore size={22} />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 p-7 bg-gray-2">
+                    <form action="#" className="relative">
+                      <h2 className="font-medium text-gray-700 text-center dark:text-black">
+                        Upload Store Image
+                      </h2>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="absolute inset-0 z-50 m-0 h-full w-full cursor-pointer p-0 opacity-0 outline-none"
+                        onChange={handleStoreFile}
+                      />
+                      <div className="flex flex-col items-center justify-center space-y-3">
+                        {Payload.shop_image ? (
+                          <div className="relative">
+                            <img
+                              src={URL.createObjectURL(Payload.shop_image)}
+                              alt={Payload.shop_image.name}
+                              className="h-20 w-20 object-cover rounded-md"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleRemoveStoreFile}
+                              className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full"
+                            >
+                              X
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-stroke bg-white dark:border-strokedark dark:bg-boxdark">
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 16 16"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              {/* Your SVG paths for the icon */}
+                            </svg>
+                          </span>
+                        )}
+                        <p>
+                          <span className="text-primary">Click to upload</span>
+                        </p>
+                        {Payload.shop_image ? (
+                          <p>{Payload.shop_image.name}</p>
+                        ) : (
+                          <>
+                            <p className="mt-1.5">SVG, PNG, JPG, or GIF</p>
+                            <p>(max, 800 X 800px)</p>
+                          </>
+                        )}
+                      </div>
+                    </form>
+                  </div>
+
+                  <div className="mb-4 ">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      Phone No.
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="tel"
+                        placeholder="Enter your Phone number"
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>
+                        ) => updatePayload("phone_number", event.target.value)}
+                      />
+
+                      <span className="absolute right-4 top-4">
+                        <FaPhone size={22} />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 ">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      Street 1
+                    </label>
+                    <div className="relative">
+                      <input
+                        placeholder="Enter your street 1"
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>
+                        ) => updatePayload("street1", event.target.value)}
+                        required
+                      />
+
+                      <span className="absolute right-4 top-4">
+                        <FaHome size={22} />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 ">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      Street 2
+                    </label>
+                    <div className="relative">
+                      <input
+                        placeholder="Enter your street 2"
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>
+                        ) => updatePayload("street2", event.target.value)}
+                      />
+
+                      <span className="absolute right-4 top-4">
+                        <FaHome size={22} />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 ">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      City
+                    </label>
+                    <div className="relative">
+                      <input
+                        placeholder="Enter your City"
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>
+                        ) => updatePayload("city", event.target.value)}
+                        required
+                      />
+
+                      <span className="absolute right-4 top-4">
+                        <FaMapMarkerAlt size={22} />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 ">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      State
+                    </label>
+                    <div className="relative">
+                      <input
+                        placeholder="Enter your state"
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>
+                        ) => updatePayload("state", event.target.value)}
+                        required
+                      />
+
+                      <span className="absolute right-4 top-4">
+                        <FaMapPin />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 ">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      Country
+                    </label>
+                    <div className="relative">
+                      <CountryCodeSelector
+                        onSelect={(selectedCountryCode: string) =>
+                          updatePayload("country", selectedCountryCode)
+                        }
+                      />
+
+                      <span className="absolute right-4 top-4">
+                        <FaGlobeAmericas />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 ">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      Zip Code
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="tel"
+                        placeholder="Enter your zip code"
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>
+                        ) => updatePayload("zip_code", event.target.value)}
+                        required
+                      />
+
+                      <span className="absolute right-4 top-4 text-gray-500">
+                        <FaSearch />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      Website URL
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="url"
+                        placeholder="Enter your website URL"
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>
+                        ) => updatePayload("website", event.target.value)}
+                      />
+                      <span className="absolute right-4 top-4 text-gray-500">
+                        <FaGlobe size={22} />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="w-full flex">
+                    <div className="relative mb-4 w-1/2 mr-4">
+                      <label className="mb-2.5 block font-medium text-black dark:text-white">
+                        Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={visible ? "text" : "password"}
+                          placeholder="Enter your password"
+                          className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                          onChange={(
+                            event: React.ChangeEvent<HTMLInputElement>
+                          ) => {
+                            updatePayload("password", event.target.value);
+                            if (!passwordRegex.test(event.target.value)) {
+                              setPasswordError(
+                                "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+                              );
+                            } else {
+                              setPasswordError("");
+                            }
+                          }}
+                          required
+                        />
+
+                        <span
+                          className="absolute right-4 top-4"
+                          onClick={() => setVisible(!visible)}
+                        >
+                          {!visible ? (
+                            <FaEyeSlash size={22} />
+                          ) : (
+                            <FaEye size={22} />
+                          )}
+                        </span>
+                      </div>
+                      {passwordError && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {passwordError}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="mb-6 relative w-1/2">
+                      <label className="mb-2.5 block font-medium text-black dark:text-white">
+                        Re-type Password
+                      </label>
+                      <div className="relative">
+                        <input
+                          type={visible2 ? "text" : "password"}
+                          placeholder="Re-enter your password"
+                          className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                          onChange={(
+                            event: React.ChangeEvent<HTMLInputElement>
+                          ) => {
+                            setConfirmPassword(event.target.value);
+                            if (event.target.value === Payload.password) {
+                              setPasswordCheck(1);
+                            }
+                          }}
+                          required
+                        />
+
+                        <span
+                          className="absolute right-4 top-4"
+                          onClick={() => setVisible2(!visible2)}
+                        >
+                          {!visible2 ? (
+                            <FaEyeSlash size={22} />
+                          ) : (
+                            <FaEye size={22} />
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  {PasswordCheck === 1 && !isError ? (
+                    <>
+                      <span className="inline-flex text-sm text-green-700 mb-4">
+                        Password Matches
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-6 h-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </span>
+                    </>
+                  ) : null}
+                  {PasswordCheck === 0 ? (
+                    <>
+                      <span className="inline-flex text-sm text-red-700 mb-4">
+                        Password Does not match
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-6 h-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </span>
+                    </>
+                  ) : null}
+                  {isError ? (
+                    <>
+                      <span className="inline-flex text-sm text-red-700 mb-4">
+                        {errorMessage}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-6 h-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </span>
+                    </>
+                  ) : null}
+                  <div className="mb-5">
+                    <input
+                      type="submit"
+                      value={loading ? "Signing Up..." : "Create Account"}
+                      className={`w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition ${
+                        loading
+                          ? "bg-gray-600 cursor-not-allowed"
+                          : "hover:bg-opacity-90"
+                      }`}
+                      disabled={loading}
+                    />
+                  </div>
+
+                  {/* <button className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50 cursor-not-allowed">
                   <span>
                     <svg
                       width="20"
@@ -883,19 +938,20 @@ const SignUp: React.FC = () => {
                   Sign up with Google
                 </button> */}
 
-                <div className="mt-6 text-center">
-                  <p>
-                    Already have an account?{" "}
-                    <Link
-                      className=" text-primary self-end"
-                      href="/"
-                      onClick={() => setAuthpage("signin")}
-                    >
-                      Sign In
-                    </Link>
-                  </p>
+                  <div className="mt-6 text-center">
+                    <p>
+                      Already have an account?{" "}
+                      <Link
+                        className=" text-primary self-end"
+                        href="/"
+                        onClick={() => setAuthpage("signin")}
+                      >
+                        Sign In
+                      </Link>
+                    </p>
+                  </div>
                 </div>
-              </div>
+              </form>
             </div>
           </div>
           <ToastContainer />
