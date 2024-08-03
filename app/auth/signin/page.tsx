@@ -17,13 +17,42 @@ import { toast } from "react-toastify";
 import { FaEnvelope, FaLock, FaTimes } from "react-icons/fa";
 
 const SignIn: React.FC = () => {
-  const [email, setemail] = useState("");
-  const [password, setpassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const { setIsLoggedIn, setVendor, setAuthpage } = useContext(MyContext);
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const passwordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    if (name === "email") {
+      setEmail(value);
+      if (!emailRegex.test(value)) {
+        setEmailError("Invalid email address");
+      } else {
+        setEmailError("");
+      }
+    }
+
+    if (name === "password") {
+      setPassword(value);
+      if (!passwordRegex.test(value)) {
+        setPasswordError(
+          "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+        );
+      } else {
+        setPasswordError("");
+      }
+    }
+  };
 
   const login = async () => {
     setError("");
@@ -75,6 +104,11 @@ const SignIn: React.FC = () => {
 
     return false;
   };
+  
+  const isButtonDisabled = () => {
+    return email.length === 0 || password.length === 0 || emailError || passwordError;
+  };
+
   return (
     <>
       {loading ? (
@@ -259,10 +293,11 @@ const SignIn: React.FC = () => {
                     </label>
                     <div className="relative">
                       <input
+                        name="email"
                         type="text"
                         placeholder="Enter your email"
                         className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                        onChange={(event) => setemail(event.target.value)}
+                        onChange={handleChange}
                         required
                       />
 
@@ -270,6 +305,9 @@ const SignIn: React.FC = () => {
                         <FaEnvelope className="text-gray-500" />
                       </span>
                     </div>
+                    {emailError && (
+                      <p className="text-red-500 text-sm mt-1">{emailError}</p>
+                    )}
                   </div>
 
                   <div className="mb-6">
@@ -278,10 +316,11 @@ const SignIn: React.FC = () => {
                     </label>
                     <div className="relative">
                       <input
+                        name="password"
                         type="password"
                         placeholder="Enter password"
                         className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                        onChange={(event) => setpassword(event.target.value)}
+                        onChange={handleChange}
                         required
                       />
 
@@ -289,6 +328,11 @@ const SignIn: React.FC = () => {
                         <FaLock className="text-gray-500" />
                       </span>
                     </div>
+                    {passwordError && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {passwordError}
+                      </p>
+                    )}
                   </div>
                   {error ? (
                     <>
@@ -302,7 +346,12 @@ const SignIn: React.FC = () => {
                     <input
                       type="submit"
                       value="Sign In"
-                      className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
+                      disabled={isButtonDisabled()}
+                      className={`w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition ${
+                        isButtonDisabled()
+                          ? 'bg-gray-600 cursor-not-allowed'
+                          : 'hover:bg-opacity-90'
+                      }`}
                     />
                   </div>
                   {/*

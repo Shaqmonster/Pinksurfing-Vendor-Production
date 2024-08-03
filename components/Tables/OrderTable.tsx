@@ -81,7 +81,6 @@ const OrderTable = () => {
             buyShipmentLabel(parcelData.data.parcel_id, vendor_id)
               .then((res) => {
                 console.log(res)
-                toast.success("Shipment label purchased successfully!");
               })
               .catch((error) => {
                 toast.error("Failed to purchase shipment label. Please try again.");

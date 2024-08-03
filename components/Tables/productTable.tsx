@@ -118,7 +118,6 @@ const ProductsTable = (props: { Products: Product[] }) => {
         if (token && store_name) {
           setLoading(true);
           getProducts(token, store_name).then((data) => {
-            console.log(data.data.Products);
             setProducts(data.data.Products);
             setLoading(false);
           });
