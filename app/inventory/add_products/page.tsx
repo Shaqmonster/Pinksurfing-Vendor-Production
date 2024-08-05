@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getCategories, getSubcategories, saveProducts } from "@/api/products";
 import { Product } from "@/types/product";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loader from "@/components/common/Loader";
@@ -21,6 +21,7 @@ const AddProducts = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [hasDiscount, setHasDiscount] = useState(false);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
   const ReactQuill = useMemo(
     () => dynamic(() => import("react-quill"), { ssr: false }),
     []
@@ -162,6 +163,7 @@ const AddProducts = () => {
         } else {
           console.log(res);
           notifySuccess(res.data.Status);
+          router.push("/inventory/products");
         }
       } catch (error) {
         notifyError(error.message || "Unexpected error occurred");
