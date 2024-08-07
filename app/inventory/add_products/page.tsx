@@ -43,6 +43,10 @@ const AddProducts = () => {
     subcategory: string;
     tags: string;
     meta_title: string;
+    length: string;
+    width: string;
+    height: string;
+    weight: string;
     quantity: string;
     short_description: string;
     description: string;
@@ -59,6 +63,10 @@ const AddProducts = () => {
     brand_name: "",
     tags: "",
     meta_title: "",
+    length: "",
+    width: "",
+    height: "",
+    weight: "",
     quantity: "",
     short_description: "",
     description: "",
@@ -93,7 +101,6 @@ const AddProducts = () => {
   useEffect(() => {
     if (selectedCategory) {
       getSubcategories(selectedCategory).then((data) => {
-        console.log(data.data);
         setSubcategories(data.data);
       });
     }
@@ -497,19 +504,20 @@ const AddProducts = () => {
                           );
 
                           if (selectedSubcat) {
-                            console.log(selectedSubcat)
                             setAllowedAttributes(
                               selectedSubcat?.allowed_attributes
                             );
-                            const initialAttributes = selectedSubcat?.allowed_attributes?.map(attr => ({
-                              name: attr.name,
-                              value: '',
-                              additional_price: 0,
-                            }));
-                            console.log(initialAttributes)
+                            const initialAttributes =
+                              selectedSubcat?.allowed_attributes?.map(
+                                (attr) => ({
+                                  name: attr.name,
+                                  value: "",
+                                  additional_price: 0,
+                                })
+                              );
                             setAttribute(initialAttributes);
                           } else {
-                            setAllowedAttributes([]); 
+                            setAllowedAttributes([]);
                             setAttribute([]);
                           }
                         }}
@@ -588,6 +596,87 @@ const AddProducts = () => {
                       updateProductData("tags", e.target?.value)
                     }
                   />
+                </div>
+              </div>
+              <div className="border-none rounded-md p-5 w-full border bg-white shadow-default dark:bg-primary mt-6">
+                <h3 className="w-full font-medium text-black dark:text-white border-b border-gray-200 pb-3 mb-5">
+                  Dimensions
+                </h3>
+                <div className="mb-5.5 flex flex-col gap-5.5 sm:flex-row">
+                  <div className="w-full xl:w-1/2">
+                    <label
+                      className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
+                      htmlFor="Title"
+                    >
+                      Length
+                    </label>
+                    <input
+                      className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                      type="text"
+                      name="length"
+                      id="length"
+                      placeholder="Length"
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateProductData("length", e.target?.value)
+                      }
+                    />
+                  </div>
+                  <div className="w-full xl:w-1/2">
+                    <label
+                      className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
+                      htmlFor="Tags"
+                    >
+                      Width
+                    </label>
+                    <input
+                      className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                      type="text"
+                      name="width"
+                      id="width"
+                      placeholder="Width"
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateProductData("width", e.target?.value)
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="mb-5.5 flex flex-col gap-5.5 sm:flex-row">
+                  <div className="w-full xl:w-1/2">
+                    <label
+                      className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
+                      htmlFor="Title"
+                    >
+                      Height
+                    </label>
+                    <input
+                      className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                      type="text"
+                      name="height"
+                      id="height"
+                      placeholder="Height"
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateProductData("height", e.target?.value)
+                      }
+                    />
+                  </div>
+                  <div className="w-full xl:w-1/2">
+                    <label
+                      className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
+                      htmlFor="Tags"
+                    >
+                      Weight
+                    </label>
+                    <input
+                      className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                      type="text"
+                      name="weight"
+                      id="weight"
+                      placeholder="Weight"
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateProductData("weight", e.target?.value)
+                      }
+                    />
+                  </div>
                 </div>
               </div>
             </div>
