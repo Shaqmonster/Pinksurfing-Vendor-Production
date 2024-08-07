@@ -324,7 +324,7 @@ const ResetPassword = () => {
                       <p>
                         Don’t have any account?{" "}
                         <Link
-                          href="/auth/signup"
+                          href="/"
                           className="text-primary"
                           onClick={() => setAuthpage("signup")}
                         >
