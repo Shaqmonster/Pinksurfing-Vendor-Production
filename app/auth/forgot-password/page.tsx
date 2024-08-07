@@ -46,7 +46,7 @@ const ForgotPassword = () => {
       setResetEmail(values.email);
       setAuthpage("reset");
     } catch (e: any) {
-      console.log(e)
+      console.log(e);
       toast.error(
         e?.response?.data?.email?.length > 0
           ? e?.response?.data?.email[0]
@@ -209,7 +209,7 @@ const ForgotPassword = () => {
             </div>
           </div>
 
-          <div className="w-full border-stroke dark:border-strokedark xl:w-1/2 xl:border-l-2">
+          <div className="w-full border-stroke dark:border-strokedark xl:w-1/2 xl:border-l-2 flex items-center justify-center">
             <div className="w-full p-4 sm:p-12.5 xl:p-17.5">
               <h2 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
                 Reset account password
@@ -274,7 +274,11 @@ const ForgotPassword = () => {
                     <div className="mt-6 text-center">
                       <p>
                         Don’t have any account?{" "}
-                        <Link href="/auth/signup" className="text-primary">
+                        <Link
+                          href="/"
+                          className="text-primary"
+                          onClick={() => setAuthpage("signup")}
+                        >
                           Sign Up
                         </Link>
                       </p>

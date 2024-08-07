@@ -12,7 +12,7 @@ const MyProvider = ({
 
   children: React.ReactNode;
 }) => {
-  const [loggedIn, setIsLoggedIn] = useState(true);
+  const [loggedIn, setIsLoggedIn] = useState(false);
   const [authPage, setAuthpage] = useState("signin");
   const [resetEmail, setResetEmail] = useState("")
   const [vendor, setVendor] = useState();
