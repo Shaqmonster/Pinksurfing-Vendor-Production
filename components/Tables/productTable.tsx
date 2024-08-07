@@ -128,7 +128,7 @@ const ProductsTable = (props: { Products: Product[] }) => {
 
   useMemo(() => {
     categories.forEach((category, index) => {
-      getSubcategories(category.slug).then((data) => {
+      getSubcategories(category?.slug).then((data) => {
         setSubcategories(data.data);
       });
     });
@@ -143,7 +143,6 @@ const ProductsTable = (props: { Products: Product[] }) => {
       setFilteredSubcategories(filteredCategory);
       console.log(filteredCategory);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
 
   const handleFileChange = (event) => {
@@ -204,6 +203,7 @@ const ProductsTable = (props: { Products: Product[] }) => {
 
           {products?.map((product: any, key) => (
             <>
+            {console.log(products)}
               <div
                 className="grid grid-cols-3 sm:grid-cols-7  border-t border-stroke py-4.5 px-4 dark:border-strokedark  2xl:px-7.5"
                 key={key}
@@ -229,10 +229,10 @@ const ProductsTable = (props: { Products: Product[] }) => {
                 </div>
                 <div className=" hidden items-center sm:flex">
                   <p className="text-sm text-black dark:text-white">
-                    {product.category}
+                    {product.category.name}
                     <br />
                     |-
-                    {" " + product.subcategory}
+                    {" " + product.subcategory.name}
                   </p>
                 </div>
                 <div className=" hidden sm:flex items-center">

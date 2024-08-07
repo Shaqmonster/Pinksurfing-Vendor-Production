@@ -19,9 +19,9 @@ import "react-quill/dist/quill.snow.css";
 export default function EditProduct({ params }: { params: { id: string } }) {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
-  const [filteredSubcategories, setFilteredSubcategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
+  const [allowedAttributes, setAllowedAttributes] = useState([]);
   const [files, setFiles] = useState<File[]>([]);
   const [hasDiscount, setHasDiscount] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -46,6 +46,10 @@ export default function EditProduct({ params }: { params: { id: string } }) {
     subcategory: string;
     tags: string;
     meta_title: string;
+    length: string;
+    width: string;
+    height: string;
+    weight: string;
     quantity: string;
     short_description: string;
     description: string;
@@ -62,6 +66,10 @@ export default function EditProduct({ params }: { params: { id: string } }) {
     brand_name: "",
     tags: "",
     meta_title: "",
+    length: "",
+    width: "",
+    height: "",
+    weight: "",
     quantity: "",
     short_description: "",
     description: "",
@@ -97,7 +105,6 @@ export default function EditProduct({ params }: { params: { id: string } }) {
     if (selectedCategory) {
       getSubcategories(selectedCategory).then((data) => {
         setSubcategories(data.data);
-        setFilteredSubcategories(data.data); 
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -565,13 +572,38 @@ export default function EditProduct({ params }: { params: { id: string } }) {
                         className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 dark:bg-[#e7e0ec] dark:border-none dark:text-black"
                         id="grid-state"
                         onChange={(e: any) => {
-                          setSelectedSubcategory(e.target.value);
-                          updateProductData("subcategory", e.target?.value);
+                          const selectedSlug = e.target.value;
+                          setSelectedSubcategory(selectedSlug);
+                          updateProductData("subcategory", selectedSlug);
+
+                          const selectedSubcat = subcategories.find(
+                            (subcat) => subcat.slug === selectedSlug
+                          );
+
+                          if (selectedSubcat) {
+                            console.log(selectedSubcat);
+                            setAllowedAttributes(
+                              selectedSubcat?.allowed_attributes
+                            );
+                            const initialAttributes =
+                              selectedSubcat?.allowed_attributes?.map(
+                                (attr) => ({
+                                  name: attr.name,
+                                  value: "",
+                                  additional_price: 0,
+                                })
+                              );
+                            console.log(initialAttributes);
+                            setAttribute(initialAttributes);
+                          } else {
+                            setAllowedAttributes([]);
+                            setAttribute([]);
+                          }
                         }}
                       >
                         <option value="0">Choose</option>
-                        {filteredSubcategories.length && selectedCategory ? (
-                          filteredSubcategories.map(
+                        {subcategories.length && selectedCategory ? (
+                          subcategories.map(
                             (
                               cat: {
                                 slug: string;
@@ -645,6 +677,91 @@ export default function EditProduct({ params }: { params: { id: string } }) {
                       updateProductData("tags", e.target?.value)
                     }
                   />
+                </div>
+              </div>
+              <div className="border-none rounded-md p-5 w-full border bg-white shadow-default dark:bg-primary mt-6">
+                <h3 className="w-full font-medium text-black dark:text-white border-b border-gray-200 pb-3 mb-5">
+                  Dimensions
+                </h3>
+                <div className="mb-5.5 flex flex-col gap-5.5 sm:flex-row">
+                  <div className="w-full xl:w-1/2">
+                    <label
+                      className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
+                      htmlFor="Title"
+                    >
+                      Length
+                    </label>
+                    <input
+                      className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                      type="text"
+                      name="length"
+                      id="length"
+                      placeholder="Length"
+                      value={productData.length}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateProductData("length", e.target?.value)
+                      }
+                    />
+                  </div>
+                  <div className="w-full xl:w-1/2">
+                    <label
+                      className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
+                      htmlFor="Tags"
+                    >
+                      Width
+                    </label>
+                    <input
+                      className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                      type="text"
+                      name="width"
+                      id="width"
+                      value={productData.width}
+                      placeholder="Width"
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateProductData("width", e.target?.value)
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="mb-5.5 flex flex-col gap-5.5 sm:flex-row">
+                  <div className="w-full xl:w-1/2">
+                    <label
+                      className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
+                      htmlFor="Title"
+                    >
+                      Height
+                    </label>
+                    <input
+                      className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                      type="text"
+                      name="height"
+                      id="height"
+                      placeholder="Height"
+                      value={productData.height}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateProductData("height", e.target?.value)
+                      }
+                    />
+                  </div>
+                  <div className="w-full xl:w-1/2">
+                    <label
+                      className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
+                      htmlFor="Tags"
+                    >
+                      Weight
+                    </label>
+                    <input
+                      className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                      type="text"
+                      name="weight"
+                      id="weight"
+                      value={productData.weight}
+                      placeholder="Weight"
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateProductData("weight", e.target?.value)
+                      }
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -733,21 +850,6 @@ export default function EditProduct({ params }: { params: { id: string } }) {
                   </React.Fragment>
                 );
               })}
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  className="bg-primary dark:bg-blue-700 text-white font-medium py-2 px-4 rounded ml-auto border-solid"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setAttribute((i) => [
-                      ...i,
-                      { name: "", value: "", additional_price: 0 },
-                    ]);
-                  }}
-                >
-                  Add another Variant
-                </button>
-              </div>
             </div>
           </div>
         </form>

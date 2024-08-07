@@ -8,6 +8,10 @@ export type Product = {
   subcategory: string;
   tags: string;
   meta_title: string;
+  length: string;
+  width: string;
+  height: string;
+  weight: string;
   quantity: string | number;
   short_description: string;
   description: string;
