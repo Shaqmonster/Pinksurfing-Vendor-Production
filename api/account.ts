@@ -42,7 +42,7 @@ export async function refreshToken(token: string, refresh: string) {
 export async function signUp(payload: any) {
   const formData = new FormData();
   Object.keys(payload).forEach((key) => {
-    if (key === 'shop_image' || key === 'profile_pic') {
+    if (key === "shop_image" || key === "profile_pic") {
       formData.append(key, payload[key]);
     } else {
       formData.append(key, payload[key]);
@@ -62,17 +62,46 @@ export async function signUp(payload: any) {
         const token = tokenResponse.data;
         data = { ...token, vendor_id: response.data.vendor_id };
       } else {
-        data = response.data; 
+        data = response.data;
       }
       return data;
     })
     .catch((err) => {
-      console.error('Error during sign up:', err);
+      console.error("Error during sign up:", err);
       return err;
     });
 
   console.log(res);
   return res;
+}
+
+export async function createVendorFromSSO(payload: any) {
+  const formData = new FormData();
+  Object.keys(payload).forEach((key) => {
+    formData.append(key, payload[key]);
+  });
+
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/vendor/create-vendor-from-sso/`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${payload.token}`,
+        },
+      }
+    );
+
+    const result = {
+      ...response.data,
+      token: payload.token
+    };
+
+    return result;
+  } catch (err) {
+    console.error("Error during vendor creation from SSO:", err);
+    return err.response ? err.response.data : { error: "An error occurred" };
+  }
 }
 
 export async function sendOtp(email: any) {
@@ -89,26 +118,58 @@ export async function sendOtp(email: any) {
 }
 
 export async function signIn(payload: any) {
-  let res = await axios
-    .post(`https://auth.pinksurfing.com/api/token/`, payload)
-    .then(async (response: any) => {
-      let data = {};
-      if (response.status < 205 && response.data.access) {
-        let { access, refresh } = response.data;
-        let vendor = await axios.get(`${BASE_URL}/vendor/profile/`, {
-          headers: {
-            Authorization: "Bearer " + access,
-          },
-        });
-        data = { ...vendor, token: access, refresh };
-      } else {
-        data = response;
+  try {
+    const response = await axios.post(
+      `https://auth.pinksurfing.com/api/token/`,
+      payload
+    );
+
+    if (response.status < 205 && response.data.access) {
+      const { access, refresh } = response.data;
+
+      try {
+        const checkVendorResponse = await axios.post(
+          `${BASE_URL}/vendor/check-vendor/`,
+          null,
+          {
+            headers: {
+              Authorization: `Bearer ${access}`,
+            },
+          }
+        );
+
+        if (checkVendorResponse.status === 409) {
+          return {
+            status: 409,
+            message: "Vendor needs to register",
+          };
+        }
+      } catch (checkVendorError) {
+        if (checkVendorError?.response?.status === 409) {
+          return {
+            status: 409,
+            message: "Vendor needs to register",
+            token: access,
+          };
+        } else {
+          throw checkVendorError;
+        }
       }
-      return data;
-    })
-    .catch((err) => err);
-  console.log(res);
-  return res;
+
+      const vendorProfile = await axios.get(`${BASE_URL}/vendor/profile/`, {
+        headers: {
+          Authorization: `Bearer ${access}`,
+        },
+      });
+
+      return { ...vendorProfile.data, token: access, refresh };
+    } else {
+      return response.data;
+    }
+  } catch (err) {
+    console.error(err);
+    return err.response ? err.response.data : { error: "An error occurred" };
+  }
 }
 
 export async function getProfile(token: string | null) {
