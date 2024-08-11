@@ -1,8 +1,14 @@
 "use client";
-import React, { useState, Dispatch, SetStateAction, useContext } from "react";
+import React, {
+  useState,
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+} from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { getOnboardingUrl, sendOtp } from "@/api/account"; // Adjust the import path based on your file structure
+import { createVendorFromSSO, getOnboardingUrl } from "@/api/account";
 import { useRouter } from "next/navigation";
 
 import { signUp } from "@/api/account";
@@ -31,19 +37,14 @@ type SignUpProps = {
   setIsLoggedIn: Dispatch<SetStateAction<boolean>>;
 };
 
-const SignUp: React.FC = () => {
+const RegisterAsVendor: React.FC = () => {
   {
     /* 2 for no activity, 1 for password match and 0 for not */
   }
 
-  const [PasswordCheck, setPasswordCheck] = useState(2);
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [visible, setVisible] = useState(false);
-  const [visible2, setVisible2] = useState(false);
   const [loading, setLoading] = useState(false);
   const { setIsLoggedIn, setAuthpage } = useContext(MyContext);
   const [Payload, setPayload] = useState({
@@ -54,7 +55,6 @@ const SignUp: React.FC = () => {
     email: "",
     phone_number: "",
     contact_person_name: "",
-    password: "",
     street1: "",
     street2: "",
     city: "",
@@ -62,16 +62,29 @@ const SignUp: React.FC = () => {
     website: "",
     country: "",
     zip_code: "",
-    entered_otp: "",
     shop_image: null,
     profile_pic: null,
+    token: "",
   });
 
   const router = useRouter();
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const passwordRegex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  useEffect(() => {
+    const storedCustomer = localStorage.getItem("customer");
+
+    if (storedCustomer) {
+      const customerData = JSON.parse(storedCustomer);
+
+      setPayload((prevPayload) => ({
+        ...prevPayload,
+        first_name: customerData.first_name || "",
+        last_name: customerData.last_name || "",
+        email: customerData.email || "",
+        phone_number: customerData.phone_number || "",
+        token: customerData.token || "",
+      }));
+    }
+  }, []);
 
   const updatePayload = (key: string, value: string) => {
     setPayload((prevPayload: any) => {
@@ -85,7 +98,6 @@ const SignUp: React.FC = () => {
     const selectedFile = event?.target?.files[0];
     if (selectedFile) {
       if (selectedFile.size > 4 * 1024 * 1024) {
-        // 4 MB limit
         toast.error("File size exceeds 4MB. Please choose a smaller file.");
         return;
       }
@@ -107,7 +119,6 @@ const SignUp: React.FC = () => {
     const selectedFile = event?.target?.files[0];
     if (selectedFile) {
       if (selectedFile.size > 4 * 1024 * 1024) {
-        // 4 MB limit
         toast.error("File size exceeds 4MB. Please choose a smaller file.");
         return;
       }
@@ -130,29 +141,24 @@ const SignUp: React.FC = () => {
     setIsError(false);
     setErrorMessage("");
 
-    if (Payload.password !== confirmPassword) {
-      setPasswordCheck(0);
-      return;
-    }
-
     setLoading(true);
-    let response = await signUp(Payload);
+    let response = await createVendorFromSSO(Payload);
     setLoading(false);
+
     console.log(response);
 
-    if (response.access) {
+    if (response.token) {
       toast.success("Registration Successful!");
       if (typeof window !== "undefined") {
-        localStorage.setItem("access", response.access);
+        localStorage.setItem("access", response.token);
         localStorage.setItem("vendor_id", response.vendor_id);
-        localStorage.setItem("store", parseJwt(response.access));
+        localStorage.setItem("store", parseJwt(response.token));
         setIsLoggedIn(true);
         router.push("/dashboard");
       }
     } else {
       let { data } = response;
       setIsError(true);
-      console.log(data);
       if (data.error) {
         setErrorMessage(data.error);
       } else {
@@ -350,15 +356,8 @@ const SignUp: React.FC = () => {
                         type="text"
                         placeholder="Enter your first name"
                         className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                        onChange={(
-                          event: React.ChangeEvent<HTMLInputElement>
-                        ) => {
-                          updatePayload("first_name", event.target.value);
-                          updatePayload(
-                            "contact_person_name",
-                            event.target.value
-                          );
-                        }}
+                        readOnly
+                        value={Payload.first_name}
                         required
                       />
 
@@ -376,11 +375,8 @@ const SignUp: React.FC = () => {
                         type="text"
                         placeholder="Enter your last name"
                         className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                        onChange={(
-                          event: React.ChangeEvent<HTMLInputElement>
-                        ) => {
-                          updatePayload("last_name", event.target.value);
-                        }}
+                        readOnly
+                        value={Payload.last_name}
                       />
 
                       <span className="absolute right-4 top-4">
@@ -470,71 +466,16 @@ const SignUp: React.FC = () => {
                         type="email"
                         placeholder="Enter your email"
                         className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                        onChange={(
-                          event: React.ChangeEvent<HTMLInputElement>
-                        ) => {
-                          updatePayload("email", event.target.value);
-                          if (!emailRegex.test(event.target.value)) {
-                            setEmailError("Invalid email address");
-                          } else {
-                            setEmailError("");
-                          }
-                        }}
+                        value={Payload.email}
+                        readOnly
                         required
                       />
 
-                      <span className="absolute right-27 top-4">
+                      <span className="absolute right-4 top-4">
                         <FaEnvelope size={22} />
                       </span>
-                      <button
-                        type="button"
-                        className={`font-semibold py-2 px-4 border rounded outline-none shadow m-2 ${
-                          emailError || !Payload.email
-                            ? "bg-gray-500 border-gray-600 text-gray-300 cursor-not-allowed"
-                            : "bg-primary border-primary text-white hover:bg-gray-100"
-                        }`}
-                        onClick={async () => {
-                          const res = await sendOtp(Payload.email);
-                          console.log(res);
-
-                          if (res) {
-                            toast.success(res.message);
-                          }
-                        }}
-                        disabled={!Payload.email || emailError}
-                      >
-                        Verify
-                      </button>
-                    </div>
-                    {emailError && (
-                      <p className="text-red-500 text-sm mt-1">{emailError}</p>
-                    )}
-                  </div>
-                  <div className="mb-4">
-                    <label className="mb-2.5 block font-medium text-black dark:text-white">
-                      Otp
-                    </label>
-                    <div className="relative">
-                      <PinInput
-                        length={6}
-                        focus
-                        onChange={(otpValue: string) =>
-                          updatePayload("entered_otp", otpValue)
-                        }
-                        inputStyle={{
-                          borderRadius: "5px",
-                          padding: "10px",
-                          fontSize: "16px",
-                          color: "black",
-                          backgroundColor: "transparent",
-                          outline: "none",
-                          border: "1px solid rgba(226, 232, 240, 1)",
-                        }}
-                        containerStyle={{ backgroundColor: "#2d1e5f" }}
-                      />
                     </div>
                   </div>
-
                   <div className="mb-4">
                     <label className="mb-2.5 block font-medium text-black dark:text-white">
                       Store Name
@@ -620,9 +561,8 @@ const SignUp: React.FC = () => {
                         type="tel"
                         placeholder="Enter your Phone number"
                         className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                        onChange={(
-                          event: React.ChangeEvent<HTMLInputElement>
-                        ) => updatePayload("phone_number", event.target.value)}
+                        value={Payload.phone_number}
+                        readOnly
                       />
 
                       <span className="absolute right-4 top-4">
@@ -767,124 +707,6 @@ const SignUp: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="w-full flex">
-                    <div className="relative mb-4 w-1/2 mr-4">
-                      <label className="mb-2.5 block font-medium text-black dark:text-white">
-                        Password
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={visible ? "text" : "password"}
-                          placeholder="Enter your password"
-                          className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                          onChange={(
-                            event: React.ChangeEvent<HTMLInputElement>
-                          ) => {
-                            updatePayload("password", event.target.value);
-                            if (!passwordRegex.test(event.target.value)) {
-                              setPasswordError(
-                                "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
-                              );
-                            } else {
-                              setPasswordError("");
-                            }
-                          }}
-                          required
-                        />
-
-                        <span
-                          className="absolute right-4 top-4"
-                          onClick={() => setVisible(!visible)}
-                        >
-                          {!visible ? (
-                            <FaEyeSlash size={22} />
-                          ) : (
-                            <FaEye size={22} />
-                          )}
-                        </span>
-                      </div>
-                      {passwordError && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {passwordError}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="mb-6 relative w-1/2">
-                      <label className="mb-2.5 block font-medium text-black dark:text-white">
-                        Re-type Password
-                      </label>
-                      <div className="relative">
-                        <input
-                          type={visible2 ? "text" : "password"}
-                          placeholder="Re-enter your password"
-                          className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                          onChange={(
-                            event: React.ChangeEvent<HTMLInputElement>
-                          ) => {
-                            setConfirmPassword(event.target.value);
-                            if (event.target.value === Payload.password) {
-                              setPasswordCheck(1);
-                            }
-                          }}
-                          required
-                        />
-
-                        <span
-                          className="absolute right-4 top-4"
-                          onClick={() => setVisible2(!visible2)}
-                        >
-                          {!visible2 ? (
-                            <FaEyeSlash size={22} />
-                          ) : (
-                            <FaEye size={22} />
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  {PasswordCheck === 1 && !isError ? (
-                    <>
-                      <span className="inline-flex text-sm text-green-700 mb-4">
-                        Password Matches
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="w-6 h-6"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      </span>
-                    </>
-                  ) : null}
-                  {PasswordCheck === 0 ? (
-                    <>
-                      <span className="inline-flex text-sm text-red-700 mb-4">
-                        Password Does not match
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="w-6 h-6"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </span>
-                    </>
-                  ) : null}
                   {isError ? (
                     <>
                       <span className="inline-flex text-sm text-red-700 mb-4">
@@ -919,43 +741,6 @@ const SignUp: React.FC = () => {
                     />
                   </div>
 
-                  {/* <button className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50 cursor-not-allowed">
-                  <span>
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <g clipPath="url(#clip0_191_13499)">
-                        <path
-                          d="M19.999 10.2217C20.0111 9.53428 19.9387 8.84788 19.7834 8.17737H10.2031V11.8884H15.8266C15.7201 12.5391 15.4804 13.162 15.1219 13.7195C14.7634 14.2771 14.2935 14.7578 13.7405 15.1328L13.7209 15.2571L16.7502 17.5568L16.96 17.5774C18.8873 15.8329 19.9986 13.2661 19.9986 10.2217"
-                          fill="#4285F4"
-                        />
-                        <path
-                          d="M10.2055 19.9999C12.9605 19.9999 15.2734 19.111 16.9629 17.5777L13.7429 15.1331C12.8813 15.7221 11.7248 16.1333 10.2055 16.1333C8.91513 16.1259 7.65991 15.7205 6.61791 14.9745C5.57592 14.2286 4.80007 13.1801 4.40044 11.9777L4.28085 11.9877L1.13101 14.3765L1.08984 14.4887C1.93817 16.1456 3.24007 17.5386 4.84997 18.5118C6.45987 19.4851 8.31429 20.0004 10.2059 19.9999"
-                          fill="#34A853"
-                        />
-                        <path
-                          d="M4.39899 11.9777C4.1758 11.3411 4.06063 10.673 4.05807 9.99996C4.06218 9.32799 4.1731 8.66075 4.38684 8.02225L4.38115 7.88968L1.19269 5.4624L1.0884 5.51101C0.372763 6.90343 0 8.4408 0 9.99987C0 11.5589 0.372763 13.0963 1.0884 14.4887L4.39899 11.9777Z"
-                          fill="#FBBC05"
-                        />
-                        <path
-                          d="M10.2059 3.86663C11.668 3.84438 13.0822 4.37803 14.1515 5.35558L17.0313 2.59996C15.1843 0.901848 12.7383 -0.0298855 10.2059 -3.6784e-05C8.31431 -0.000477834 6.4599 0.514732 4.85001 1.48798C3.24011 2.46124 1.9382 3.85416 1.08984 5.51101L4.38946 8.02225C4.79303 6.82005 5.57145 5.77231 6.61498 5.02675C7.65851 4.28118 8.9145 3.87541 10.2059 3.86663Z"
-                          fill="#EB4335"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_191_13499">
-                          <rect width="20" height="20" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
-                  </span>
-                  Sign up with Google
-                </button> */}
-
                   <div className="mt-6 text-center">
                     <p>
                       Already have an account?{" "}
@@ -979,4 +764,4 @@ const SignUp: React.FC = () => {
   );
 };
 
-export default SignUp;
+export default RegisterAsVendor;

@@ -54,14 +54,41 @@ const SignIn: React.FC = () => {
     }
   };
 
+  function parseJwt(token) {
+    try {
+      const base64Url = token.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map(function (c) {
+            return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+          })
+          .join("")
+      );
+
+      const payload = JSON.parse(jsonPayload);
+
+      payload.token = token;
+
+      return payload;
+    } catch (e) {
+      console.error("Error parsing JWT:", e);
+      return {
+        token: token,
+        payload: null,
+      };
+    }
+  }
+
   const login = async () => {
     setError("");
     setLoading(true);
+
     if (email && password) {
       let data = await signIn({ email, password })
         .then((res) => res)
         .catch((e) => {
-          console.log(e.response.status);
           if (e.response.status == 401) {
             setError("Invalid email or password");
           } else {
@@ -69,26 +96,25 @@ const SignIn: React.FC = () => {
           }
         });
       setLoading(false);
-      // console.log(data.response.status)
-      if (data && "token" in data) {
-        console.log(data);
+      if (data && data.status === 409) {
+        localStorage.setItem("customer", JSON.stringify(parseJwt(data.token)));
+        setAuthpage("register-as-vendor");
+      } else if (data && "token" in data) {
         let { token, refresh } = data;
+        console.log(data)
         if (typeof window !== "undefined") {
           localStorage.setItem("access", token);
           localStorage.setItem("refresh", refresh);
-          localStorage.setItem("vendor_id", data.data.id);
+          localStorage.setItem("vendor_id", data.id);
           setIsLoggedIn(true);
           toast.success("Login successful");
         }
-        // setError("Logged In")
-        // setIsLoggedIn(true)
-        if ("data" in data) {
-          console.log(data);
-          localStorage.setItem("store", JSON.stringify(data.data));
-          setVendor(data?.data);
+
+        if (data) {
+          localStorage.setItem("store", JSON.stringify(data));
+          setVendor(data);
         }
         router.push("/dashboard");
-        // router.refresh()
       } else {
         if ("response" in data && data.response.status > 399) {
           setError("Invalid email or password");
@@ -104,9 +130,11 @@ const SignIn: React.FC = () => {
 
     return false;
   };
-  
+
   const isButtonDisabled = () => {
-    return email.length === 0 || password.length === 0 || emailError || passwordError;
+    return (
+      email.length === 0 || password.length === 0 || emailError || passwordError
+    );
   };
 
   return (
@@ -349,8 +377,8 @@ const SignIn: React.FC = () => {
                       disabled={isButtonDisabled()}
                       className={`w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition ${
                         isButtonDisabled()
-                          ? 'bg-gray-600 cursor-not-allowed'
-                          : 'hover:bg-opacity-90'
+                          ? "bg-gray-600 cursor-not-allowed"
+                          : "hover:bg-opacity-90"
                       }`}
                     />
                   </div>

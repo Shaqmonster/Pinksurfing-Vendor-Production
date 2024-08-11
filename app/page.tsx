@@ -7,10 +7,11 @@ import { redirect, usePathname, useRouter } from "next/navigation";
 import { getProducts } from "@/api/products";
 import SignUp from "./auth/signup/page";
 import { Product } from "@/types/product";
-import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/dist/ReactToastify.css";
 import Dashboard from "./dashboard/page";
 import ForgotPassword from "./auth/forgot-password/page";
 import ResetPassword from "./auth/reset-password/page";
+import RegisterAsVendor from "./auth/register-as-vendor.tsx/page";
 
 export default function Home() {
   const { loggedIn, setIsLoggedIn, authPage } = useContext(MyContext);
@@ -44,13 +45,13 @@ export default function Home() {
             }
           } else {
             setIsLoggedIn(false);
-            router.push("/")
+            router.push("/");
           }
         })
         .catch((err) => {
           console.error(err);
           setIsLoggedIn(false);
-          router.push("/")
+          router.push("/");
         })
         .finally(() => setLoading(false));
     }
@@ -70,11 +71,14 @@ export default function Home() {
       case "reset":
         setAuthPageState(<ResetPassword />);
         break;
+      case "register-as-vendor":
+        setAuthPageState(<RegisterAsVendor />);
+        break;
       default:
         setAuthPageState(<SignIn />);
         break;
     }
   }, [authPage]);
 
-  return <>{loggedIn ? <Dashboard/> : authPageState}</>;
+  return <>{loggedIn ? <Dashboard /> : authPageState}</>;
 }
