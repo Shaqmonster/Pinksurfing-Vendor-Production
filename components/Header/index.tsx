@@ -9,17 +9,14 @@ import { getProfile, refreshToken } from "@/api/account";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { getProducts } from "@/api/products";
 import { useRouter } from "next/navigation";
-import { FiBell, FiSearch } from "react-icons/fi";
+import { FiBell, FiMenu, FiSearch } from "react-icons/fi";
+import Sidebar from "../Sidebar";
 
-const Header = (props: {
-  sidebarOpen: string | boolean | undefined;
-  setSidebarOpen: (arg0: boolean) => void;
-  loggedIn: boolean | undefined;
-}) => {
-  // const { loggedIn } = useContext(MyContext)
+const Header = (props: { loggedIn: boolean | undefined }) => {
   const pathname = usePathname();
   const router = useRouter();
-  const { setAuthpage, authPage, vendor } = useContext(MyContext);
+  const { setAuthpage, authPage, vendor, setSidebarOpen, sidebarOpen } =
+    useContext(MyContext);
   const [profile, setProfile] = useState();
   const [Logged, setLogged] = useState(false);
   const [tokens, setTokens] = useState({
@@ -30,6 +27,7 @@ const Header = (props: {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      console.log(sidebarOpen);
       let access = localStorage.getItem("access");
       let vendor_id = localStorage.getItem("vendor_id");
       if (
@@ -102,41 +100,25 @@ const Header = (props: {
   }, [tokens.access, tokens.vendor_id]);
 
   return (
-    <header className="sticky top-0 z-999 flex w-full bg-white drop-shadow-1 dark:bg-primary dark:drop-shadow-none">
-      <div className="flex flex-grow items-center justify-between px-4 py-4 shadow-2 md:px-6 2xl:px-11">
-        {/* <!-- Hamburger Toggle BTN --> */}
-        {Logged ? (
-          <>
-            <div className="flex items-center gap-2 sm:gap-4 ">
-              <button
-                aria-controls="sidebar"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  props.setSidebarOpen(!props.sidebarOpen);
-                }}
-                className="z-99999 block rounded-sm border border-stroke bg-white p-1.5 shadow-sm dark:border-strokedark dark:bg-boxdark lg:hidden"
-              >
-                <span className="relative block h-5.5 w-5.5 cursor-pointer">
-                  <span
-                    className={`block h-0.5 w-full bg-black dark:bg-white transition-all duration-300 ${
-                      props.sidebarOpen ? "rotate-45 translate-y-1.5" : ""
-                    }`}
-                  ></span>
-                  <span
-                    className={`block h-0.5 w-full bg-black dark:bg-white transition-all duration-300 my-1 ${
-                      props.sidebarOpen ? "opacity-0" : ""
-                    }`}
-                  ></span>
-                  <span
-                    className={`block h-0.5 w-full bg-black dark:bg-white transition-all duration-300 ${
-                      props.sidebarOpen ? "-rotate-45 -translate-y-1.5" : ""
-                    }`}
-                  ></span>
-                </span>
-              </button>
-              {!props.sidebarOpen ? (
+    <>
+      <header className="sticky top-0 z-999 flex w-full bg-white drop-shadow-1 dark:bg-primary dark:drop-shadow-none">
+        <div className="flex flex-grow items-center justify-between px-4 py-4 shadow-2 md:px-6 2xl:px-11">
+          {/* <!-- Hamburger Toggle BTN --> */}
+          {Logged ? (
+            <>
+              <div className="flex items-center gap-2 sm:gap-4 ">
+                <button
+                  aria-controls="sidebar"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSidebarOpen(!sidebarOpen);
+                  }}
+                  className="z-99999 block rounded-sm border border-stroke bg-white p-1.5 shadow-sm dark:border-strokedark dark:bg-boxdark lg:hidden"
+                >
+                  <FiMenu size={24} className="text-black dark:text-white" />
+                </button>
                 <>
-                  <Link className="block flex flex-row lg:hidden" href="/">
+                  <Link className="block flex flex-row" href="/">
                     <Image
                       width={32}
                       height={32}
@@ -148,42 +130,45 @@ const Header = (props: {
                     </h2>
                   </Link>
                 </>
-              ) : null}
+              </div>
+              <div className="flex items-center gap-3 2xsm:gap-7">
+                <ul className="flex items-center gap-2 2xsm:gap-4">
+                  <DarkModeSwitcher />
+                </ul>
+                <button className="text-gray-600 dark:text-gray-400">
+                  <FiSearch size={20} />
+                </button>
+                <FiBell
+                  size={20}
+                  className="cursor-pointer text-gray-600 dark:text-gray-400"
+                />
+                <DropdownUser setLogged={setLogged} />
+              </div>
+            </>
+          ) : (
+            <div className="flex w-full flex-grow justify-end gap-2 sm:gap-4 ">
+              {authPage === "signin" ? (
+                <Link
+                  className="font-bold text-primary self-end"
+                  href="/"
+                  onClick={() => setAuthpage("signup")}
+                >
+                  Signup
+                </Link>
+              ) : (
+                <Link
+                  className="font-bold text-primary self-end"
+                  href="/"
+                  onClick={() => setAuthpage("signin")}
+                >
+                  Sign in
+                </Link>
+              )}
             </div>
-            <div className="flex items-center gap-3 2xsm:gap-7">
-              <ul className="flex items-center gap-2 2xsm:gap-4">
-                <DarkModeSwitcher />
-              </ul>
-              <button className="text-gray-600 dark:text-gray-400">
-                <FiSearch size={20} />
-              </button>
-              <FiBell size={20} className="cursor-pointer text-gray-600 dark:text-gray-400" />
-              <DropdownUser setLogged={setLogged} />
-            </div>
-          </>
-        ) : (
-          <div className="flex w-full flex-grow justify-end gap-2 sm:gap-4 ">
-            {authPage === "signin" ? (
-              <Link
-                className="font-bold text-primary self-end"
-                href="/"
-                onClick={() => setAuthpage("signup")}
-              >
-                Signup
-              </Link>
-            ) : (
-              <Link
-                className="font-bold text-primary self-end"
-                href="/"
-                onClick={() => setAuthpage("signin")}
-              >
-                Sign in
-              </Link>
-            )}
-          </div>
-        )}
-      </div>
-    </header>
+          )}
+        </div>
+      </header>
+    </>
   );
 };
 

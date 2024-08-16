@@ -10,6 +10,8 @@ interface IMyContext {
   setAuthpage: Dispatch<SetStateAction<string>>;
   vendor: any;
   setVendor: Dispatch<SetStateAction<any>>;
+  sidebarOpen: boolean;
+  setSidebarOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 export const MyContext = createContext<IMyContext>({
@@ -21,4 +23,6 @@ export const MyContext = createContext<IMyContext>({
   setAuthpage: () => {},
   vendor: {},
   setVendor: () => {},
+  sidebarOpen: false,
+  setSidebarOpen: () => {},
 });

@@ -104,12 +104,12 @@ const DropdownUser = ({ setLogged }) => {
           <span className="block text-xs">{user.contact_person_name}</span>
         </span>
 
-        <span className="h-12 w-12 rounded-full">
+        <span className="h-12 w-12 rounded-full overflow-hidden">
           <Image
             width={112}
             height={112}
             src={user.profile_picture || "/images/user/ic_dummy_user.png"}
-            className="rounded-full"
+            className="rounded-full aspect-square"
             alt="User"
           />
         </span>

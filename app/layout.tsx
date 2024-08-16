@@ -20,11 +20,11 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [loggedIn, setLoggedIn] = useState<boolean>(false);
   const [authPage, setAuthPage] = useState(<SignIn />);
   const pathname = usePathname();
+  const { sidebarOpen ,setSidebarOpen} = useContext(MyContext);
   const bodyScrollCallback = useCallback((loggedIn: boolean) => {
     setLoggedIn(loggedIn);
   }, []);
@@ -45,6 +45,12 @@ export default function RootLayout({
     loggedIn && pathname.includes("/auth/signup") ? redirect("/Stripe") : null;
   });
 
+  useEffect(() => {
+    if (window.innerWidth >= 1024) {
+      setSidebarOpen(true);
+    }
+  }, [setSidebarOpen]);
+
   return (
     <html lang="en">
       <body suppressHydrationWarning={true}>
@@ -55,22 +61,20 @@ export default function RootLayout({
             ) : (
               <div className="flex h-screen overflow-hidden">
                 {/* <!-- ===== Sidebar Start ===== --> */}
-                {loggedIn ? (
-                  <Sidebar
-                    sidebarOpen={sidebarOpen}
-                    setSidebarOpen={setSidebarOpen}
-                  />
-                ) : null}
-                {/* <!-- ===== Sidebar End ===== --> */}
+                <div
+                  // className={`hidden lg:flex ${
+                  //   sidebarOpen ? "flex" : "hidden"
+                  // }`}
+                >
+                  {loggedIn ? <Sidebar /> : null}
+
+                  {/* <!-- ===== Sidebar End ===== --> */}
+                </div>
 
                 {/* <!-- ===== Content Area Start ===== --> */}
                 <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
                   {/* <!-- ===== Header Start ===== --> */}
-                  <Header
-                    sidebarOpen={sidebarOpen}
-                    setSidebarOpen={setSidebarOpen}
-                    loggedIn={loggedIn}
-                  />
+                  <Header loggedIn={loggedIn} />
                   {/* <!-- ===== Header End ===== --> */}
 
                   {/* <!-- ===== Main Content Start ===== --> */}
