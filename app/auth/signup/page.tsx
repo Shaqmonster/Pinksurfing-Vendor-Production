@@ -375,7 +375,7 @@ const SignUp: React.FC = () => {
                     Start for free
                   </span>
                   <h2 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
-                    Sign Up as Pinksurfing Vendors
+                    Sign Up as a Pinksurfing Vendor
                   </h2>
 
                   <div className="mb-4">

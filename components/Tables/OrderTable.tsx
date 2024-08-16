@@ -1,6 +1,12 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
-import { changeStatus, getOrders, getParcelDetails, buyShipmentLabel } from "@/api/orders";
+import { useState, useEffect, useCallback } from "react";
+import {
+  changeStatus,
+  getOrders,
+  getParcelDetails,
+  buyShipmentLabel,
+  getShippingDetails,
+} from "@/api/orders";
 import { Package } from "@/types/package";
 import Link from "next/link";
 import Loader from "../common/Loader";
@@ -33,6 +39,7 @@ const OrderTable = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [labelUrls, setLabelUrls] = useState<{ [key: string]: string }>({});
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
 
   const orderStatuses = [
@@ -50,7 +57,7 @@ const OrderTable = () => {
   const vendor_id =
     typeof window !== "undefined" ? localStorage.getItem("access") : "";
 
-  useMemo(() => {
+  useEffect(() => {
     if (!vendor_id) return;
 
     setLoading(true);
@@ -62,8 +69,11 @@ const OrderTable = () => {
       ) {
         setLoading(false);
         let orders = data.data["Order Request"];
+        orders = orders.filter(
+          (order: Order) => order.order_status !== "PENDING"
+        );
         if (Array.isArray(orders) && orders.length) {
-          console.log(orders)
+          console.log(orders);
           setOrders(orders.slice(0, 10));
         }
       }
@@ -75,18 +85,18 @@ const OrderTable = () => {
 
     orders.forEach((order) => {
       if (order.order_status === "PACKED") {
-        getParcelDetails(order.id, vendor_id).then((parcelData: any) => {
-          console.log(parcelData.data)
-          if (parcelData && parcelData.data) {
-            buyShipmentLabel(parcelData.data.parcel_id, vendor_id)
-              .then((res) => {
-                console.log(res)
-              })
-              .catch((error) => {
-                toast.error("Failed to purchase shipment label. Please try again.");
-              });
-          }
-        });
+        getShippingDetails(order.id, vendor_id)
+          .then((response: any) => {
+            if (response && response.data) {
+              setLabelUrls((prevUrls) => ({
+                ...prevUrls,
+                [order.id]: response.data.postage_label_url,
+              }));
+            }
+          })
+          .catch((error) => {
+            toast.error("Failed to retrieve shipping details.");
+          });
       }
     });
   }, [orders, vendor_id]);
@@ -127,6 +137,25 @@ const OrderTable = () => {
           );
           setIsModalOpen(false);
           toast.success("Order status updated to PACKED successfully!");
+
+          getParcelDetails(currentOrder.id, vendor_id).then(
+            (parcelData: any) => {
+              if (parcelData && parcelData.data) {
+                buyShipmentLabel(parcelData.data.parcel_id, vendor_id)
+                  .then((res) => {
+                    setLabelUrls((prev) => ({
+                      ...prev,
+                      [currentOrder.id]: res.data.label_url,
+                    }));
+                  })
+                  .catch((error) => {
+                    toast.error(
+                      "Failed to purchase shipment label. Please try again."
+                    );
+                  });
+              }
+            }
+          );
         })
         .catch((error) => {
           toast.error("Failed to update order status. Please try again.");
@@ -185,20 +214,40 @@ const OrderTable = () => {
                       </p>
                     </td>
                     <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
-                      <div className="flex items-center justify-between">
-                        <select
-                          className="bg-white dark:bg-primary text-black dark:text-white py-2 px-3 rounded"
-                          value={order.order_status}
-                          onChange={(e) =>
-                            handleStatusChange(order, e.target.value)
-                          }
-                        >
-                          {orderStatuses.map((status, index) => (
-                            <option key={index} value={status}>
-                              {status}
-                            </option>
-                          ))}
-                        </select>
+                      <div className="flex flex-col space-y-2">
+                        {order.order_status === "PACKED" ||
+                        order.order_status === "SHIPPED" ||
+                        order.order_status === "DELIVERED" ? (
+                          <span className="bg-white dark:bg-primary text-black dark:text-white py-2 px-3 rounded">
+                            {order.order_status}
+                          </span>
+                        ) : (
+                          <select
+                            className="bg-white dark:bg-primary text-black dark:text-white py-2 px-3 rounded"
+                            value={order.order_status}
+                            onChange={(e) =>
+                              handleStatusChange(order, e.target.value)
+                            }
+                          >
+                            {orderStatuses.map((status, index) => (
+                              <option key={index} value={status}>
+                                {status}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                        {order.order_status === "PACKED" &&
+                          labelUrls[order.id] && (
+                            <a
+                              href={labelUrls[order.id]}
+                              target="_blank"
+                              download
+                              rel="noopener noreferrer"
+                              className="text-blue-500 underline"
+                            >
+                              Download Label
+                            </a>
+                          )}
                       </div>
                     </td>
                     <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">

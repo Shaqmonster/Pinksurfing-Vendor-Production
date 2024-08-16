@@ -86,3 +86,18 @@ export async function buyShipmentLabel(parcelId: string, token: string | null) {
     .catch((error) => error);
   return res;
 }
+
+export async function getShippingDetails(
+  orderItemId: string | null,
+  token: string | null
+) {
+  let res = await axios
+    .get(`${BASE_URL}/shipping/shipping-details/${orderItemId}/`, { 
+      headers: {
+        Authorization: `Bearer ${token?.replaceAll('"', "")}`,
+      },
+    })
+    .then((response) => response)
+    .catch((error) => error);
+  return res;
+}
