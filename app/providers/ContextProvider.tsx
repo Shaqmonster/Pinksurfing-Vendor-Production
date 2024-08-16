@@ -16,6 +16,7 @@ const MyProvider = ({
   const [authPage, setAuthpage] = useState("signin");
   const [resetEmail, setResetEmail] = useState("")
   const [vendor, setVendor] = useState();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     setLoggedIn(loggedIn);
@@ -32,6 +33,8 @@ const MyProvider = ({
         authPage,
         vendor,
         setVendor,
+        sidebarOpen,
+        setSidebarOpen,
       }}
     >
       {children}

@@ -1,5 +1,11 @@
 "use client";
-import React, { useState, Dispatch, SetStateAction, useContext } from "react";
+import React, {
+  useState,
+  Dispatch,
+  SetStateAction,
+  useContext,
+  useEffect,
+} from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { getOnboardingUrl, sendOtp } from "@/api/account"; // Adjust the import path based on your file structure
@@ -26,6 +32,8 @@ import {
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import Loader from "@/components/common/Loader";
+import { Country, State, City } from "country-state-city";
+import { getVendorProfile } from "@/api/products";
 
 type SignUpProps = {
   setIsLoggedIn: Dispatch<SetStateAction<boolean>>;
@@ -45,6 +53,11 @@ const SignUp: React.FC = () => {
   const [visible, setVisible] = useState(false);
   const [visible2, setVisible2] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [countries, setCountries] = useState([]);
+  const [states, setStates] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [selectedCountryCode, setSelectedCountryCode] = useState("");
+  const [selectedStateCode, setSelectedStateCode] = useState("");
   const { setIsLoggedIn, setAuthpage } = useContext(MyContext);
   const [Payload, setPayload] = useState({
     first_name: "",
@@ -145,7 +158,15 @@ const SignUp: React.FC = () => {
       if (typeof window !== "undefined") {
         localStorage.setItem("access", response.access);
         localStorage.setItem("vendor_id", response.vendor_id);
-        localStorage.setItem("store", parseJwt(response.access));
+        const { data, error } = await getVendorProfile(response.access);
+        if (!error) {
+          const storedData = localStorage.getItem("store");
+          if (!storedData) {
+            localStorage.setItem("store", JSON.stringify(data));
+          }
+        } else {
+          console.error("Error fetching profile:", error);
+        }
         setIsLoggedIn(true);
         router.push("/dashboard");
       }
@@ -176,6 +197,22 @@ const SignUp: React.FC = () => {
 
     return jsonPayload;
   }
+
+  useEffect(() => {
+    setCountries(Country.getAllCountries());
+  }, []);
+
+  const handleCountrySelect = (countryCode) => {
+    setSelectedCountryCode(countryCode);
+    setStates(State.getStatesOfCountry(countryCode));
+    updatePayload("country", countryCode);
+  };
+
+  const handleStateSelect = (stateCode) => {
+    setSelectedStateCode(stateCode);
+    setCities(City.getCitiesOfState(selectedCountryCode, stateCode));
+    updatePayload("state", stateCode);
+  };
 
   return (
     <>
@@ -672,20 +709,22 @@ const SignUp: React.FC = () => {
 
                   <div className="mb-4 ">
                     <label className="mb-2.5 block font-medium text-black dark:text-white">
-                      City
+                      Country
                     </label>
                     <div className="relative">
-                      <input
-                        placeholder="Enter your City"
+                      <select
                         className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                        onChange={(
-                          event: React.ChangeEvent<HTMLInputElement>
-                        ) => updatePayload("city", event.target.value)}
-                        required
-                      />
-
+                        onChange={(e) => handleCountrySelect(e.target.value)}
+                      >
+                        <option value="">Select your country</option>
+                        {countries.map((country) => (
+                          <option key={country.isoCode} value={country.isoCode}>
+                            {country.name}
+                          </option>
+                        ))}
+                      </select>
                       <span className="absolute right-4 top-4">
-                        <FaMapMarkerAlt size={22} />
+                        <FaGlobeAmericas />
                       </span>
                     </div>
                   </div>
@@ -695,15 +734,18 @@ const SignUp: React.FC = () => {
                       State
                     </label>
                     <div className="relative">
-                      <input
-                        placeholder="Enter your state"
+                      <select
                         className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                        onChange={(
-                          event: React.ChangeEvent<HTMLInputElement>
-                        ) => updatePayload("state", event.target.value)}
-                        required
-                      />
-
+                        onChange={(e) => handleStateSelect(e.target.value)}
+                        disabled={!states.length}
+                      >
+                        <option value="">Select your state</option>
+                        {states.map((state) => (
+                          <option key={state.isoCode} value={state.isoCode}>
+                            {state.name}
+                          </option>
+                        ))}
+                      </select>
                       <span className="absolute right-4 top-4">
                         <FaMapPin />
                       </span>
@@ -712,17 +754,23 @@ const SignUp: React.FC = () => {
 
                   <div className="mb-4 ">
                     <label className="mb-2.5 block font-medium text-black dark:text-white">
-                      Country
+                      City
                     </label>
                     <div className="relative">
-                      <CountryCodeSelector
-                        onSelect={(selectedCountryCode: string) =>
-                          updatePayload("country", selectedCountryCode)
-                        }
-                      />
-
+                      <select
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(e) => updatePayload("city", e.target.value)}
+                        disabled={!cities.length}
+                      >
+                        <option value="">Select your city</option>
+                        {cities.map((city) => (
+                          <option key={city.name} value={city.name}>
+                            {city.name}
+                          </option>
+                        ))}
+                      </select>
                       <span className="absolute right-4 top-4">
-                        <FaGlobeAmericas />
+                        <FaMapMarkerAlt size={22} />
                       </span>
                     </div>
                   </div>

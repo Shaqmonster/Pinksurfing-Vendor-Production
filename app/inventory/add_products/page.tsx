@@ -515,7 +515,7 @@ const AddProducts = () => {
                                   additional_price: 0,
                                 })
                               );
-                            setAttribute(initialAttributes);
+                            // setAttribute(initialAttributes);
                           } else {
                             setAllowedAttributes([]);
                             setAttribute([]);
@@ -692,48 +692,92 @@ const AddProducts = () => {
               >
                 Variants 'different sizes of the same or main item for sale'
               </label>
-              {allowedAttributes?.map((attributeName, j) => {
+              {attribute?.map((att, j) => {
                 return (
                   <React.Fragment key={j}>
                     <div className="col-span-4 flex justify-between gap-2">
-                      <input
+                      <select
                         className="w-10 rounded flex-1 border border-gray-300 dark:border-none ml-4 py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
-                        type="text"
                         name="attributeName"
                         id="attributeName"
-                        value={attributeName?.name}
-                        readOnly
-                      />
+                        value={att.name}
+                        onChange={(e) => {
+                          setAttribute((i) => {
+                            i[j]["name"] = e.target.value;
+                            return [...i];
+                          });
+                        }}
+                      >
+                        <option value="">Select Attribute</option>
+                        {allowedAttributes?.map((allowedAttribute, index) => (
+                          <option key={index} value={allowedAttribute.name}>
+                            {allowedAttribute.name}
+                          </option>
+                        ))}
+                      </select>
+
                       <input
                         className="w-10 rounded flex-1 border border-gray-300 dark:border-none ml-4 py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
                         type="text"
                         name="attributeValue"
                         id="attributeValue"
                         placeholder="Variant Value"
+                        value={att.value}
                         onChange={(e) => {
                           setAttribute((i) => {
                             i[j]["value"] = e.target.value;
-                            return i;
+                            return [...i];
                           });
                         }}
                       />
+
                       <input
                         className="w-10 rounded flex-1 border border-gray-300 dark:border-none ml-4 py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
                         type="number"
                         name="attributePrice"
                         id="attributePrice"
                         placeholder="Variant Price"
+                        value={att.additional_price}
                         onChange={(e) => {
                           setAttribute((i) => {
                             i[j]["additional_price"] = e.target.value;
-                            return i;
+                            return [...i];
                           });
                         }}
                       />
+
+                      <button
+                        type="button"
+                        className="bg-red-500 hover:bg-red-700 text-black dark:text-white font-medium py-2 px-4 rounded"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setAttribute((i) =>
+                            i.filter((_, index) => index !== j)
+                          );
+                        }}
+                      >
+                        Delete
+                      </button>
                     </div>
                   </React.Fragment>
                 );
               })}
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  className="bg-primary hover:bg-blue-700 text-white font-medium py-2 px-4 rounded ml-auto"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setAttribute((i) => [
+                      ...i,
+                      { name: "", value: "", additional_price: 0 },
+                    ]);
+                  }}
+                >
+                  Add another Variant
+                </button>
+              </div>
             </div>
           </div>
         </form>

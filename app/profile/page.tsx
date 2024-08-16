@@ -114,7 +114,7 @@ const Profile = () => {
                 width={150}
                 height={150}
                 alt="profile"
-                className="rounded-full object-cover"
+                className="rounded-full object-cover aspect-square"
               />
               <label
                 htmlFor="profile"

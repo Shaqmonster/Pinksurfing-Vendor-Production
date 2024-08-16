@@ -113,7 +113,9 @@ export default function EditProduct({ params }: { params: { id: string } }) {
   useEffect(() => {
     const token = localStorage.getItem("access");
     if (token) {
+      setLoading(true)
       getSingleProduct(token, params.id).then((data) => {
+        setLoading(false)
         console.log("Fetched Product:", data.data.Products);
         setAttribute(data.data.Products.attributes);
         setProductData(data.data.Products);
