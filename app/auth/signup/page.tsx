@@ -375,7 +375,7 @@ const SignUp: React.FC = () => {
                     Start for free
                   </span>
                   <h2 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
-                    Sign Up as a Pinksurfing Vendor
+                    Sign Up as a Vendor and Create store
                   </h2>
 
                   <div className="mb-4">
@@ -427,11 +427,11 @@ const SignUp: React.FC = () => {
                   </div>
                   <div className="mb-4">
                     <label className="mb-2.5 block font-medium text-black dark:text-white">
-                      Bio
+                      General information about your store
                     </label>
                     <div className="relative">
                       <textarea
-                        placeholder="Enter your bio"
+                        placeholder="Enter your information about your store"
                         className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
                         onChange={(
                           event: React.ChangeEvent<HTMLTextAreaElement>

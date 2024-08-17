@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState, useContext } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FiMenu } from "react-icons/fi";
 import Image from "next/image";
 import { MyContext } from "@/app/providers/context";
 import {
+  FaArrowLeft,
   FaBox,
   FaClipboardList,
   FaCog,
@@ -25,32 +25,31 @@ const Sidebar = () => {
     storedSidebarExpanded === null ? false : storedSidebarExpanded === "true"
   );
 
-  // // Close on click outside
-  // useEffect(() => {
-  //   console.log("here")
-  //   const clickHandler = ({ target }) => {
-  //     if (!sidebar.current || !trigger.current) return;
-  //     if (
-  //       !sidebarOpen ||
-  //       sidebar.current.contains(target) ||
-  //       trigger.current.contains(target)
-  //     )
-  //       return;
-  //     setSidebarOpen(false);
-  //   };
-  //   document.addEventListener("click", clickHandler);
-  //   return () => document.removeEventListener("click", clickHandler);
-  // }, [sidebarOpen]);
+  // Close on click outside
+  useEffect(() => {
+    const clickHandler = ({ target }) => {
+      if (!sidebar.current || !trigger.current) return;
+      if (
+        !sidebarOpen ||
+        sidebar.current.contains(target) ||
+        trigger.current.contains(target)
+      )
+        return;
+      setSidebarOpen(false);
+    };
+    document.addEventListener("click", clickHandler);
+    return () => document.removeEventListener("click", clickHandler);
+  }, [sidebarOpen]);
 
-  // // Close if the esc key is pressed
-  // useEffect(() => {
-  //   const keyHandler = ({ keyCode }) => {
-  //     if (!sidebarOpen || keyCode !== 27) return;
-  //     setSidebarOpen(false);
-  //   };
-  //   document.addEventListener("keydown", keyHandler);
-  //   return () => document.removeEventListener("keydown", keyHandler);
-  // }, [sidebarOpen]);
+  // Close if the esc key is pressed
+  useEffect(() => {
+    const keyHandler = ({ keyCode }) => {
+      if (!sidebarOpen || keyCode !== 27) return;
+      setSidebarOpen(false);
+    };
+    document.addEventListener("keydown", keyHandler);
+    return () => document.removeEventListener("keydown", keyHandler);
+  }, [sidebarOpen]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -96,7 +95,7 @@ const Sidebar = () => {
           aria-expanded={sidebarOpen}
           className="block lg:hidden"
         >
-          <FiMenu size={20} />
+          <FaArrowLeft size={20} />
         </button>
       </div>
       {/* <!-- SIDEBAR HEADER --> */}
