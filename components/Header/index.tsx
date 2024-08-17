@@ -122,7 +122,7 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
                     <Image
                       width={32}
                       height={32}
-                      src={"/images/bitcoin.png"}
+                      src={"/images/bitcoin.jpg"}
                       alt="Logo"
                     />
                     <h2 className="ml-2 pt-1 text-align font-bold">
