@@ -70,14 +70,14 @@ const ResetPassword = () => {
               <Link className="mb-5.5 inline-block" href="/">
                 <Image
                   className="hidden dark:block"
-                  src={"/images/logo/logo.png"}
+                  src={"/images/logo/logo.jpg"}
                   alt="Logo"
                   width={176}
                   height={32}
                 />
                 <Image
                   className="dark:hidden"
-                  src={"/images/logo/logo.png"}
+                  src={"/images/logo/logo.jpg"}
                   alt="Logo"
                   width={176}
                   height={32}
