@@ -381,6 +381,7 @@ const SignUp: React.FC = () => {
                   <div className="mb-4">
                     <label className="mb-2.5 block font-medium text-black dark:text-white">
                       First Name
+                      <span className="text-red-500 font-bold text-lg">*</span>
                     </label>
                     <div className="relative">
                       <input
@@ -428,6 +429,7 @@ const SignUp: React.FC = () => {
                   <div className="mb-4">
                     <label className="mb-2.5 block font-medium text-black dark:text-white">
                       General information about your store
+                      <span className="text-red-500 font-bold text-lg">*</span>
                     </label>
                     <div className="relative">
                       <textarea
@@ -501,6 +503,7 @@ const SignUp: React.FC = () => {
                   <div className="mb-4 ">
                     <label className="mb-2.5 block font-medium text-black dark:text-white">
                       Email
+                      <span className="text-red-500 font-bold text-lg">*</span>
                     </label>
                     <div className="relative flex">
                       <input
@@ -550,6 +553,7 @@ const SignUp: React.FC = () => {
                   <div className="mb-4">
                     <label className="mb-2.5 block font-medium text-black dark:text-white">
                       Otp
+                      <span className="text-red-500 font-bold text-lg">*</span>
                     </label>
                     <div className="relative">
                       <PinInput
@@ -575,6 +579,7 @@ const SignUp: React.FC = () => {
                   <div className="mb-4">
                     <label className="mb-2.5 block font-medium text-black dark:text-white">
                       Store Name
+                      <span className="text-red-500 font-bold text-lg">*</span>
                     </label>
                     <div className="relative">
                       <input
@@ -671,6 +676,7 @@ const SignUp: React.FC = () => {
                   <div className="mb-4 ">
                     <label className="mb-2.5 block font-medium text-black dark:text-white">
                       Street 1
+                      <span className="text-red-500 font-bold text-lg">*</span>
                     </label>
                     <div className="relative">
                       <input
@@ -778,6 +784,7 @@ const SignUp: React.FC = () => {
                   <div className="mb-4 ">
                     <label className="mb-2.5 block font-medium text-black dark:text-white">
                       Zip Code
+                      <span className="text-red-500 font-bold text-lg">*</span>
                     </label>
                     <div className="relative">
                       <input
@@ -819,6 +826,9 @@ const SignUp: React.FC = () => {
                     <div className="relative mb-4 w-1/2 mr-4">
                       <label className="mb-2.5 block font-medium text-black dark:text-white">
                         Password
+                        <span className="text-red-500 font-bold text-lg">
+                          *
+                        </span>
                       </label>
                       <div className="relative">
                         <input
@@ -861,6 +871,9 @@ const SignUp: React.FC = () => {
                     <div className="mb-6 relative w-1/2">
                       <label className="mb-2.5 block font-medium text-black dark:text-white">
                         Re-type Password
+                        <span className="text-red-500 font-bold text-lg">
+                          *
+                        </span>
                       </label>
                       <div className="relative">
                         <input
