@@ -16,7 +16,6 @@ const Dashboard: React.FC = () => {
       if (!token) return;
       (async () => {
         const res = await getTopSellingProducts(token);
-        console.log(res);
         setTopProducts(res.data);
       })();
     }

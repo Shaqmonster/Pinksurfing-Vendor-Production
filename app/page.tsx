@@ -12,10 +12,11 @@ import Dashboard from "./dashboard/page";
 import ForgotPassword from "./auth/forgot-password/page";
 import ResetPassword from "./auth/reset-password/page";
 import RegisterAsVendor from "./auth/register-as-vendor.tsx/page";
+import Loader from "@/components/common/Loader";
 
 export default function Home() {
   const { loggedIn, setIsLoggedIn, authPage } = useContext(MyContext);
-  const [authPageState, setAuthPageState] = useState(<SignIn />);
+  const [authPageState, setAuthPageState] = useState<JSX.Element | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -28,6 +29,7 @@ export default function Home() {
 
       if (!access || !vendor_id) {
         setIsLoggedIn(false);
+        setLoading(false); 
         return;
       }
 
@@ -79,6 +81,10 @@ export default function Home() {
         break;
     }
   }, [authPage]);
+
+  if (loading) {
+    return <Loader />; 
+  }
 
   return <>{loggedIn ? <Dashboard /> : authPageState}</>;
 }
