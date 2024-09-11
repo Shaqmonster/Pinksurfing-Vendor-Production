@@ -2,7 +2,7 @@
 import "./globals.css";
 import "./data-tables-css.css";
 import "./satoshi.css";
-import { useState, useEffect, useRef, useContext, useCallback } from "react";
+import { useState, useEffect, useContext, useCallback } from "react";
 import Loader from "@/components/common/Loader";
 
 import Sidebar from "@/components/Sidebar";
@@ -22,7 +22,6 @@ export default function RootLayout({
 }) {
   const [loading, setLoading] = useState<boolean>(false);
   const [loggedIn, setLoggedIn] = useState<boolean>(false);
-  const [authPage, setAuthPage] = useState(<SignIn />);
   const pathname = usePathname();
   const { sidebarOpen ,setSidebarOpen} = useContext(MyContext);
   const bodyScrollCallback = useCallback((loggedIn: boolean) => {

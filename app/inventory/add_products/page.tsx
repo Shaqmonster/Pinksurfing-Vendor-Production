@@ -345,17 +345,22 @@ const AddProducts = () => {
                     <span className="text-red-500 text-[24px]">*</span>
                   </label>
                   <ReactQuill
-                    className="rounded border border-gray-300 dark:border-none py-2 px-3 text-black dark:text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:focus:border-primary min-h-[150px]"
+                    className="rounded border-gray-300 dark:border-none py-2 px-3 text-black dark:bg-[#e7e0ec] min-h-[150px]"
                     theme="snow"
                     value={productData.short_description}
                     formats={formats}
-                    onChange={(textValue) =>
-                      setProductData({
-                        ...productData,
-                        short_description: textValue,
-                      })
-                    }
+                    onChange={(e) => {
+                      if (e.length <= 300) {
+                        setProductData({
+                          ...productData,
+                          short_description: e,
+                        });
+                      }
+                    }}
                   />
+                  <div className="text-xs mt-2 text-gray-500 dark:text-gray-400">
+                    {productData.short_description.length}/300 characters
+                  </div>
                 </div>
                 <div className="w-full pt-6">
                   <label
