@@ -1,21 +1,18 @@
 "use client";
 import Image from "next/image";
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getCategories,
   getProducts,
   getSubcategories,
-  updateProducts,
 } from "@/api/products";
 import { Product } from "@/types/product";
 import { redirect } from "next/navigation";
-import { data } from "autoprefixer";
 import { deleteProduct } from "@/api/products";
 import React from "react";
 import Loader from "../common/Loader";
 import Link from "next/link";
 import { FaEdit, FaTrash } from "react-icons/fa";
-import { MyContext } from "@/app/providers/context";
 import ConfirmationModal from "../Modals/ConfirmDelete";
 import { toast } from "react-toastify";
 
@@ -196,10 +193,10 @@ const ProductsTable = (props: { Products: Product[] }) => {
                 </div>
                 <div className=" hidden items-center sm:flex">
                   <p className="text-sm text-black dark:text-white">
-                    {product.category.name}
+                    {product?.category?.name}
                     <br />
                     |-
-                    {" " + product.subcategory.name}
+                    {" " + product?.subcategory?.name}
                   </p>
                 </div>
                 <div className=" hidden sm:flex items-center">
