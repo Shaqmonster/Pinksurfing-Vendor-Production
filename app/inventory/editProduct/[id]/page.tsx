@@ -29,13 +29,14 @@ export default function EditProduct({ params }: { params: { id: string } }) {
     () => dynamic(() => import("react-quill"), { ssr: false }),
     []
   );
-  const [attribute, setAttribute] = useState([
-    {
-      name: "",
-      value: "",
-      additional_price: 0,
-    },
-  ]);
+
+  interface Attribute {
+    name: string;
+    value: string;
+    additional_price: number;
+  }
+  
+  const [attribute, setAttribute] = useState<Attribute[]>([]);
 
   interface ProductData {
     name: string;
