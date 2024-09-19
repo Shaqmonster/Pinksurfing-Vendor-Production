@@ -11,6 +11,8 @@ import Loader from "@/components/common/Loader";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 
+
+
 const AddProducts = () => {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
@@ -26,13 +28,13 @@ const AddProducts = () => {
     () => dynamic(() => import("react-quill"), { ssr: false }),
     []
   );
-  const [attribute, setAttribute] = useState([
-    {
-      name: "",
-      value: "",
-      additional_price: 0,
-    },
-  ]);
+  
+  interface Attribute {
+    name: string;
+    value: string;
+    additional_price: number;
+  }
+  const [attribute, setAttribute] = useState<Attribute[]>([]);
 
   interface ProductData {
     name: string;
