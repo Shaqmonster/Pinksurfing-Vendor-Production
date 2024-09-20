@@ -21,6 +21,7 @@ export default function EditProduct({ params }: { params: { id: string } }) {
   const [subcategories, setSubcategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
+  const [subcategoriesLoading, setSubcategoriesLoading] = useState(false);
   const [allowedAttributes, setAllowedAttributes] = useState([]);
   const [files, setFiles] = useState<File[]>([]);
   const [hasDiscount, setHasDiscount] = useState(false);
@@ -35,7 +36,7 @@ export default function EditProduct({ params }: { params: { id: string } }) {
     value: string;
     additional_price: number;
   }
-  
+
   const [attribute, setAttribute] = useState<Attribute[]>([]);
 
   interface ProductData {
@@ -104,12 +105,22 @@ export default function EditProduct({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     if (selectedCategory) {
-      getSubcategories(selectedCategory).then((data) => {
-        setSubcategories(data.data);
-      });
+      setSubcategoriesLoading(true);
+      getSubcategories(selectedCategory)
+        .then((data) => {
+          setSubcategories(data.data);
+          setSubcategoriesLoading(false);
+        })
+        .catch(() => {
+          setSubcategoriesLoading(false);
+        });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
+
+  const updateSubCategory = (value: string) => {
+    setSelectedCategory(value);
+    console.log(value);
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("access");
@@ -127,11 +138,6 @@ export default function EditProduct({ params }: { params: { id: string } }) {
       notifyError("No access token found");
     }
   }, [params.id]);
-
-  const updateSubCategory = (value: string) => {
-    setSelectedCategory(value);
-    console.log(value);
-  };
 
   const updateProductData = (
     key: keyof Product | "brand_name",
@@ -233,6 +239,7 @@ export default function EditProduct({ params }: { params: { id: string } }) {
                       <select
                         className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 dark:bg-[#e7e0ec] dark:border-none dark:text-black"
                         id="grid-state"
+                        disabled={subcategoriesLoading || !selectedCategory} 
                         onChange={(e) => {
                           updateSubCategory(e.target.value);
                           updateProductData("category", e.target?.value);
@@ -301,6 +308,7 @@ export default function EditProduct({ params }: { params: { id: string } }) {
                             setAllowedAttributes([]);
                             setAttribute([]);
                           }
+                          setSubcategoriesLoading(false);
                         }}
                       >
                         <option value="0">Choose</option>

@@ -11,8 +11,6 @@ import Loader from "@/components/common/Loader";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 
-
-
 const AddProducts = () => {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
@@ -20,6 +18,7 @@ const AddProducts = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [allowedAttributes, setAllowedAttributes] = useState([]);
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
+  const [subcategoriesLoading, setSubcategoriesLoading] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [hasDiscount, setHasDiscount] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -28,7 +27,7 @@ const AddProducts = () => {
     () => dynamic(() => import("react-quill"), { ssr: false }),
     []
   );
-  
+
   interface Attribute {
     name: string;
     value: string;
@@ -102,17 +101,20 @@ const AddProducts = () => {
 
   useEffect(() => {
     if (selectedCategory) {
+      setSubcategoriesLoading(true); 
       getSubcategories(selectedCategory).then((data) => {
         setSubcategories(data.data);
+        setSubcategoriesLoading(false);  
+      }).catch(() => {
+        setSubcategoriesLoading(false); 
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
-
+  
   const updateSubCategory = (value: string) => {
     setSelectedCategory(value);
     console.log(value);
-  };
+  };  
 
   const updateProductData = (
     key: keyof Product | "brand_name",
@@ -239,6 +241,7 @@ const AddProducts = () => {
                       </div>
                     </div>
                   </div>
+
                   <div className="w-full xl:w-1/2">
                     <label
                       className="block uppercase tracking-wide text-xs font-bold mb-2"
@@ -250,6 +253,7 @@ const AddProducts = () => {
                       <select
                         className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 dark:bg-[#e7e0ec] dark:border-none dark:text-black"
                         id="grid-state"
+                        disabled={subcategoriesLoading || !selectedCategory} 
                         onChange={(e: any) => {
                           const selectedSlug = e.target.value;
                           setSelectedSubcategory(selectedSlug);
@@ -276,6 +280,7 @@ const AddProducts = () => {
                             setAllowedAttributes([]);
                             setAttribute([]);
                           }
+                          setSubcategoriesLoading(false);
                         }}
                       >
                         <option value="0">Choose</option>
