@@ -78,7 +78,7 @@ const Sidebar = () => {
           className="normal-case text-xl flex flex-row items-center font-bold text-black dark:text-white"
         >
           <Image
-            src="/images/bitcoin.jpg"
+            src="/images/bitcoin.png"
             alt=""
             height={40}
             width={40}

@@ -92,7 +92,7 @@ const SignIn: React.FC = () => {
           if (e.response.status == 401) {
             setError("Invalid email or password");
           } else {
-            setError("Cannot connect to server");
+            setError("Invalid email or password");
           }
         });
       setLoading(false);
@@ -119,7 +119,7 @@ const SignIn: React.FC = () => {
         if ("response" in data && data.response.status > 399) {
           setError("Invalid email or password");
         } else {
-          setError("Cannot connect to server");
+          setError("Invalid email or password");
         }
       }
     } else {
