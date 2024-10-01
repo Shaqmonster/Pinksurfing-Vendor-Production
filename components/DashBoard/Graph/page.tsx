@@ -10,6 +10,9 @@ interface GraphSectionProps {
   width?: number | string;
 }
 
+// a
+
+
 const GraphSection: React.FC<GraphSectionProps> = ({
   height = 100,
   width = "100%",
