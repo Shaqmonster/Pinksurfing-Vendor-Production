@@ -15,6 +15,7 @@ import { MyContext } from "@/app/providers/context";
 import Loader from "@/components/common/Loader";
 import { toast } from "react-toastify";
 import { FaEnvelope, FaLock, FaTimes } from "react-icons/fa";
+import { handleError, handleSuccess } from "@/utils/toast";
 
 const SignIn: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -89,14 +90,19 @@ const SignIn: React.FC = () => {
       let data = await signIn({ email, password })
         .then((res) => res)
         .catch((e) => {
+          console.log(e)
           if (e.response.status == 401) {
-            setError("Invalid email or password");
+            console.log(e)
+            handleError("Invalid email or password")
           } else {
-            setError("Invalid email or password");
+            handleError("Invalid email or password")
           }
         });
       setLoading(false);
+      setError("");
       if (data && data.status === 409) {
+        console.log(data?.message)
+        handleError(data?.message)
         localStorage.setItem("customer", JSON.stringify(parseJwt(data.token)));
         setAuthpage("register-as-vendor");
       } else if (data && "token" in data) {
@@ -107,7 +113,7 @@ const SignIn: React.FC = () => {
           localStorage.setItem("refresh", refresh);
           localStorage.setItem("vendor_id", data.id);
           setIsLoggedIn(true);
-          toast.success("Login successful");
+          handleSuccess("Login Successful");
         }
 
         if (data) {
@@ -117,9 +123,10 @@ const SignIn: React.FC = () => {
         router.push("/dashboard");
       } else {
         if ("response" in data && data.response.status > 399) {
-          setError("Invalid email or password");
+          handleError("Invalid email or password")
         } else {
-          setError("Invalid email or password");
+          console.log(data)
+          handleError(data.message || "Invalid email or password")
         }
       }
     } else {

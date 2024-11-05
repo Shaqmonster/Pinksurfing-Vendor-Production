@@ -10,6 +10,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Loader from "@/components/common/Loader";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
+import { handleError } from "@/utils/toast";
 
 const AddProducts = () => {
   const [categories, setCategories] = useState([]);
@@ -101,20 +102,20 @@ const AddProducts = () => {
 
   useEffect(() => {
     if (selectedCategory) {
-      setSubcategoriesLoading(true); 
+      setSubcategoriesLoading(true);
       getSubcategories(selectedCategory).then((data) => {
         setSubcategories(data.data);
-        setSubcategoriesLoading(false);  
+        setSubcategoriesLoading(false);
       }).catch(() => {
-        setSubcategoriesLoading(false); 
+        setSubcategoriesLoading(false);
       });
     }
   }, [selectedCategory]);
-  
+
   const updateSubCategory = (value: string) => {
     setSelectedCategory(value);
     console.log(value);
-  };  
+  };
 
   const updateProductData = (
     key: keyof Product | "brand_name",
@@ -169,15 +170,15 @@ const AddProducts = () => {
         );
         console.log(res);
         setLoading(false);
-        if (res.error) {
-          notifyError(res.message || "Error adding product");
+        if (res.status > 399) {
+          handleError(res.data.Status || "Error adding product");
         } else {
           console.log(res);
           notifySuccess(res.data.Status);
           router.push("/inventory/products");
         }
       } catch (error) {
-        notifyError(error.message || "Unexpected error occurred");
+        handleError(error.response.data.message || "Unexpected error occurred");
         setLoading(false);
       }
     }
@@ -220,14 +221,14 @@ const AddProducts = () => {
                         <option value="0">Choose</option>
                         {categories.length
                           ? categories.map(
-                              (cat: { slug: string; name: string }, index) => {
-                                return (
-                                  <option key={index} value={cat.slug}>
-                                    {cat.name}
-                                  </option>
-                                );
-                              }
-                            )
+                            (cat: { slug: string; name: string }, index) => {
+                              return (
+                                <option key={index} value={cat.slug}>
+                                  {cat.name}
+                                </option>
+                              );
+                            }
+                          )
                           : null}
                       </select>
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
@@ -365,9 +366,15 @@ const AddProducts = () => {
                       }
                     }}
                   />
-                  <div className="text-xs mt-2 text-gray-500 dark:text-gray-400">
+                  <div
+                    className={`text-xs mt-2 ${productData.short_description.length >= 300
+                        ? 'text-red-500'
+                        : 'text-gray-500 dark:text-gray-400'
+                      }`}
+                  >
                     {productData.short_description.length}/300 characters
                   </div>
+
                 </div>
                 <div className="w-full pt-6">
                   <label
