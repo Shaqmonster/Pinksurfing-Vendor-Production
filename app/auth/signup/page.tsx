@@ -4,7 +4,7 @@ import React, {
   Dispatch,
   SetStateAction,
   useContext,
-  useEffect,
+  useEffect
 } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -28,12 +28,13 @@ import {
   FaPhone,
   FaSearch,
   FaStore,
-  FaUser,
+  FaUser
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import Loader from "@/components/common/Loader";
 import { Country, State, City } from "country-state-city";
 import { getVendorProfile } from "@/api/products";
+import { handleError, handleSuccess } from "@/utils/toast";
 
 type SignUpProps = {
   setIsLoggedIn: Dispatch<SetStateAction<boolean>>;
@@ -77,7 +78,7 @@ const SignUp: React.FC = () => {
     zip_code: "",
     entered_otp: "",
     shop_image: null,
-    profile_pic: null,
+    profile_pic: null
   });
 
   const router = useRouter();
@@ -104,7 +105,7 @@ const SignUp: React.FC = () => {
       }
       setPayload((prevPayload) => ({
         ...prevPayload,
-        shop_image: selectedFile,
+        shop_image: selectedFile
       }));
     }
   };
@@ -112,7 +113,7 @@ const SignUp: React.FC = () => {
   const handleRemoveStoreFile = () => {
     setPayload((prevPayload) => ({
       ...prevPayload,
-      shop_image: null,
+      shop_image: null
     }));
   };
 
@@ -126,7 +127,7 @@ const SignUp: React.FC = () => {
       }
       setPayload((prevPayload) => ({
         ...prevPayload,
-        profile_pic: selectedFile,
+        profile_pic: selectedFile
       }));
     }
   };
@@ -134,11 +135,11 @@ const SignUp: React.FC = () => {
   const handleRemoveProfilePicture = () => {
     setPayload((prevPayload) => ({
       ...prevPayload,
-      profile_pic: null,
+      profile_pic: null
     }));
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: any) => {
     event.preventDefault();
     setIsError(false);
     setErrorMessage("");
@@ -154,7 +155,7 @@ const SignUp: React.FC = () => {
     console.log(response);
 
     if (response.access) {
-      toast.success("Registration Successful!");
+      handleSuccess("Registration Successful!");
       if (typeof window !== "undefined") {
         localStorage.setItem("access", response.access);
         localStorage.setItem("vendor_id", response.vendor_id);
@@ -170,15 +171,18 @@ const SignUp: React.FC = () => {
         setIsLoggedIn(true);
         router.push("/dashboard");
       }
-    } else {
-      let { data } = response;
+    } else if (response.status || response.error) {
       setIsError(true);
-      console.log(data);
-      if (data.error) {
-        setErrorMessage(data.error);
-      } else {
-        setErrorMessage("An unknown error occurred during signup.");
-      }
+      const errorToDisplay =
+        response.status ||
+        response.error ||
+        response.message ||
+        "An unknown error occurred during signup.";
+
+      handleError(errorToDisplay);
+      setErrorMessage(errorToDisplay);
+    } else {
+      setErrorMessage("An unknown error occurred during signup.");
     }
   };
 
@@ -569,7 +573,7 @@ const SignUp: React.FC = () => {
                           color: "black",
                           backgroundColor: "transparent",
                           outline: "none",
-                          border: "1px solid rgba(226, 232, 240, 1)",
+                          border: "1px solid rgba(226, 232, 240, 1)"
                         }}
                         containerStyle={{ backgroundColor: "#2d1e5f" }}
                       />

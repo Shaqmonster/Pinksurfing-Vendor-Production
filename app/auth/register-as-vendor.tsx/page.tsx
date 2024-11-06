@@ -32,6 +32,7 @@ import {
 } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import Loader from "@/components/common/Loader";
+import { handleError, handleSuccess } from "@/utils/toast";
 
 type SignUpProps = {
   setIsLoggedIn: Dispatch<SetStateAction<boolean>>;
@@ -148,7 +149,7 @@ const RegisterAsVendor: React.FC = () => {
     console.log(response);
 
     if (response.token) {
-      toast.success("Registration Successful!");
+      handleSuccess("Registration Successful!");
       if (typeof window !== "undefined") {
         localStorage.setItem("access", response.token);
         localStorage.setItem("vendor_id", response.vendor_id);
@@ -161,7 +162,12 @@ const RegisterAsVendor: React.FC = () => {
       setIsError(true);
       if (data.error) {
         setErrorMessage(data.error);
+        handleError(data.error);
+      } else if (data?.message) {
+        handleError(data.message);
+        setErrorMessage(data.message);
       } else {
+        handleError("An unknown error occurred during signup.");
         setErrorMessage("An unknown error occurred during signup.");
       }
     }
