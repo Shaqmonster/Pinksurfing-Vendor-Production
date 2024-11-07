@@ -15,6 +15,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Loader from "@/components/common/Loader";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
+import { useRouter } from "next/navigation";
 
 export default function EditProduct({ params }: { params: { id: string } }) {
   const [categories, setCategories] = useState([]);
@@ -26,6 +27,7 @@ export default function EditProduct({ params }: { params: { id: string } }) {
   const [files, setFiles] = useState<File[]>([]);
   const [hasDiscount, setHasDiscount] = useState(false);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
   const ReactQuill = useMemo(
     () => dynamic(() => import("react-quill"), { ssr: false }),
     []
@@ -196,9 +198,10 @@ export default function EditProduct({ params }: { params: { id: string } }) {
         } else {
           console.log(res);
           notifySuccess(res.data.Status);
+          router.push("/inventory/products");
         }
       } catch (error) {
-        notifyError(error.message || "Unexpected error occurred");
+        notifyError("Unexpected error occurred");
         setLoading(false);
       }
     }
@@ -209,6 +212,16 @@ export default function EditProduct({ params }: { params: { id: string } }) {
     delete updatedProductData[`image${imageKey}`];
     setProductData(updatedProductData);
   };
+  useEffect(() => {
+    if (productData.category?.slug) {
+      setSelectedCategory(productData.category.slug);
+    }
+  }, [productData.category]);
+  useEffect(() => {
+    if (productData.subcategory?.slug) {
+      setSelectedSubcategory(productData.subcategory.slug);
+    }
+  }, [productData.subcategory]);
 
   return (
     <div className="mx-auto max-w-270">
@@ -244,6 +257,7 @@ export default function EditProduct({ params }: { params: { id: string } }) {
                           updateSubCategory(e.target.value);
                           updateProductData("category", e.target?.value);
                         }}
+                        value={selectedCategory || "0"}
                       >
                         <option value="0">Choose</option>
                         {categories.length
@@ -310,6 +324,7 @@ export default function EditProduct({ params }: { params: { id: string } }) {
                           }
                           setSubcategoriesLoading(false);
                         }}
+                        value={selectedSubcategory || "0"}
                       >
                         <option value="0">Choose</option>
                         {subcategories.length && selectedCategory ? (

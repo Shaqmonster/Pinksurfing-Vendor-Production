@@ -4,6 +4,8 @@ import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import Image from "next/image";
 import { getVendorProfile, updateVendorProfile } from "@/api/products";
 import { useRouter } from 'next/router';
+import Loader, { Loader2 } from "@/components/common/Loader";
+import { toast } from "react-toastify";
 
 const Settings = () => {
 
@@ -27,33 +29,35 @@ const Settings = () => {
   const [loading, setLoading] = useState(false);
 
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const { data, error } = await getVendorProfile(token);
-        if (!error) {
-          console.log('Profile Data:', data);
+  const fetchProfile = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await getVendorProfile(token);
+      if (!error) {
+        console.log('Profile Data:', data);
 
-          setStoreName(data.store_name);
-          setContactPersonName(data.contact_person_name);
-          setEmail(data.email);
-          setPhoneNumber(data.phone_number);
-          setStreet1(data.street1);
-          setStreet2(data.street2);
-          setCity(data.city);
-          setState(data.state);
-          setCountry(data.country);
-          setZipCode(data.zip_code);
-          setWebsite(data.website);
-          setBio(data.bio);
-        } else {
-          console.error('Error fetching profile:', error);
-        }
-      } catch (error) {
-        console.error('Unexpected error:', error);
+        setStoreName(data.store_name);
+        setContactPersonName(data.contact_person_name);
+        setEmail(data.email);
+        setPhoneNumber(data.phone_number);
+        setStreet1(data.street1);
+        setStreet2(data.street2);
+        setCity(data.city);
+        setState(data.state);
+        setCountry(data.country);
+        setZipCode(data.zip_code);
+        setWebsite(data.website);
+        setBio(data.bio);
+      } else {
+        console.error('Error fetching profile:', error);
       }
-    };
-
+    } catch (error) {
+      console.error('Unexpected error:', error);
+    } finally{
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
     fetchProfile();
   }, [token]);
 
@@ -78,16 +82,28 @@ const Settings = () => {
       bio: bio,
     };
 
-    const { data, error } = await updateVendorProfile(token, updatedData);
-
-    if (!error) {
-      window.location.reload();
-    } else {
+    try {
+      const { data, error } = await updateVendorProfile(token, updatedData);
+      if (!error) {
+        toast.success(data.status)
+        await fetchProfile();
+      } else {
+        console.log(data)
+        toast.error(data.response.data.error || data.response.data.website[0] || "Error Updating the Profile");
+        console.error("Error updating profile:", error);
+      }
+    } catch (error) {
+      toast.success("Unexpected error,please try again after some time");
+      console.error("Unexpected error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <>
+          {loading && <Loader2 />}
+
       <div className="mx-auto max-w-270">
         <Breadcrumb pageName="Settings" />
 

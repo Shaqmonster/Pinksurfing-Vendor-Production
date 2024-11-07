@@ -63,7 +63,7 @@ export async function updateVendorProfile(
     const { status, data } = response;
     return { status, data, error: false };
   } catch (error) {
-    return { error: true, data: null };
+    return { error: true, data: error };
   }
 }
 
@@ -156,7 +156,7 @@ export async function saveProducts(
     const { status, data } = response;
     return { status, data, error: false };
   } catch (error) {
-    const { status, message, response } = error;
+    const { status, message, response } : any = error;
     return { status, data: response, message, error: true };
   }
 }

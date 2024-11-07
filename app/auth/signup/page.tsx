@@ -540,9 +540,11 @@ const SignUp: React.FC = () => {
                         onClick={async () => {
                           const res = await sendOtp(Payload.email);
                           console.log(res);
-
-                          if (res) {
+                        
+                          if (res.success) {
                             toast.success(res.message);
+                          } else {
+                            toast.error(res.message);
                           }
                         }}
                         disabled={!Payload.email || emailError}

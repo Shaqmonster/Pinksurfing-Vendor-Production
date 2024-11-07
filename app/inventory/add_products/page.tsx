@@ -7,7 +7,7 @@ import { Product } from "@/types/product";
 import { useRouter } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Loader from "@/components/common/Loader";
+import Loader, { Loader2 } from "@/components/common/Loader";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { handleError } from "@/utils/toast";
@@ -169,17 +169,20 @@ const AddProducts = () => {
           files
         );
         console.log(res);
-        setLoading(false);
-        if (res.status > 399) {
-          handleError(res.data.Status || "Error adding product");
-        } else {
+        if(!res.error){
           console.log(res);
-          notifySuccess(res.data.Status);
+          toast.success(res.data.Status);
           router.push("/inventory/products");
         }
+        else{
+          console.log(res);
+          handleError(res.data.data.Status || "Error adding product");
+        }
       } catch (error) {
-        handleError(error.response.data.message || "Unexpected error occurred");
-        setLoading(false);
+        console.log(error)
+        toast.error(error.response.data.message || "Unexpected error occurred");
+      } finally{
+        setLoading(false)
       }
     }
   };
@@ -187,7 +190,7 @@ const AddProducts = () => {
   return (
     <div className="mx-auto max-w-270">
       {loading ? (
-        <Loader />
+        <Loader2 />
       ) : (
         <form onSubmit={handleSave} className="">
           <div className="flex justify-between border-b border-gray-200 pb-3 mb-6">
