@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { toast } from "react-toastify";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -110,10 +110,16 @@ export async function sendOtp(email: any) {
       "https://auth.pinksurfing.com/api/send-otp/",
       { email }
     );
-    return response.data;
-  } catch (error) {
-    console.error("Error sending OTP:", error);
-    throw error;
+    return { success: true, message: response.data.message };
+  } catch (error : any) {
+    console.log(error)
+    if (error.response) {
+      return {
+        success: false,
+        message: error.response?.data?.Error || error.response?.data?.message || "An error occurred",
+      };
+    }
+    return { success: false, message: "Failed to send OTP due to network error" };
   }
 }
 
