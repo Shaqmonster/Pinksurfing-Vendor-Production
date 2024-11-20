@@ -123,15 +123,15 @@ const Page = ({ params }: { params: { id: string } }) => {
                         className="w-full rounded border bg-gray py-3 px-4.5 text-black dark:bg-meta-4"
                         value={selectedStatus || orderData?.order_status || ""}
                         onChange={handleStatusSelect}
-                        disabled={orderData?.order_status === "shipped"}
+                        disabled={orderData?.order_status === "shipped".toUpperCase()}
                       >
                         <option value="" disabled>
                           Select a status
                         </option>
-                        {orderData?.order_status === "received" && (
+                        {orderData?.order_status === "received".toUpperCase() && (
                           <option value="packed">Packed</option>
                         )}
-                        {orderData?.order_status === "packed" && (
+                        {orderData?.order_status === "packed".toUpperCase() && (
                           <option value="shipped">Shipped</option>
                         )}
                       </select>
