@@ -162,10 +162,10 @@ const Page = ({ params }: { params: { id: string } }) => {
                         "opacity-50 cursor-not-allowed"
                       }`}
                       onClick={handleStatusChange}
-                      disabled={
-                        !selectedStatus ||
-                        selectedStatus === orderData?.order_status
-                      }
+                      // disabled={
+                      //   !selectedStatus ||
+                      //   selectedStatus === orderData?.order_status
+                      // }
                     >
                       Change Status
                     </button>
