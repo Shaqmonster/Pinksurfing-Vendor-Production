@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import { getSingleOrder, changeOrderStatus } from "@/api/products";
+import { toast } from "react-toastify";
+import { buyShipmentLabel, getParcelDetails } from "@/api/orders";
 
 const Page = ({ params }: { params: { id: string } }) => {
   const [token, setToken] = useState<string | null>(
@@ -10,9 +12,15 @@ const Page = ({ params }: { params: { id: string } }) => {
   const [loading, setLoading] = useState(true);
   const [orderData, setOrderData] = useState<any>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
-  const [additionalFields, setAdditionalFields] = useState<string>("");
+  const [additionalFields, setAdditionalFields] = useState({
+    length: "",
+    width: "",
+    height: "",
+    weight: ""
+  });
   const [showAdditionalFields, setShowAdditionalFields] = useState(false);
-
+  const [showShipmentButton, setShowShipmentButton] = useState(false);
+  const [parcelId,setParcelId] = useState<string | null>(null);
   useEffect(() => {
     const fetchSingleOrder = async () => {
       try {
@@ -23,6 +31,7 @@ const Page = ({ params }: { params: { id: string } }) => {
             data["Order Details"]?.order_status?.trim().toUpperCase() ===
             "SHIPPED";
           setShowAdditionalFields(isShipped);
+          setSelectedStatus(data["Order Details"]?.order_status);
         } else {
           console.error("Error fetching order:", error);
         }
@@ -40,29 +49,36 @@ const Page = ({ params }: { params: { id: string } }) => {
     const selectedValue = e.target.value;
     if (selectedValue !== selectedStatus) {
       setSelectedStatus(selectedValue);
-      setAdditionalFields(""); // Reset additional fields when the status changes
+      setAdditionalFields({
+        length: "",
+        width: "",
+        height: "",
+        weight: ""
+      }); // Reset additional fields when the status changes
     }
   };
 
   const handleStatusChange = async () => {
-    if (!selectedStatus || selectedStatus === orderData?.order_status) return;
-
+    if (!selectedStatus) return;
+    setSelectedStatus("PACKED");
     try {
       const response = await changeOrderStatus(
+        token,
         params.id,
         selectedStatus,
         additionalFields
       );
-
       if (response.error) {
         console.error("Failed to update order status:", response.error);
       } else {
-        console.log("Order status updated successfully");
+        console.log("Order status updated successfully", response.data);
         setOrderData((prevData: any) => ({
           ...prevData,
-          order_status: selectedStatus,
+          order_status: selectedStatus
         }));
-
+        toast.success(response.data.Success);
+        await getParcelId();
+        setShowShipmentButton(true);
         if (selectedStatus === "shipped") {
           setShowAdditionalFields(true);
         }
@@ -71,7 +87,38 @@ const Page = ({ params }: { params: { id: string } }) => {
       console.error("Error updating order status:", error);
     }
   };
-
+  const getParcelId = async () => {
+    try {
+      const response = await getParcelDetails(params.id,token);
+      if (response.error) {
+        toast.error("Failed to get parcel details:");
+        console.error("Failed to get parcel details:", response.error);
+      } else {
+        setParcelId(response.data.parcel_id);
+        console.log("Parcel details fetched successfully", response.data);
+        toast.success(response.data.Success);
+      }
+    } catch (error) {
+      console.error("Error getting parcel details:", error);
+    }
+  };
+  const handleBuyShipmentLabel = async () => {
+    console.log("Buying shipment label for parcel:", parcelId);
+    if(!parcelId) return;
+    try {
+      const response = await buyShipmentLabel(parcelId, token);
+      console.log(response);
+      if (response.error) {
+        toast.error("Failed to buy shipment label:");
+        console.error("Failed to buy shipment label:", response.error);
+      } else {
+        console.log("Shipment label bought successfully", response.data);
+        toast.success(response.data.Success);
+      }
+    } catch (error) {
+      console.error("Error buying shipment label:", error);
+    }
+  };
   return (
     <>
       <div className="mx-auto max-w-270">
@@ -117,9 +164,9 @@ const Page = ({ params }: { params: { id: string } }) => {
 
                     <div className="mb-5.5">
                       <label className="mb-3 block text-sm font-medium">
-                        Order Status
+                        Order Status : {orderData?.order_status}
                       </label>
-                      <select
+                      {/* <select
                         className="w-full rounded border bg-gray py-3 px-4.5 text-black dark:bg-meta-4"
                         value={selectedStatus || orderData?.order_status || ""}
                         onChange={handleStatusSelect}
@@ -134,10 +181,78 @@ const Page = ({ params }: { params: { id: string } }) => {
                         {orderData?.order_status === "packed".toUpperCase() && (
                           <option value="shipped">Shipped</option>
                         )}
-                      </select>
+                      </select> */}
+                    </div>
+                    <div className="mb-5.5">
+                      <label className="mb-3 block text-sm font-medium">
+                        Length
+                      </label>
+                      <input
+                        className="w-full rounded border bg-gray py-3 px-4.5 text-black dark:bg-meta-4"
+                        type="text"
+                        value={additionalFields.length || ""}
+                        onChange={(e) =>
+                          setAdditionalFields((prev: any) => ({
+                            ...prev,
+                            length: e.target.value
+                          }))
+                        }
+                        placeholder="Enter length"
+                      />
+                    </div>
+                    <div className="mb-5.5">
+                      <label className="mb-3 block text-sm font-medium">
+                        Width
+                      </label>
+                      <input
+                        className="w-full rounded border bg-gray py-3 px-4.5 text-black dark:bg-meta-4"
+                        type="text"
+                        value={additionalFields.width || ""}
+                        onChange={(e) =>
+                          setAdditionalFields((prev: any) => ({
+                            ...prev,
+                            width: e.target.value
+                          }))
+                        }
+                        placeholder="Enter width"
+                      />
+                    </div>
+                    <div className="mb-5.5">
+                      <label className="mb-3 block text-sm font-medium">
+                        Height
+                      </label>
+                      <input
+                        className="w-full rounded border bg-gray py-3 px-4.5 text-black dark:bg-meta-4"
+                        type="text"
+                        value={additionalFields.height || ""}
+                        onChange={(e) =>
+                          setAdditionalFields((prev: any) => ({
+                            ...prev,
+                            height: e.target.value
+                          }))
+                        }
+                        placeholder="Enter height"
+                      />
+                    </div>
+                    <div className="mb-5.5">
+                      <label className="mb-3 block text-sm font-medium">
+                        Weight
+                      </label>
+                      <input
+                        className="w-full rounded border bg-gray py-3 px-4.5 text-black dark:bg-meta-4"
+                        type="text"
+                        value={additionalFields.weight || ""}
+                        onChange={(e) =>
+                          setAdditionalFields((prev: any) => ({
+                            ...prev,
+                            weight: e.target.value
+                          }))
+                        }
+                        placeholder="Enter weight"
+                      />
                     </div>
 
-                    {showAdditionalFields && (
+                    {/* {showAdditionalFields && (
                       <div className="mb-5.5">
                         <label className="mb-3 block text-sm font-medium">
                           Additional Information
@@ -146,19 +261,28 @@ const Page = ({ params }: { params: { id: string } }) => {
                           className="w-full rounded border bg-gray py-3 px-4.5 text-black dark:bg-meta-4"
                           type="text"
                           value={additionalFields}
-                          onChange={(e) =>
-                            setAdditionalFields(e.target.value)
-                          }
+                          onChange={(e) => setAdditionalFields(e.target.value)}
                           placeholder="Enter additional information"
                         />
                       </div>
+                    )} */}
+                    {showShipmentButton && (
+                      <button
+                        type="button"
+                        className={`bg-primary text-white py-2 px-6 rounded-full block mb-4`}
+                        onClick={handleBuyShipmentLabel}
+                      >
+                        Buy Shipment Label
+                      </button>
                     )}
-
                     <button
                       type="button"
                       className={`bg-primary text-white py-2 px-6 rounded-full ${
                         (!selectedStatus ||
-                          selectedStatus === orderData?.order_status) &&
+                          !additionalFields.length ||
+                          !additionalFields.width ||
+                          !additionalFields.height ||
+                          !additionalFields.weight) &&
                         "opacity-50 cursor-not-allowed"
                       }`}
                       onClick={handleStatusChange}

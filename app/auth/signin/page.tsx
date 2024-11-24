@@ -31,7 +31,7 @@ const SignIn: React.FC = () => {
   const passwordRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
-  const handleChange = (event) => {
+  const handleChange = (event : any) => {
     const { name, value } = event.target;
 
     if (name === "email") {

@@ -215,7 +215,7 @@ const OrderTable = () => {
                     </td>
                     <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">
                       <div className="flex flex-col space-y-2">
-                        {order.order_status === "PACKED" ||
+                        {/* {order.order_status === "PACKED" ||
                         order.order_status === "SHIPPED" ||
                         order.order_status === "DELIVERED" ? (
                           <span className="bg-white dark:bg-primary text-black dark:text-white py-2 px-3 rounded">
@@ -235,8 +235,11 @@ const OrderTable = () => {
                               </option>
                             ))}
                           </select>
-                        )}
-                        {order.order_status === "PACKED" &&
+                        )} */}
+                <span className="bg-white dark:bg-primary text-black dark:text-white py-2 px-3 rounded">
+                            {order.order_status}
+                          </span>
+                        {/* {order.order_status === "PACKED" &&
                           labelUrls[order.id] && (
                             <a
                               href={labelUrls[order.id]}
@@ -247,7 +250,7 @@ const OrderTable = () => {
                             >
                               Download Label
                             </a>
-                          )}
+                          )} */}
                       </div>
                     </td>
                     <td className="border-b border-[#eee] py-5 px-4 dark:border-strokedark">

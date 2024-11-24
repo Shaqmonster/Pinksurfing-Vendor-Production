@@ -297,23 +297,23 @@ export async function getTopSellingProducts(token: string | null) {
 export async function changeOrderStatus(
   token: string | null,
   orderId: string,
-  status: string
+  status: string,
+  additionalFields: { length: string; width: string; height: string; weight: string }
 ) {
   if (!token || !orderId) {
     return { error: true, data: null };
   }
-
+  console.log({ status, ...additionalFields });
   try {
     const response = await axios.post(
       `${BASE_URL}/vendor/change-order-status/${orderId}/`,
-      { status },
+      { status, ...additionalFields },
       {
         headers: {
           Authorization: `Bearer ${token.replaceAll('"', "")}`,
         },
       }
     );
-
     const { status: responseStatus, data } = response;
     return { status: responseStatus, data, error: false };
   } catch (error) {

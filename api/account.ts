@@ -108,7 +108,9 @@ export async function sendOtp(email: any) {
   try {
     const response = await axios.post(
       "https://auth.pinksurfing.com/api/send-otp/",
-      { email }
+      { email ,
+        new_register: "yes"
+      }
     );
     return { success: true, message: response.data.message };
   } catch (error : any) {
