@@ -251,6 +251,17 @@ const Page = ({ params }: { params: { id: string } }) => {
                     </div>
                     <div className="mb-5.5">
                       <label className="mb-3 block text-sm font-medium">
+                        {
+                          orderData?.order_status === "RECEIVED" && (
+                            <p>
+                              Payment Completed
+                            </p>
+                          )
+                        }
+                      </label>
+                    </div>
+                    <div className="mb-5.5">
+                      <label className="mb-3 block text-sm font-medium">
                         Length
                       </label>
                       <input
