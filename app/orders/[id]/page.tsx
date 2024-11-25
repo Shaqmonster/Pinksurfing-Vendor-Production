@@ -140,10 +140,21 @@ const Page = ({ params }: { params: { id: string } }) => {
                     {/* Order Details */}
                     <div className="mb-5.5">
                       <label className="mb-3 block text-sm font-medium">
+                        Order Id
+                      </label>
+                      <input
+                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
+                        type="text"
+                        value={orderData?.id || ""}
+                        readOnly
+                      />
+                    </div>
+                    <div className="mb-5.5">
+                      <label className="mb-3 block text-sm font-medium">
                         Quantity
                       </label>
                       <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 text-black dark:bg-meta-4"
+                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
                         type="text"
                         value={orderData?.quantity || ""}
                         readOnly
@@ -155,9 +166,64 @@ const Page = ({ params }: { params: { id: string } }) => {
                         Total Price
                       </label>
                       <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 text-black dark:bg-meta-4"
+                        className="w-full rounded border bg-gray py-3 px-4.5  dark:bg-meta-4"
                         type="text"
                         value={orderData?.total_price || ""}
+                        readOnly
+                      />
+                    </div>
+                    <div className="mb-5.5">
+                      <label className="mb-3 block text-sm font-medium">
+                        customer
+                      </label>
+                      <input
+                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
+                        type="text"
+                        value={orderData?.customer || ""}
+                        readOnly
+                      />
+                    </div>
+                    <div className="mb-5.5">
+                      <label className="mb-3 block text-sm font-medium">
+                      product
+                      </label>
+                      <input
+                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
+                        type="text"
+                        value={orderData?.product || ""}
+                        readOnly
+                      />
+                    </div>
+                    <div className="mb-5.5">
+                      <label className="mb-3 block text-sm font-medium">
+                      delivery_address
+                      </label>
+                      <input
+                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
+                        type="text"
+                        value={orderData?.delivery_address || ""}
+                        readOnly
+                      />
+                    </div>
+                    <div className="mb-5.5">
+                      <label className="mb-3 block text-sm font-medium">
+                      order_date
+                      </label>
+                      <input
+                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
+                        type="text"
+                        value={orderData?.order_date || ""}
+                        readOnly
+                      />
+                    </div>
+                    <div className="mb-5.5">
+                      <label className="mb-3 block text-sm font-medium">
+                      vendor
+                      </label>
+                      <input
+                        className="w-full rounded border bg-gray py-3 px-4.5  dark:bg-meta-4"
+                        type="text"
+                        value={orderData?.vendor || ""}
                         readOnly
                       />
                     </div>
@@ -188,7 +254,7 @@ const Page = ({ params }: { params: { id: string } }) => {
                         Length
                       </label>
                       <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 text-black dark:bg-meta-4"
+                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
                         type="text"
                         value={additionalFields.length || ""}
                         onChange={(e) =>
@@ -205,7 +271,7 @@ const Page = ({ params }: { params: { id: string } }) => {
                         Width
                       </label>
                       <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 text-black dark:bg-meta-4"
+                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
                         type="text"
                         value={additionalFields.width || ""}
                         onChange={(e) =>
@@ -222,7 +288,7 @@ const Page = ({ params }: { params: { id: string } }) => {
                         Height
                       </label>
                       <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 text-black dark:bg-meta-4"
+                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
                         type="text"
                         value={additionalFields.height || ""}
                         onChange={(e) =>
@@ -239,7 +305,7 @@ const Page = ({ params }: { params: { id: string } }) => {
                         Weight
                       </label>
                       <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 text-black dark:bg-meta-4"
+                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
                         type="text"
                         value={additionalFields.weight || ""}
                         onChange={(e) =>
@@ -266,7 +332,7 @@ const Page = ({ params }: { params: { id: string } }) => {
                         />
                       </div>
                     )} */}
-                    {showShipmentButton && (
+                    {showShipmentButton &&  orderData?.order_status =="PACKED"  && (
                       <button
                         type="button"
                         className={`bg-primary text-white py-2 px-6 rounded-full block mb-4`}
