@@ -174,7 +174,18 @@ const Page = ({ params }: { params: { id: string } }) => {
                     </div>
                     <div className="mb-5.5">
                       <label className="mb-3 block text-sm font-medium">
-                        customer
+                        Customer Name
+                      </label>
+                      <input
+                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
+                        type="text"
+                        value={orderData?.customer_name || ""}
+                        readOnly
+                      />
+                    </div>
+                    <div className="mb-5.5">
+                      <label className="mb-3 block text-sm font-medium">
+                        Customer Email
                       </label>
                       <input
                         className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
