@@ -27,6 +27,7 @@ const Page = ({ params }: { params: { id: string } }) => {
         const { data, error } = await getSingleOrder(token, params.id);
         if (!error) {
           setOrderData(data["Order Details"]);
+          console.log(data["Order Details"]);
           const isShipped =
             data["Order Details"]?.order_status?.trim().toUpperCase() ===
             "SHIPPED";
@@ -191,6 +192,17 @@ const Page = ({ params }: { params: { id: string } }) => {
                         className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
                         type="text"
                         value={orderData?.customer || ""}
+                        readOnly
+                      />
+                    </div>
+                    <div className="mb-5.5">
+                      <label className="mb-3 block text-sm font-medium">
+                        Customer Mobile Number
+                      </label>
+                      <input
+                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
+                        type="text"
+                        value={orderData?.phone || ""}
                         readOnly
                       />
                     </div>
@@ -379,7 +391,7 @@ const Page = ({ params }: { params: { id: string } }) => {
                       //   selectedStatus === orderData?.order_status
                       // }
                     >
-                      Change Status
+                      Product Packed
                     </button>
                   </form>
                 )}
