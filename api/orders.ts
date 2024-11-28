@@ -71,9 +71,10 @@ export async function getParcelDetails(
   return res;
 }
 
+
 export async function buyShipmentLabel(parcelId: string, token: string | null) {
-  let res = await axios
-    .post(
+  try {
+    const response = await axios.post(
       `${BASE_URL}/shipping/buy-shipment-label/`,
       { parcel_id: parcelId },
       {
@@ -81,10 +82,41 @@ export async function buyShipmentLabel(parcelId: string, token: string | null) {
           Authorization: `Bearer ${token?.replaceAll('"', "")}`,
         },
       }
-    )
-    .then((response) => response)
-    .catch((error) => error);
-  return res;
+    );
+    // Return the response data on success
+    return { error: false, data: response.data };
+  } catch (error: any) {
+    // Handle request errors and API errors
+    if (error.response) {
+      console.error("API responded with an error:", error.response.data);
+      return {
+        error: true,
+        message: error.response.data.message || "Failed to buy shipment label.",
+      };
+    } else {
+      console.error("Request failed:", error.message);
+      return { error: true, message: "Network error or server is unreachable." };
+    }
+  }
+}
+
+export async function getShipmentDetails(orderId: string, token: string | null) {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/shipping/shipping-details/${orderId}/`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token?.replaceAll('"', "")}`,
+        },
+      }
+    );
+    return response.data; // Return response data directly
+  } catch (error) {
+    // Handle error and log it
+    console.error("Error fetching shipment details:", error);
+    throw error;
+  }
 }
 
 export async function getShippingDetails(

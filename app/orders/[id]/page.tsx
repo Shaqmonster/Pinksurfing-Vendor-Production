@@ -3,7 +3,12 @@ import React, { useState, useEffect } from "react";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import { getSingleOrder, changeOrderStatus } from "@/api/products";
 import { toast } from "react-toastify";
-import { buyShipmentLabel, getParcelDetails } from "@/api/orders";
+import {
+  buyShipmentLabel,
+  getParcelDetails,
+  getShipmentDetails
+} from "@/api/orders";
+import { fail } from "assert";
 
 const Page = ({ params }: { params: { id: string } }) => {
   const [token, setToken] = useState<string | null>(
@@ -20,13 +25,17 @@ const Page = ({ params }: { params: { id: string } }) => {
   });
   const [showAdditionalFields, setShowAdditionalFields] = useState(false);
   const [showShipmentButton, setShowShipmentButton] = useState(false);
-  const [parcelId,setParcelId] = useState<string | null>(null);
+  const [parcelId, setParcelId] = useState<string | null>(null);
+  const [showDownloadShipmentLabel, setShowDownloadShipmentLabel] =
+    useState(false);
+    const [orderStatus , setOrderStatus] = useState<string | null>(null);
   useEffect(() => {
     const fetchSingleOrder = async () => {
       try {
         const { data, error } = await getSingleOrder(token, params.id);
         if (!error) {
           setOrderData(data["Order Details"]);
+          setOrderStatus(data["Order Details"]?.order_status);
           console.log(data["Order Details"]);
           const isShipped =
             data["Order Details"]?.order_status?.trim().toUpperCase() ===
@@ -60,37 +69,50 @@ const Page = ({ params }: { params: { id: string } }) => {
   };
 
   const handleStatusChange = async () => {
-    if (!selectedStatus) return;
+    if (!selectedStatus) {
+      toast.error("Please select a status to proceed.");
+      return;
+    }
+
+    // Temporarily update status while processing
     setSelectedStatus("PACKED");
+    setOrderStatus("PACKED");
     try {
       const response = await changeOrderStatus(
         token,
         params.id,
-        selectedStatus,
+        "PACKED",
         additionalFields
       );
-      if (response.error) {
-        console.error("Failed to update order status:", response.error);
-      } else {
-        console.log("Order status updated successfully", response.data);
-        setOrderData((prevData: any) => ({
-          ...prevData,
-          order_status: selectedStatus
-        }));
-        toast.success(response.data.Success);
-        await getParcelId();
-        setShowShipmentButton(true);
-        if (selectedStatus === "shipped") {
-          setShowAdditionalFields(true);
-        }
+
+      // Assuming `response` contains a success message or updated data
+      toast.success("Order status updated successfully!");
+      console.log("Order status updated successfully", response);
+
+      // Update the local order data state
+      setOrderData((prevData: any) => ({
+        ...prevData,
+        order_status: selectedStatus
+      }));
+
+      // Perform additional actions after status change
+      if (selectedStatus === "shipped") {
+        setShowAdditionalFields(true);
       }
-    } catch (error) {
+
+      await getParcelId();
+      setShowShipmentButton(true);
+    } catch (error: any) {
+      // Handle errors gracefully
+      setOrderStatus("RECEIVED");
+      toast.error(error.message || "Failed to update order status.");
       console.error("Error updating order status:", error);
     }
   };
+
   const getParcelId = async () => {
     try {
-      const response = await getParcelDetails(params.id,token);
+      const response = await getParcelDetails(params.id, token);
       if (response.error) {
         toast.error("Failed to get parcel details:");
         console.error("Failed to get parcel details:", response.error);
@@ -105,21 +127,67 @@ const Page = ({ params }: { params: { id: string } }) => {
   };
   const handleBuyShipmentLabel = async () => {
     console.log("Buying shipment label for parcel:", parcelId);
-    if(!parcelId) return;
+
+    if (!parcelId) {
+      toast.error("Parcel ID is missing!");
+      return;
+    }
+
     try {
       const response = await buyShipmentLabel(parcelId, token);
-      console.log(response);
+
       if (response.error) {
-        toast.error("Failed to buy shipment label:");
-        console.error("Failed to buy shipment label:", response.error);
+        // Display error message from response
+        toast.error(response.message || "Failed to buy shipment label.");
+        console.error("Failed to buy shipment label:", response.message);
       } else {
+        // Handle success response
         console.log("Shipment label bought successfully", response.data);
-        toast.success(response.data.Success);
+        toast.success("Shipment label bought successfully");
+        setShowDownloadShipmentLabel(true);
       }
     } catch (error) {
+      // Catch any unexpected errors
       console.error("Error buying shipment label:", error);
+      toast.error("An unexpected error occurred. Please try again.");
     }
   };
+
+  const downloadShipmentLabel = async () => {
+    const orderId = orderData?.id;
+    console.log("Downloading shipment label for order:", orderId);
+    if (!orderId) {
+      toast.error("Order ID is missing!");
+      return;
+    }
+
+    try {
+      const response = await getShipmentDetails(orderId, token);
+
+      if (response.postage_label_url) {
+        // Trigger the download
+        const link = document.createElement("a");
+        link.href = response.postage_label_url;
+        link.download = `shipment_label_${orderId}.png`;
+        link.click();
+
+        toast.success("Shipment label downloaded successfully!");
+        console.log("Shipment label downloaded successfully", response);
+      } else {
+        toast.error("Postage label URL not found in the response.");
+        console.error("Postage label URL not found in the response:", response);
+      }
+    } catch (error) {
+      toast.error("Failed to download shipment label.");
+      console.error("Error downloading shipment label:", error);
+    }
+  };
+  useEffect(() => {
+    if (orderData?.order_status === "PACKED") {
+      getParcelId();
+      setShowShipmentButton(true);
+    }
+  }, [orderData]);
   return (
     <>
       <div className="mx-auto max-w-270">
@@ -208,7 +276,7 @@ const Page = ({ params }: { params: { id: string } }) => {
                     </div>
                     <div className="mb-5.5">
                       <label className="mb-3 block text-sm font-medium">
-                      product
+                        product
                       </label>
                       <input
                         className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
@@ -219,7 +287,7 @@ const Page = ({ params }: { params: { id: string } }) => {
                     </div>
                     <div className="mb-5.5">
                       <label className="mb-3 block text-sm font-medium">
-                      delivery_address
+                        delivery_address
                       </label>
                       <input
                         className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
@@ -230,7 +298,7 @@ const Page = ({ params }: { params: { id: string } }) => {
                     </div>
                     <div className="mb-5.5">
                       <label className="mb-3 block text-sm font-medium">
-                      order_date
+                        order_date
                       </label>
                       <input
                         className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
@@ -241,7 +309,7 @@ const Page = ({ params }: { params: { id: string } }) => {
                     </div>
                     <div className="mb-5.5">
                       <label className="mb-3 block text-sm font-medium">
-                      vendor
+                        vendor
                       </label>
                       <input
                         className="w-full rounded border bg-gray py-3 px-4.5  dark:bg-meta-4"
@@ -253,7 +321,7 @@ const Page = ({ params }: { params: { id: string } }) => {
 
                     <div className="mb-5.5">
                       <label className="mb-3 block text-sm font-medium">
-                        Order Status : {orderData?.order_status}
+                        Order Status : {orderStatus}
                       </label>
                       {/* <select
                         className="w-full rounded border bg-gray py-3 px-4.5 text-black dark:bg-meta-4"
@@ -274,125 +342,124 @@ const Page = ({ params }: { params: { id: string } }) => {
                     </div>
                     <div className="mb-5.5">
                       <label className="mb-3 block text-sm font-medium">
-                        {
-                          orderData?.order_status === "RECEIVED" && (
-                            <p>
-                              Payment Completed
-                            </p>
-                          )
-                        }
+                        {orderData?.order_status === "RECEIVED" && (
+                          <p>Payment Completed</p>
+                        )}
                       </label>
                     </div>
-                    <div className="mb-5.5">
-                      <label className="mb-3 block text-sm font-medium">
-                        Length
-                      </label>
-                      <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
-                        type="text"
-                        value={additionalFields.length || ""}
-                        onChange={(e) =>
-                          setAdditionalFields((prev: any) => ({
-                            ...prev,
-                            length: e.target.value
-                          }))
-                        }
-                        placeholder="Enter length"
-                      />
-                    </div>
-                    <div className="mb-5.5">
-                      <label className="mb-3 block text-sm font-medium">
-                        Width
-                      </label>
-                      <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
-                        type="text"
-                        value={additionalFields.width || ""}
-                        onChange={(e) =>
-                          setAdditionalFields((prev: any) => ({
-                            ...prev,
-                            width: e.target.value
-                          }))
-                        }
-                        placeholder="Enter width"
-                      />
-                    </div>
-                    <div className="mb-5.5">
-                      <label className="mb-3 block text-sm font-medium">
-                        Height
-                      </label>
-                      <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
-                        type="text"
-                        value={additionalFields.height || ""}
-                        onChange={(e) =>
-                          setAdditionalFields((prev: any) => ({
-                            ...prev,
-                            height: e.target.value
-                          }))
-                        }
-                        placeholder="Enter height"
-                      />
-                    </div>
-                    <div className="mb-5.5">
-                      <label className="mb-3 block text-sm font-medium">
-                        Weight
-                      </label>
-                      <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
-                        type="text"
-                        value={additionalFields.weight || ""}
-                        onChange={(e) =>
-                          setAdditionalFields((prev: any) => ({
-                            ...prev,
-                            weight: e.target.value
-                          }))
-                        }
-                        placeholder="Enter weight"
-                      />
-                    </div>
+                    {orderData?.order_status === "RECEIVED" &&
+                      !(
+                        showShipmentButton ||
+                        orderData?.order_status == "PACKED"
+                      ) && (
+                        <>
+                          <div className="mb-5.5">
+                            <label className="mb-3 block text-sm font-medium">
+                              Length
+                            </label>
+                            <input
+                              className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
+                              type="text"
+                              value={additionalFields.length || ""}
+                              onChange={(e) =>
+                                setAdditionalFields((prev: any) => ({
+                                  ...prev,
+                                  length: e.target.value
+                                }))
+                              }
+                              placeholder="Enter length"
+                            />
+                          </div>
+                          <div className="mb-5.5">
+                            <label className="mb-3 block text-sm font-medium">
+                              Width
+                            </label>
+                            <input
+                              className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
+                              type="text"
+                              value={additionalFields.width || ""}
+                              onChange={(e) =>
+                                setAdditionalFields((prev: any) => ({
+                                  ...prev,
+                                  width: e.target.value
+                                }))
+                              }
+                              placeholder="Enter width"
+                            />
+                          </div>
+                          <div className="mb-5.5">
+                            <label className="mb-3 block text-sm font-medium">
+                              Height
+                            </label>
+                            <input
+                              className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
+                              type="text"
+                              value={additionalFields.height || ""}
+                              onChange={(e) =>
+                                setAdditionalFields((prev: any) => ({
+                                  ...prev,
+                                  height: e.target.value
+                                }))
+                              }
+                              placeholder="Enter height"
+                            />
+                          </div>
+                          <div className="mb-5.5">
+                            <label className="mb-3 block text-sm font-medium">
+                              Weight
+                            </label>
+                            <input
+                              className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
+                              type="text"
+                              value={additionalFields.weight || ""}
+                              onChange={(e) =>
+                                setAdditionalFields((prev: any) => ({
+                                  ...prev,
+                                  weight: e.target.value
+                                }))
+                              }
+                              placeholder="Enter weight"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            className={`bg-primary text-white py-2 px-6 rounded-full ${
+                              (!selectedStatus ||
+                                !additionalFields.length ||
+                                !additionalFields.width ||
+                                !additionalFields.height ||
+                                !additionalFields.weight) &&
+                              "opacity-50 cursor-not-allowed"
+                            }`}
+                            onClick={handleStatusChange}
+                          >
+                            Product Packed
+                          </button>
+                        </>
+                      )}
+                    {(showShipmentButton ||
+                      orderData?.order_status == "PACKED") &&
+                      !(orderData?.order_status == "SHIPPED" ||
+                        showDownloadShipmentLabel) && (
+                        <button
+                          type="button"
+                          className={`bg-primary text-white py-2 px-6 rounded-full block mb-4`}
+                          onClick={handleBuyShipmentLabel}
+                        >
+                          Buy Shipment Label
+                        </button>
+                      )}
 
-                    {/* {showAdditionalFields && (
-                      <div className="mb-5.5">
-                        <label className="mb-3 block text-sm font-medium">
-                          Additional Information
-                        </label>
-                        <input
-                          className="w-full rounded border bg-gray py-3 px-4.5 text-black dark:bg-meta-4"
-                          type="text"
-                          value={additionalFields}
-                          onChange={(e) => setAdditionalFields(e.target.value)}
-                          placeholder="Enter additional information"
-                        />
-                      </div>
-                    )} */}
-                    {showShipmentButton &&  orderData?.order_status =="PACKED"  && (
+                    {(orderData?.order_status == "SHIPPED" ||
+                      showDownloadShipmentLabel) && (
                       <button
                         type="button"
-                        className={`bg-primary text-white py-2 px-6 rounded-full block mb-4`}
-                        onClick={handleBuyShipmentLabel}
+                        className={`bg-primary text-white py-2 px-6 rounded-full`}
+                        onClick={downloadShipmentLabel}
                       >
-                        Buy Shipment Label
+                        Download Shipment Label
                       </button>
                     )}
-                    <button
-                      type="button"
-                      className={`bg-primary text-white py-2 px-6 rounded-full ${
-                        (!selectedStatus ||
-                          !additionalFields.length ||
-                          !additionalFields.width ||
-                          !additionalFields.height ||
-                          !additionalFields.weight) &&
-                        "opacity-50 cursor-not-allowed"
-                      }`}
-                      onClick={handleStatusChange}
-                      // disabled={
-                      //   !selectedStatus ||
-                      //   selectedStatus === orderData?.order_status
-                      // }
-                    >
-                      Product Packed
-                    </button>
                   </form>
                 )}
               </div>

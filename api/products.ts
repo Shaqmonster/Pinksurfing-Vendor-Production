@@ -301,9 +301,12 @@ export async function changeOrderStatus(
   additionalFields: { length: string; width: string; height: string; weight: string }
 ) {
   if (!token || !orderId) {
-    return { error: true, data: null };
+    console.error("Token or order ID is missing");
+    throw new Error("Token or order ID is required to update the order status.");
   }
-  console.log({ status, ...additionalFields });
+
+  console.log("Changing order status with:", { status, ...additionalFields });
+
   try {
     const response = await axios.post(
       `${BASE_URL}/vendor/change-order-status/${orderId}/`,
@@ -314,9 +317,15 @@ export async function changeOrderStatus(
         },
       }
     );
-    const { status: responseStatus, data } = response;
-    return { status: responseStatus, data, error: false };
-  } catch (error) {
-    return { error: true, data: null };
+
+    return response.data; // Return response data directly
+  } catch (error: any) {
+    if (error.response) {
+      console.error("API responded with an error:", error.response.data);
+      throw new Error(error.response.data.message || "Failed to update order status.");
+    } else {
+      console.error("Error during the request:", error.message);
+      throw new Error("Network error or server is unreachable.");
+    }
   }
 }
