@@ -135,13 +135,13 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
                 <ul className="flex items-center gap-2 2xsm:gap-4">
                   <DarkModeSwitcher />
                 </ul>
-                <button className="text-gray-600 dark:text-gray-400">
+                {/* <button className="text-gray-600 dark:text-gray-400">
                   <FiSearch size={20} />
                 </button>
                 <FiBell
                   size={20}
                   className="cursor-pointer text-gray-600 dark:text-gray-400"
-                />
+                /> */}
                 <DropdownUser setLogged={setLogged} />
               </div>
             </>

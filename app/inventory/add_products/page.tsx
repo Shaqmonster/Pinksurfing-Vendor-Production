@@ -73,7 +73,7 @@ const AddProducts = () => {
     short_description: "",
     description: "",
     image: "",
-    id: "",
+    id: ""
   });
 
   const formats = [
@@ -88,7 +88,7 @@ const AddProducts = () => {
     "indent",
     "link",
     "color",
-    "clean",
+    "clean"
   ];
 
   const notifySuccess = (success: string) => toast.success(success);
@@ -103,12 +103,14 @@ const AddProducts = () => {
   useEffect(() => {
     if (selectedCategory) {
       setSubcategoriesLoading(true);
-      getSubcategories(selectedCategory).then((data) => {
-        setSubcategories(data.data);
-        setSubcategoriesLoading(false);
-      }).catch(() => {
-        setSubcategoriesLoading(false);
-      });
+      getSubcategories(selectedCategory)
+        .then((data) => {
+          setSubcategories(data.data);
+          setSubcategoriesLoading(false);
+        })
+        .catch(() => {
+          setSubcategoriesLoading(false);
+        });
     }
   }, [selectedCategory]);
 
@@ -147,6 +149,22 @@ const AddProducts = () => {
     );
   };
 
+  const handleDrop = (event: any) => {
+    event.preventDefault();
+    const droppedFiles = Array.from(event.dataTransfer.files);
+    if (droppedFiles.length + files.length > 4) {
+      toast.error("Cannot upload more than 4 images");
+      return;
+    }
+    droppedFiles.forEach((file: any) => {
+      if (file.type.startsWith("image/")) updateFile(file);
+    });
+  };
+
+  const handleDragOver = (event: any) => {
+    event.preventDefault();
+  };
+
   const handleSave = async () => {
     if (typeof window !== "undefined") {
       let token = localStorage.getItem("access");
@@ -155,13 +173,13 @@ const AddProducts = () => {
       const finalUnitPrice = hasDiscount ? unit_price : mrp;
       const updatedProductData = {
         ...productData,
-        unit_price: finalUnitPrice,
+        unit_price: finalUnitPrice
       };
       console.log(updatedProductData);
       console.log(attribute);
       setLoading(true);
       try {
-        const res = await saveProducts(
+        const res: any = await saveProducts(
           token,
           vendor_id,
           updatedProductData,
@@ -169,20 +187,19 @@ const AddProducts = () => {
           files
         );
         console.log(res);
-        if(!res.error){
+        if (!res.error) {
           console.log(res);
           toast.success(res.data.Status);
           router.push("/inventory/products");
-        }
-        else{
+        } else {
           console.log(res);
           handleError(res.data.data.Status || "Error adding product");
         }
-      } catch (error) {
-        console.log(error)
+      } catch (error: any) {
+        console.log(error);
         toast.error(error.response.data.message || "Unexpected error occurred");
-      } finally{
-        setLoading(false)
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -221,17 +238,17 @@ const AddProducts = () => {
                           updateProductData("category", e.target?.value);
                         }}
                       >
-                        <option value="0">Choose</option>
+                        {/* <option value="0">categories[0]</option> */}
                         {categories.length
                           ? categories.map(
-                            (cat: { slug: string; name: string }, index) => {
-                              return (
-                                <option key={index} value={cat.slug}>
-                                  {cat.name}
-                                </option>
-                              );
-                            }
-                          )
+                              (cat: { slug: string; name: string }, index) => {
+                                return (
+                                  <option key={index} value={cat.slug}>
+                                    {cat.name}
+                                  </option>
+                                );
+                              }
+                            )
                           : null}
                       </select>
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
@@ -257,14 +274,14 @@ const AddProducts = () => {
                       <select
                         className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 dark:bg-[#e7e0ec] dark:border-none dark:text-black"
                         id="grid-state"
-                        disabled={subcategoriesLoading || !selectedCategory} 
+                        disabled={subcategoriesLoading || !selectedCategory}
                         onChange={(e: any) => {
                           const selectedSlug = e.target.value;
                           setSelectedSubcategory(selectedSlug);
                           updateProductData("subcategory", selectedSlug);
 
-                          const selectedSubcat = subcategories.find(
-                            (subcat) => subcat.slug === selectedSlug
+                          const selectedSubcat: any = subcategories.find(
+                            (subcat: any) => subcat.slug === selectedSlug
                           );
 
                           if (selectedSubcat) {
@@ -273,10 +290,10 @@ const AddProducts = () => {
                             );
                             const initialAttributes =
                               selectedSubcat?.allowed_attributes?.map(
-                                (attr) => ({
+                                (attr: any) => ({
                                   name: attr.name,
                                   value: "",
-                                  additional_price: 0,
+                                  additional_price: 0
                                 })
                               );
                             // setAttribute(initialAttributes);
@@ -287,7 +304,7 @@ const AddProducts = () => {
                           setSubcategoriesLoading(false);
                         }}
                       >
-                        <option value="0">Choose</option>
+                        {/* <option value="0">Choose</option> */}
                         {subcategories.length && selectedCategory ? (
                           subcategories.map(
                             (
@@ -364,20 +381,20 @@ const AddProducts = () => {
                       if (e.length <= 300) {
                         setProductData({
                           ...productData,
-                          short_description: e,
+                          short_description: e
                         });
                       }
                     }}
                   />
                   <div
-                    className={`text-xs mt-2 ${productData.short_description.length >= 300
-                        ? 'text-red-500'
-                        : 'text-gray-500 dark:text-gray-400'
-                      }`}
+                    className={`text-xs mt-2 ${
+                      productData.short_description.length >= 300
+                        ? "text-red-500"
+                        : "text-gray-500 dark:text-gray-400"
+                    }`}
                   >
                     {productData.short_description.length}/300 characters
                   </div>
-
                 </div>
                 <div className="w-full pt-6">
                   <label
@@ -490,7 +507,7 @@ const AddProducts = () => {
                     onChange={(textValue) =>
                       setProductData({
                         ...productData,
-                        description: textValue,
+                        description: textValue
                       })
                     }
                   />
@@ -507,7 +524,11 @@ const AddProducts = () => {
                     <h2 className="font-medium text-gray-700 text-center dark:text-black">
                       Upload Product Image.
                     </h2>
-                    <div className="flex flex-col items-center justify-center space-y-3">
+                    <div
+                      className="flex flex-col items-center justify-center space-y-3"
+                      onDrop={handleDrop}
+                      onDragOver={handleDragOver}
+                    >
                       {files.map((file, index) => (
                         <div key={index} className="relative">
                           <img
@@ -528,21 +549,63 @@ const AddProducts = () => {
                         </div>
                       ))}
                       {!files.length ? (
-                        <span className="flex h-10 w-10 items-center justify-center rounded-full border border-none bg-white dark:bg-boxdark">
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 16 16"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
+                        <div className="relative">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            id="file-input"
+                            onChange={(event) => {
+                              const selectedFiles = event?.target?.files;
+                              if (selectedFiles) {
+                                if (selectedFiles.length + files.length > 4) {
+                                  toast.error(
+                                    "Cannot upload more than 4 images"
+                                  );
+                                  return;
+                                }
+                                const newFiles = Array.from(selectedFiles);
+                                newFiles.forEach((file) => updateFile(file));
+                              }
+                            }}
+                            multiple
+                          />
+                          <label
+                            htmlFor="file-input"
+                            className="cursor-pointer"
                           >
-                            {/* Your SVG paths for the icon */}
-                          </svg>
-                        </span>
+                            <span className="flex h-10 w-10 items-center justify-center rounded-full border border-none bg-white dark:bg-boxdark">
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 16 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <line
+                                  x1="8"
+                                  y1="3"
+                                  x2="8"
+                                  y2="13"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                />
+                                <line
+                                  x1="3"
+                                  y1="8"
+                                  x2="13"
+                                  y2="8"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                />
+                              </svg>
+                            </span>
+                          </label>
+                        </div>
                       ) : null}
                       <label>
                         <span className="text-primary cursor-pointer">
-                          Click to upload
+                          Click to upload or drag & drop
                         </span>
                         <input
                           type="file"
@@ -631,7 +694,7 @@ const AddProducts = () => {
                     </label>
                     <input
                       className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
-                      type="text"
+                      type="number"
                       name="length"
                       id="length"
                       placeholder="Length"
@@ -649,7 +712,7 @@ const AddProducts = () => {
                     </label>
                     <input
                       className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
-                      type="text"
+                      type="number"
                       name="width"
                       id="width"
                       placeholder="Width"
@@ -669,7 +732,7 @@ const AddProducts = () => {
                     </label>
                     <input
                       className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
-                      type="text"
+                      type="number"
                       name="height"
                       id="height"
                       placeholder="Height"
@@ -687,7 +750,7 @@ const AddProducts = () => {
                     </label>
                     <input
                       className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
-                      type="text"
+                      type="number"
                       name="weight"
                       id="weight"
                       placeholder="Weight"
@@ -728,11 +791,13 @@ const AddProducts = () => {
                         }}
                       >
                         <option value="">Select Attribute</option>
-                        {allowedAttributes?.map((allowedAttribute, index) => (
-                          <option key={index} value={allowedAttribute.name}>
-                            {allowedAttribute.name}
-                          </option>
-                        ))}
+                        {allowedAttributes?.map(
+                          (allowedAttribute: any, index) => (
+                            <option key={index} value={allowedAttribute.name}>
+                              {allowedAttribute.name}
+                            </option>
+                          )
+                        )}
                       </select>
 
                       <input
@@ -758,7 +823,7 @@ const AddProducts = () => {
                         placeholder="Variant Price"
                         value={att.additional_price}
                         onChange={(e) => {
-                          setAttribute((i) => {
+                          setAttribute((i: any) => {
                             i[j]["additional_price"] = e.target.value;
                             return [...i];
                           });
@@ -790,7 +855,7 @@ const AddProducts = () => {
                     e.preventDefault();
                     setAttribute((i) => [
                       ...i,
-                      { name: "", value: "", additional_price: 0 },
+                      { name: "", value: "", additional_price: 0 }
                     ]);
                   }}
                 >

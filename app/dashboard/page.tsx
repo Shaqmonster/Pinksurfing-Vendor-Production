@@ -7,6 +7,7 @@ import GraphSection from "@/components/DashBoard/Graph/page";
 import TotalSales from "@/components/DashBoard/TotalSales/page";
 import IncomeChart from "@/components/DashBoard/BarGraph/page";
 import { getTopSellingProducts } from "@/api/products";
+import OrderTable from "@/components/Tables/OrderTable";
 
 const Dashboard: React.FC = () => {
   const [topProducts, setTopProducts] = useState([]);
@@ -24,9 +25,9 @@ const Dashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 text-black dark:text-white">
       <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Section 1: Recent Orders */}
-          <div className="bg-white dark:bg-gray-700 dark:text-black dark:bg-primary p-4 rounded shadow-lg flex flex-col">
+          {/* <div className="bg-white dark:bg-gray-700 dark:text-black dark:bg-primary p-4 rounded shadow-lg flex flex-col">
             <h3 className="text-base font-thin dark:text-white">
               Recent Orders
             </h3>
@@ -35,7 +36,7 @@ const Dashboard: React.FC = () => {
               11.95% <AiOutlineArrowUp className="w-3 h-3 ms-1" />
             </div>
             <GraphSection />
-          </div>
+          </div> */}
 
           {/* Section 2: Weekly Sales */}
           <div className="bg-white dark:bg-gray-700 dark:text-black dark:bg-primary p-4 rounded shadow-lg flex flex-col">
@@ -51,29 +52,30 @@ const Dashboard: React.FC = () => {
 
           {/* Section 3: Product Performance */}
           <div className="bg-white dark:bg-gray-700 dark:text-white dark:bg-primary p-4 rounded shadow-lg flex flex-col">
-            <h3 className="text-base font-thin">
-              Product Performance
-            </h3>
-            <p className="text-xl font-bold mt-3">
-              Top Performing Products
-            </p>
+            <h3 className="text-base font-thin">Product Performance</h3>
+            <p className="text-xl font-bold mt-3">Top Performing Products</p>
             <div className="flex flex-col space-y-2">
               {topProducts?.map((product, index) => (
-                <div key={index} className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-border-b">
+                <div
+                  key={index}
+                  className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-border-b"
+                >
                   <p className="text-md font-semibold">{product.name}</p>
-                  <p className="text-md font-semibold text-green-500 dark:text-green-500">${product.unit_price}</p>
+                  <p className="text-md font-semibold text-green-500 dark:text-green-500">
+                    ${product.unit_price}
+                  </p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Section 4: Total Sales */}
-          <div className="col-span-3 bg-white dark:bg-gray-700 dark:text-black dark:bg-primary p-4 rounded-lg shadow-md">
+          {/* <div className="col-span-3 bg-white dark:bg-gray-700 dark:text-black dark:bg-primary p-4 rounded-lg shadow-md">
             <TotalSales />
-          </div>
+          </div> */}
 
           {/* Section 5: Income */}
-          <div className="col-span-3 dark:bg-gray-700 dark:text-black">
+          {/* <div className="col-span-3 dark:bg-gray-700 dark:text-black">
             <div className="flex justify-center items-start gap-4">
               <div className="w-full md:w-1/2 flex flex-col bg-white dark:bg-primary rounded-lg">
                 <IncomeChart />
@@ -127,12 +129,14 @@ const Dashboard: React.FC = () => {
                       $300.00
                     </p>
                   </div>
-                  {/* Add more transactions as needed */}
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
+          <div className="flex flex-col gap-10 pt-12">
+            <OrderTable recentOrders={true}/>
+          </div>
       </main>
     </div>
   );

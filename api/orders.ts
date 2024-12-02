@@ -15,9 +15,9 @@ export async function getOrders(token: string | null) {
 }
 
 export async function changeStatus(
-  token,
-  order_id,
-  status,
+  token : any,
+  order_id : any,
+  status : any,
   length = null,
   width = null,
   height = null,

@@ -35,7 +35,7 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleString(undefined, options);
 };
 
-const OrderTable = () => {
+const OrderTable = ({recentOrders}: any) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -74,7 +74,11 @@ const OrderTable = () => {
         );
         if (Array.isArray(orders) && orders.length) {
           console.log(orders);
-          setOrders(orders.slice(0, 10));
+          if(recentOrders){
+            setOrders(orders.slice(0, 4));
+          }else{
+            setOrders(orders.slice(0, 10));
+          }
         }
       }
     });
@@ -170,7 +174,7 @@ const OrderTable = () => {
       ) : (
         <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-primary sm:px-7.5 xl:pb-1">
           <h2 className="text-xl font-bold text-black dark:text-white mb-4 pb-4 border-b border-[#eee] dark:border-strokedark">
-            All Orders
+            {recentOrders ? "Recent Orders" : " All Orders"}
           </h2>
           <div className="max-w-full overflow-x-auto">
             <table className="w-full table-auto">

@@ -183,7 +183,7 @@ const Sidebar = () => {
                   }`}
                 >
                   <FaCog className="fill-current" size={18} />
-                  Settings
+                  About My Store
                 </Link>
               </li>
               {/* <!-- Menu Item Settings --> */}
