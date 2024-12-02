@@ -123,6 +123,10 @@ export async function getShippingDetails(
   orderItemId: string | null,
   token: string | null
 ) {
+  if(!orderItemId){
+    console.log("No order item id provided");
+    return;
+  }
   let res = await axios
     .get(`${BASE_URL}/shipping/shipping-details/${orderItemId}/`, { 
       headers: {
