@@ -41,12 +41,12 @@ const Dashboard: React.FC = () => {
           {/* Section 2: Weekly Sales */}
           <div className="bg-white dark:bg-gray-700 dark:text-black dark:bg-primary p-4 rounded shadow-lg flex flex-col">
             <h3 className="text-base font-thin dark:text-white">
-              Weekly Sales
+              Monthly Sales
             </h3>
-            <p className="text-xl font-bold dark:text-white mt-3">$25,000</p>
+            {/* <p className="text-xl font-bold dark:text-white mt-3">$25,000</p>
             <div className="flex items-center pt-3 text-base font-semibold text-green-500 dark:text-green-500 text-center">
               5.32% <AiOutlineArrowUp className="w-3 h-3 ms-1" />
-            </div>
+            </div> */}
             <GraphSection />
           </div>
 
@@ -55,7 +55,7 @@ const Dashboard: React.FC = () => {
             <h3 className="text-base font-thin">Product Performance</h3>
             <p className="text-xl font-bold mt-3">Top Performing Products</p>
             <div className="flex flex-col space-y-2">
-              {topProducts?.map((product, index) => (
+              {topProducts?.map((product : any, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-border-b"

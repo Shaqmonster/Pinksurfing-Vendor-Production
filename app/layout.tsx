@@ -16,17 +16,30 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function RootLayout({
-  children,
+  children
 }: {
   children: React.ReactNode;
 }) {
   const [loading, setLoading] = useState<boolean>(false);
   const [loggedIn, setLoggedIn] = useState<boolean>(false);
   const pathname = usePathname();
-  const { sidebarOpen ,setSidebarOpen} = useContext(MyContext);
+  const { sidebarOpen, setSidebarOpen } = useContext(MyContext);
   const bodyScrollCallback = useCallback((loggedIn: boolean) => {
+    console.log(loggedIn);
     setLoggedIn(loggedIn);
   }, []);
+  const checkLoginState = () => {
+    let access = localStorage.getItem("access");
+    let vendor_id = localStorage.getItem("vendor_id");
+    if (access && vendor_id) {
+      setLoggedIn(true);
+    } else {
+      setLoggedIn(false);
+    }
+  };
+  useEffect(() => {
+    checkLoginState();
+  }, [pathname]);
 
   useEffect(() => {
     let access: string | null = "",
@@ -60,15 +73,7 @@ export default function RootLayout({
             ) : (
               <div className="flex h-screen overflow-hidden">
                 {/* <!-- ===== Sidebar Start ===== --> */}
-                <div
-                  // className={`hidden lg:flex ${
-                  //   sidebarOpen ? "flex" : "hidden"
-                  // }`}
-                >
-                  {loggedIn ? <Sidebar /> : null}
-
-                  {/* <!-- ===== Sidebar End ===== --> */}
-                </div>
+                {loggedIn && <div>{loggedIn && <Sidebar />}</div>}
 
                 {/* <!-- ===== Content Area Start ===== --> */}
                 <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">

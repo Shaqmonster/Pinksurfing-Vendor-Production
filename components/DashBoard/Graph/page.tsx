@@ -1,8 +1,8 @@
 // components/DashBoard/GraphSection.tsx
 "use client";
-import React from "react";
+import React ,{useEffect}from "react";
 import dynamic from "next/dynamic";
-
+import { getMonthlySales } from "@/api/orders";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 interface GraphSectionProps {
@@ -10,13 +10,25 @@ interface GraphSectionProps {
   width?: number | string;
 }
 
-// a
-
-
 const GraphSection: React.FC<GraphSectionProps> = ({
   height = 100,
-  width = "100%",
+  width = "100%"
 }) => {
+  useEffect(() => {
+    let access = localStorage.getItem("access");
+    console.log(access);
+    if (access) {
+      (async () => {
+        try {
+          const data = await getMonthlySales(access);
+          console.log(data); // Handle the successful response data
+        } catch (error) {
+          console.error("Error in fetching monthly sales:", error); // Handle any errors
+        }
+      })();
+    }
+  }, []);
+  
   const options = {
     chart: {
       height,
@@ -24,17 +36,17 @@ const GraphSection: React.FC<GraphSectionProps> = ({
       type: "area",
       fontFamily: "Inter, sans-serif",
       dropShadow: {
-        enabled: false,
+        enabled: false
       },
       toolbar: {
-        show: false,
-      },
+        show: false
+      }
     },
     tooltip: {
       enabled: true,
       x: {
-        show: false,
-      },
+        show: false
+      }
     },
     fill: {
       type: "gradient",
@@ -42,14 +54,14 @@ const GraphSection: React.FC<GraphSectionProps> = ({
         opacityFrom: 0.55,
         opacityTo: 0,
         shade: "#F87171",
-        gradientToColors: ["#F87171"],
-      },
+        gradientToColors: ["#F87171"]
+      }
     },
     dataLabels: {
-      enabled: false,
+      enabled: false
     },
     stroke: {
-      width: 6,
+      width: 6
     },
     grid: {
       show: false,
@@ -57,8 +69,8 @@ const GraphSection: React.FC<GraphSectionProps> = ({
       padding: {
         left: 2,
         right: 2,
-        top: 0,
-      },
+        top: 0
+      }
     },
     xaxis: {
       categories: [
@@ -68,29 +80,29 @@ const GraphSection: React.FC<GraphSectionProps> = ({
         "04 February",
         "05 February",
         "06 February",
-        "07 February",
+        "07 February"
       ],
       labels: {
-        show: false,
+        show: false
       },
       axisBorder: {
-        show: false,
+        show: false
       },
       axisTicks: {
-        show: false,
-      },
+        show: false
+      }
     },
     yaxis: {
-      show: false,
-    },
+      show: false
+    }
   };
 
   const series = [
     {
       name: "Total Revenue",
       data: [8000, 15000, 9000, 16000, 10000, 18000],
-      color: "#F87171",
-    },
+      color: "#F87171"
+    }
   ];
 
   return (
