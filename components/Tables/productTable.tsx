@@ -176,7 +176,7 @@ const ProductsTable = (props: { Products: Product[] }) => {
                 <div className="flex items-center" ref={rowRef}>
                   <div className="flex  gap-4 flex-row items-center">
                     <div className="h-12.5 w-15 rounded-md">
-                      <Image
+                      <img
                         src={product.image1}
                         width="56"
                         height="50"
