@@ -102,15 +102,15 @@ export async function buyShipmentLabel(parcelId: string, token: string | null) {
 
 export async function getShipmentDetails(orderId: string, token: string | null) {
   try {
-    const response = await axios.post(
+    const response = await axios.get(
       `${BASE_URL}/shipping/shipping-details/${orderId}/`,
-      {},
       {
         headers: {
           Authorization: `Bearer ${token?.replaceAll('"', "")}`,
         },
       }
     );
+    console.log("Shipment details response:", response.data);
     return response.data; // Return response data directly
   } catch (error) {
     // Handle error and log it

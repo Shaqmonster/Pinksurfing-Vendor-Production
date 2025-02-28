@@ -94,7 +94,7 @@ const ProductsTable = (props: { Products: Product[] }) => {
   }, []);
 
   useMemo(() => {
-    categories.forEach((category, index) => {
+    categories.forEach((category : any, index) => {
       getSubcategories(category?.slug).then((data) => {
         setSubcategories(data.data);
       });
@@ -112,14 +112,14 @@ const ProductsTable = (props: { Products: Product[] }) => {
     }
   }, [selectedCategory]);
 
-  function truncateAndConvertToText(htmlString, maxLength = 40) {
+  function truncateAndConvertToText(htmlString : any, maxLength = 40) {
     let truncatedText = htmlString.substring(0, maxLength);
     let tempElement = document.createElement("div");
     tempElement.innerHTML = truncatedText;
     return tempElement.textContent || tempElement.innerText || "";
   }
 
-  const openDeleteModal = (productId) => {
+  const openDeleteModal = (productId : any) => {
     setProductIdToDelete(productId);
     setIsModalOpen(true);
   };

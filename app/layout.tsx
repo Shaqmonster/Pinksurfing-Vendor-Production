@@ -2,7 +2,7 @@
 import "./globals.css";
 import "./data-tables-css.css";
 import "./satoshi.css";
-import { useState, useEffect, useContext, useCallback } from "react";
+import { useState, useEffect, useContext, useCallback,useMemo } from "react";
 import Loader from "@/components/common/Loader";
 
 import Sidebar from "@/components/Sidebar";
@@ -14,6 +14,7 @@ import SignIn from "./auth/signin/page";
 import { redirect, usePathname } from "next/navigation";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { getTopSellingProducts } from "@/api/products";
 
 export default function RootLayout({
   children
@@ -62,6 +63,19 @@ export default function RootLayout({
       setSidebarOpen(true);
     }
   }, [setSidebarOpen]);
+
+  useMemo(() => {
+    if (typeof window !== "undefined") {
+      let token = localStorage.getItem("access");
+      if (!token) return;
+      (async () => {
+        const res = await getTopSellingProducts(token);
+        if(res.error){
+          setLoggedIn(false);
+        }
+      })();
+    }
+  }, []);
 
   return (
     <html lang="en">
