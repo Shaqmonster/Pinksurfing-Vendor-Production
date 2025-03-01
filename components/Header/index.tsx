@@ -122,7 +122,7 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
                     <Image
                       width={46}
                       height={46}
-                      className="rounded-full"
+                      className=""
                       src={"/logo.jpg"}
                       alt="Logo"
                     />

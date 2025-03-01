@@ -82,7 +82,7 @@ const Sidebar = () => {
             alt=""
             height={40}
             width={40}
-            className="mx-4 rounded-full"
+            className="mx-4"
           />
           PinkSurfing
         </Link>
