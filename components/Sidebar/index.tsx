@@ -78,11 +78,11 @@ const Sidebar = () => {
           className="normal-case text-xl flex flex-row items-center font-bold text-black dark:text-white"
         >
           <Image
-            src="/images/bitcoin.png"
+            src="/logo.jpg"
             alt=""
             height={40}
             width={40}
-            className="mx-4"
+            className="mx-4 rounded-full"
           />
           PinkSurfing
         </Link>

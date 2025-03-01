@@ -118,11 +118,12 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
                   <FiMenu size={24} className="text-black dark:text-white" />
                 </button>
                 <>
-                  <Link className="block flex flex-row" href="/">
+                  <Link className="flex flex-row" href="/">
                     <Image
-                      width={32}
-                      height={32}
-                      src={"/images/bitcoin.png"}
+                      width={46}
+                      height={46}
+                      className="rounded-full"
+                      src={"/logo.jpg"}
                       alt="Logo"
                     />
                     <h2 className="ml-2 pt-1 text-align font-bold">
