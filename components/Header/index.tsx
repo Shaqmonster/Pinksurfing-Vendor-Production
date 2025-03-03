@@ -119,16 +119,13 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
                 </button>
                 <>
                   <Link className="flex flex-row" href="/">
-                    <Image
+                    <img
                       width={46}
                       height={46}
                       className=""
                       src={"/logo.jpg"}
                       alt="Logo"
                     />
-                    <h2 className="ml-2 pt-1 text-align font-bold">
-                      PinkSurfing
-                    </h2>
                   </Link>
                 </>
               </div>
@@ -143,7 +140,11 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
                   size={20}
                   className="cursor-pointer text-gray-600 dark:text-gray-400"
                 /> */}
-                <DropdownUser setLogged={setLogged} />
+                {
+                  Logged && (
+                    <DropdownUser setLogged={setLogged} />
+                  )
+                }
               </div>
             </>
           ) : (
