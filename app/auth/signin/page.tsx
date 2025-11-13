@@ -45,13 +45,6 @@ const SignIn: React.FC = () => {
 
     if (name === "password") {
       setPassword(value);
-      if (!passwordRegex.test(value)) {
-        setPasswordError(
-          "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
-        );
-      } else {
-        setPasswordError("");
-      }
     }
   };
 
@@ -104,6 +97,7 @@ const SignIn: React.FC = () => {
         console.log(data?.message)
         handleError(data?.message)
         localStorage.setItem("customer", JSON.stringify(parseJwt(data.token)));
+        console.log(parseJwt(data.token),"going to register as vendor")
         setAuthpage("register-as-vendor");
       } else if (data && "token" in data) {
         let { token, refresh } = data;

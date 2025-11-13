@@ -30,7 +30,7 @@ import {
   FaStore,
   FaUser,
 } from "react-icons/fa";
-import { ToastContainer, toast } from "react-toastify";
+// import { ToastContainer, toast } from "react-toastify";
 import Loader from "@/components/common/Loader";
 import { handleError, handleSuccess } from "@/utils/toast";
 
@@ -99,7 +99,7 @@ const RegisterAsVendor: React.FC = () => {
     const selectedFile = event?.target?.files[0];
     if (selectedFile) {
       if (selectedFile.size > 4 * 1024 * 1024) {
-        toast.error("File size exceeds 4MB. Please choose a smaller file.");
+        handleError("File size exceeds 4MB. Please choose a smaller file.");
         return;
       }
       setPayload((prevPayload) => ({
@@ -120,7 +120,7 @@ const RegisterAsVendor: React.FC = () => {
     const selectedFile = event?.target?.files[0];
     if (selectedFile) {
       if (selectedFile.size > 4 * 1024 * 1024) {
-        toast.error("File size exceeds 4MB. Please choose a smaller file.");
+        handleError("File size exceeds 4MB. Please choose a smaller file.");
         return;
       }
       setPayload((prevPayload) => ({
@@ -188,6 +188,9 @@ const RegisterAsVendor: React.FC = () => {
 
     return jsonPayload;
   }
+  useEffect(() => {
+    console.log("reached here");
+  }, []);
 
   return (
     <>
@@ -763,7 +766,7 @@ const RegisterAsVendor: React.FC = () => {
               </form>
             </div>
           </div>
-          <ToastContainer />
+          {/* <ToastContainer /> */}
         </div>
       )}
     </>
