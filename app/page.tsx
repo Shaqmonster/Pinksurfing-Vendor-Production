@@ -33,6 +33,12 @@ export default function Home() {
         return;
       }
 
+      // If user is logged in and on root page, redirect to dashboard
+      if (pathname === "/") {
+        router.push("/dashboard");
+        return;
+      }
+
       getProducts(access, vendor_id)
         .then((response) => {
           if (response.status < 205) {
@@ -57,7 +63,7 @@ export default function Home() {
         })
         .finally(() => setLoading(false));
     }
-  }, [setIsLoggedIn, router]);
+  }, [setIsLoggedIn, router, pathname]);
 
   useEffect(() => {
     switch (authPage) {
