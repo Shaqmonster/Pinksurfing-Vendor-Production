@@ -81,10 +81,11 @@ const ProductsTable = (props: { Products: Product[] }) => {
 
       if (store) {
         const storeObject = JSON.parse(store);
-        const store_name = storeObject.store_name;
-        if (token && store_name) {
+        const store_slug = storeObject.slug;
+        console.log("Store Name:", storeObject);
+        if (token && store_slug) {
           setLoading(true);
-          getProducts(token, store_name).then((data) => {
+          getProducts(token, store_slug).then((data) => {
             setProducts(data.data.Products);
             setLoading(false);
           });

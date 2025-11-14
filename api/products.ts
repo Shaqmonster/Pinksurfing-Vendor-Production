@@ -234,10 +234,10 @@ export async function getSingleOrder(token: string | null, orderId: string) {
 
 export async function getProducts(
   token: string | null,
-  store_name: string | null
+  store_slug: string | null
 ) {
   let res = await axios
-    .get(`${BASE_URL}/product/vendor-products/${store_name}/`, {
+    .get(`${BASE_URL}/product/vendor-products/${store_slug}/`, {
       headers: {
         Authorization: `Bearer ${token?.replaceAll('"', "")}`,
       },
