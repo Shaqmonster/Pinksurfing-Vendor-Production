@@ -74,7 +74,7 @@ const Sidebar = () => {
       {/* <!-- SIDEBAR HEADER --> */}
       <div className="flex items-center justify-between gap-2 px-6 py-2 pt-5.5 lg:py-2.5 lg:pt-6.5">
         <Link
-          href="/"
+          href="/dashboard"
           className="normal-case text-xl flex flex-row items-center font-bold text-black dark:text-white"
         >
           <Image

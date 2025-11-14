@@ -118,7 +118,7 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
                   <FiMenu size={24} className="text-black dark:text-white" />
                 </button>
                 <>
-                  <Link className="flex flex-row" href="/">
+                  <Link className="flex flex-row" href="/dashboard">
                     <img
                       width={46}
                       height={46}
