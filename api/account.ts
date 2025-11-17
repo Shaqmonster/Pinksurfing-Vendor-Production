@@ -3,6 +3,24 @@ import { toast } from "react-toastify";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
+export async function logout(token: string) {
+  try {
+    const response = await axios.post(
+      `https://auth.pinksurfing.com/logout/`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token.replaceAll('"', "")}`,
+        },
+      }
+    );
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Error during logout:", error);
+    return { success: false, error };
+  }
+}
+
 export async function getOnboardingUrl(token: string) {
   try {
     const response = await axios.get(`${BASE_URL}/vendor/get-onboarding-url/`, {

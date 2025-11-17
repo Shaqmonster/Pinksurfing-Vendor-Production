@@ -5,6 +5,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MyContext } from "@/app/providers/context";
 import { getVendorProfile } from "@/api/products";
+import { logout as logoutAPI } from "@/api/account";
+import { deleteCookie } from "@/utils/cookies";
 import { FaUser, FaCog, FaSignOutAlt } from "react-icons/fa";
 import { MdKeyboardArrowDown } from "react-icons/md";
 
@@ -52,12 +54,36 @@ const DropdownUser = ({ setLogged }) => {
     fetchProfile();
   }, [token]);
 
-  const signout = () => {
+  const signout = async () => {
     if (typeof window !== "undefined") {
+      const token = localStorage.getItem("access");
+      
+      // Call logout API to clear session on server
+      if (token) {
+        try {
+          await logoutAPI(token);
+          console.log("Successfully logged out from server");
+        } catch (error) {
+          console.error("Error logging out from server:", error);
+        }
+      }
+      
+      // Clear localStorage
       localStorage.removeItem("access");
       localStorage.removeItem("vendor_id");
       localStorage.removeItem("store");
+      localStorage.removeItem("refresh");
+      
+      // Clear subdomain cookies
+      const domain = window.location.hostname.includes('localhost') 
+        ? undefined 
+        : '.pinksurfing.com';
+        
+      deleteCookie("access_token", domain);
+      deleteCookie("refresh_token", domain);
+      deleteCookie("user_id", domain);
     }
+    
     setIsLoggedIn(false);
     setLogged(false);
     window.location.href = "/";
