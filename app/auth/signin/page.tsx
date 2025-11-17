@@ -16,6 +16,7 @@ import Loader from "@/components/common/Loader";
 import { toast } from "react-toastify";
 import { FaEnvelope, FaLock, FaTimes } from "react-icons/fa";
 import { handleError, handleSuccess } from "@/utils/toast";
+import { setCookie } from "@/utils/cookies";
 
 const SignIn: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -103,9 +104,20 @@ const SignIn: React.FC = () => {
         let { token, refresh } = data;
         console.log(data)
         if (typeof window !== "undefined") {
+          // Store in localStorage
           localStorage.setItem("access", token);
           localStorage.setItem("refresh", refresh);
           localStorage.setItem("vendor_id", data.id);
+          
+          // Set cookies for subdomain SSO (shared with pinksurfing.com)
+          const domain = window.location.hostname.includes('localhost') 
+            ? undefined 
+            : '.pinksurfing.com';
+          
+          setCookie("access_token", token, 7, domain);
+          setCookie("refresh_token", refresh, 7, domain);
+          setCookie("user_id", data.id, 7, domain);
+          
           setIsLoggedIn(true);
           handleSuccess("Login Successful");
         }

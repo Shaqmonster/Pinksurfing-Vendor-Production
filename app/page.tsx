@@ -13,6 +13,7 @@ import ForgotPassword from "./auth/forgot-password/page";
 import ResetPassword from "./auth/reset-password/page";
 import RegisterAsVendor from "./auth/register-as-vendor.tsx/page";
 import Loader from "@/components/common/Loader";
+import { getCookie } from "@/utils/cookies";
 
 export default function Home() {
   const { loggedIn, setIsLoggedIn, authPage } = useContext(MyContext);
@@ -24,9 +25,34 @@ export default function Home() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const access = localStorage.getItem("access");
-      const vendor_id = localStorage.getItem("vendor_id");
+      // First check localStorage
+      let access = localStorage.getItem("access");
+      let vendor_id = localStorage.getItem("vendor_id");
+      let refresh = localStorage.getItem("refresh");
 
+      // If not in localStorage, check cookies (SSO from ecommerce site)
+      if (!access || !vendor_id) {
+        const cookieAccess = getCookie("access_token");
+        const cookieUserId = getCookie("user_id");
+        const cookieRefresh = getCookie("refresh_token");
+
+        if (cookieAccess && cookieUserId) {
+          // Store cookie values in localStorage for future use
+          localStorage.setItem("access", cookieAccess);
+          localStorage.setItem("vendor_id", cookieUserId);
+          if (cookieRefresh) {
+            localStorage.setItem("refresh", cookieRefresh);
+          }
+          
+          access = cookieAccess;
+          vendor_id = cookieUserId;
+          refresh = cookieRefresh;
+          
+          console.log("SSO: Tokens found in cookies, stored in localStorage");
+        }
+      }
+
+      // If still no tokens found, show login
       if (!access || !vendor_id) {
         setIsLoggedIn(false);
         setLoading(false); 
