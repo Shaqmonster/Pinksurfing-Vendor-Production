@@ -3,6 +3,63 @@ import { toast } from "react-toastify";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
+export async function isCustomer(email: string) {
+  try {
+    const response = await axios.post(`${BASE_URL}/customer/is-customer/`, {
+      email,
+    });
+    console.log("Customer Status Response:", response);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Error checking customer status:", error);
+    return { success: false, error };
+  }
+}
+
+export async function customerLogin(email: string, password: string) {
+  try {
+    const response = await axios.post(
+      `https://auth.pinksurfing.com/api/token/`,
+      {
+        email,
+        password,
+      }
+    );
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Error during customer login:", error);
+    return { success: false, error };
+  }
+}
+
+export async function customerVendorRegistration(token: string, payload: any) {
+  const formData = new FormData();
+  Object.keys(payload).forEach((key) => {
+    if (key === "shop_image" && payload[key]) {
+      formData.append(key, payload[key]);
+    } else if (payload[key]) {
+      formData.append(key, payload[key]);
+    }
+  });
+
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/vendor/customer-vendor-registration/`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token.replaceAll('"', "")}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Error during customer-vendor registration:", error);
+    return { success: false, error };
+  }
+}
+
 export async function logout(token: string) {
   try {
     const response = await axios.post(
@@ -71,6 +128,7 @@ export async function signUp(payload: any) {
     .post(`${BASE_URL}/vendor/create-account/`, formData)
     .then(async (response: any) => {
       let data: any = {};
+      console.log("Sign Up Response:", response);
       if (response.status < 205 && response.data.vendor_id) {
         const { email, password } = payload;
         const tokenResponse = await axios.post(
@@ -79,6 +137,7 @@ export async function signUp(payload: any) {
         );
         const token = tokenResponse.data;
         data = { ...token, vendor_id: response.data.vendor_id };
+        console.log("Token fetched after sign up:", data);
       } else {
         data = response.data;
       }

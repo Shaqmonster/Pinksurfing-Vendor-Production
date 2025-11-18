@@ -8,10 +8,11 @@ import React, {
 } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { getOnboardingUrl, sendOtp } from "@/api/account"; // Adjust the import path based on your file structure
+import { getOnboardingUrl, sendOtp, isCustomer, customerLogin, customerVendorRegistration } from "@/api/account"; // Adjust the import path based on your file structure
 import { useRouter } from "next/navigation";
 
 import { signUp } from "@/api/account";
+import { setCookie } from "@/utils/cookies";
 import { MyContext } from "@/app/providers/context";
 import { redirect } from "next/navigation";
 import CountryCodeSelector from "../../../components/CountryCodeSelector/countrycode";
@@ -30,6 +31,7 @@ import {
   FaStore,
   FaUser
 } from "react-icons/fa";
+import { MdEmail } from "react-icons/md";
 import { ToastContainer, toast } from "react-toastify";
 import Loader from "@/components/common/Loader";
 import { Country, State, City } from "country-state-city";
@@ -44,6 +46,12 @@ const SignUp: React.FC = () => {
   {
     /* 2 for no activity, 1 for password match and 0 for not */
   }
+  // Multi-step flow states
+  const [step, setStep] = useState(1); // 1: Email, 2: Password/Full Form, 3: Vendor Details
+  const [userType, setUserType] = useState(""); // "existing_customer", "new_user", "existing_vendor"
+  const [authToken, setAuthToken] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const [PasswordCheck, setPasswordCheck] = useState(2);
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -98,9 +106,9 @@ const SignUp: React.FC = () => {
   const handleStoreFile = (event) => {
     const selectedFile = event?.target?.files[0];
     if (selectedFile) {
-      if (selectedFile.size > 4 * 1024 * 1024) {
-        // 4 MB limit
-        toast.error("File size exceeds 4MB. Please choose a smaller file.");
+      if (selectedFile.size > 50 * 1024 * 1024) {
+        // 50 MB limit
+        toast.error("File size exceeds 50MB. Please choose a smaller file.");
         return;
       }
       setPayload((prevPayload) => ({
@@ -120,9 +128,9 @@ const SignUp: React.FC = () => {
   const handleProfilePictureChange = (event) => {
     const selectedFile = event?.target?.files[0];
     if (selectedFile) {
-      if (selectedFile.size > 4 * 1024 * 1024) {
-        // 4 MB limit
-        toast.error("File size exceeds 4MB. Please choose a smaller file.");
+      if (selectedFile.size > 50 * 1024 * 1024) {
+        // 50 MB limit
+        toast.error("File size exceeds 50MB. Please choose a smaller file.");
         return;
       }
       setPayload((prevPayload) => ({
@@ -137,6 +145,117 @@ const SignUp: React.FC = () => {
       ...prevPayload,
       profile_pic: null
     }));
+  };
+
+  // Multi-step flow handlers
+  const handleEmailNext = async () => {
+    if (!email || !email.includes("@")) {
+      setEmailError("Please enter a valid email");
+      return;
+    }
+    setEmailError("");
+    setLoading(true);
+    
+    const response = await isCustomer(email);
+    setLoading(false);
+
+    if (!response.success || response.error) {
+      handleError("Error checking email. Please try again.");
+      return;
+    }
+
+    const { is_customer, is_vendor } = response.data;
+
+    // Scenario 3: Existing vendor - redirect to signin
+    if (is_customer && is_vendor) {
+      setUserType("existing_vendor");
+      toast.info("You already have a vendor account. Redirecting to sign in...");
+      setTimeout(() => setAuthpage("signin"), 2000);
+      return;
+    }
+
+    // Scenario 1: Existing customer - ask for password
+    if (is_customer && !is_vendor) {
+      setUserType("existing_customer");
+      console.log("Existing customer detected");
+      setStep(2);
+      return;
+    }
+
+    // Scenario 2: New user - go to full signup
+    if (!is_customer && !is_vendor) {
+      setUserType("new_user");
+      updatePayload("email", email);
+      setStep(2);
+      return;
+    }
+  };
+
+  const handlePasswordNext = async () => {
+    if (!password) {
+      setPasswordError("Please enter your password");
+      return;
+    }
+    setPasswordError("");
+    setLoading(true);
+
+    const response = await customerLogin(email, password);
+    setLoading(false);
+
+    if (!response.success || response.error) {
+      handleError("Invalid email or password");
+      setPasswordError("Invalid password");
+      return;
+    }
+
+    const { access, refresh, user_id } = response.data;
+
+    if (access) {
+      setAuthToken(access);
+      // Store token in localStorage and cookies for SSO
+      localStorage.setItem("access", access);
+      if (refresh) {
+        localStorage.setItem("refresh", refresh);
+      }
+      if (user_id) {
+        localStorage.setItem("user_id", user_id);
+      }
+      setCookie("access_token", access, 7, ".pinksurfing.com");
+      if (refresh) {
+        setCookie("refresh_token", refresh, 7, ".pinksurfing.com");
+      }
+      if (user_id) {
+        setCookie("user_id", user_id, 7, ".pinksurfing.com");
+      }
+      
+      updatePayload("email", email);
+      setStep(3);
+    }
+  };
+
+  const handleVendorRegistration = async (event: any) => {
+    event.preventDefault();
+    setLoading(true);
+
+    // Validate required fields for vendor registration
+    if (!Payload.company_name || !Payload.street1 || !Payload.country || 
+        !Payload.state || !Payload.city || !Payload.zip_code) {
+      setLoading(false);
+      handleError("Please fill all required fields");
+      return;
+    }
+
+    const response = await customerVendorRegistration(authToken, Payload);
+    setLoading(false);
+
+    if (response.success && response.data && response.data.vendor_id) {
+      handleSuccess("Vendor registration successful!");
+      localStorage.setItem("vendor_id", response.data.vendor_id);
+      setIsLoggedIn(true);
+      router.push("/dashboard");
+    } else {
+      handleError(response.error || "Registration failed");
+    }
   };
 
   const handleSubmit = async (event: any) => {
@@ -373,15 +492,123 @@ const SignUp: React.FC = () => {
             </div>
 
             <div className="w-full border-stroke dark:border-strokedark xl:w-1/2 xl:border-l-2">
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={userType === "existing_customer" && step === 3 ? handleVendorRegistration : handleSubmit}>
                 <div className="w-full p-4 sm:p-12.5 xl:p-17.5">
                   <span className="mb-1.5 block font-medium">
                     Start for free
                   </span>
                   <h2 className="mb-9 text-2xl font-bold text-black dark:text-white sm:text-title-xl2">
-                    Sign Up as a Vendor and Create store
+                    {step === 1 ? "Enter Your Email" : step === 2 && userType === "existing_customer" ? "Enter Your Password" : step === 3 && userType === "existing_customer" ? "Vendor Registration" : "Sign Up as a Vendor and Create store"}
                   </h2>
 
+                  {/* Step 1: Email Input */}
+                  {step === 1 && (
+                    <>
+                      <div className="mb-4">
+                        <label className="mb-2.5 block font-medium text-black dark:text-white">
+                          Email
+                          <span className="text-red-500 font-bold text-lg">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="email"
+                            placeholder="Enter your email"
+                            value={email}
+                            onChange={(e) => {
+                              setEmail(e.target.value);
+                              setEmailError("");
+                            }}
+                            className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                          />
+                          <span className="absolute right-4 top-4">
+                            <MdEmail size={22} />
+                          </span>
+                        </div>
+                        {emailError && <p className="text-red-500 mt-1">{emailError}</p>}
+                      </div>
+                      
+                      <div className="mb-5">
+                        <button
+                          type="button"
+                          onClick={handleEmailNext}
+                          className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
+                        >
+                          Next
+                        </button>
+                      </div>
+
+                      <div className="mt-6 text-center">
+                        <p>
+                          Already have an account?{" "}
+                          <Link href="/auth/signin" className="text-primary">
+                            Sign in
+                          </Link>
+                        </p>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Step 2: Password for Existing Customer */}
+                  {step === 2 && userType === "existing_customer" && (
+                    <>
+                      <div className="mb-4">
+                        <label className="mb-2.5 block font-medium text-black dark:text-white">
+                          Email
+                        </label>
+                        <p className="text-black dark:text-white py-2">{email}</p>
+                      </div>
+
+                      <div className="mb-4">
+                        <label className="mb-2.5 block font-medium text-black dark:text-white">
+                          Password
+                          <span className="text-red-500 font-bold text-lg">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type={visible ? "text" : "password"}
+                            placeholder="Enter your password"
+                            value={password}
+                            onChange={(e) => {
+                              setPassword(e.target.value);
+                              setPasswordError("");
+                            }}
+                            className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                          />
+                          <span
+                            className="absolute right-4 top-4 cursor-pointer"
+                            onClick={() => setVisible(!visible)}
+                          >
+                            {visible ? <FaEyeSlash size={22} /> : <FaEye size={22} />}
+                          </span>
+                        </div>
+                        {passwordError && <p className="text-red-500 mt-1">{passwordError}</p>}
+                      </div>
+
+                      <div className="mb-5">
+                        <button
+                          type="button"
+                          onClick={handlePasswordNext}
+                          className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
+                        >
+                          Next
+                        </button>
+                      </div>
+
+                      <div className="mt-6 text-center">
+                        <button
+                          type="button"
+                          onClick={() => setStep(1)}
+                          className="text-primary"
+                        >
+                          ← Back to email
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Step 2: Full Signup for New User */}
+                  {step === 2 && userType === "new_user" && (
+                    <>
                   <div className="mb-4">
                     <label className="mb-2.5 block font-medium text-black dark:text-white">
                       First Name
@@ -582,6 +809,289 @@ const SignUp: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Close Step 2 for new users */}
+                  </>
+                  )}
+
+                  {/* Step 3: Vendor Details for Existing Customer (No email/password/OTP needed) */}
+                  {step === 3 && userType === "existing_customer" && (
+                    <>
+                  <div className="mb-4">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      General information about your store
+                      <span className="text-red-500 font-bold text-lg">*</span>
+                    </label>
+                    <div className="relative">
+                      <textarea
+                        placeholder="Enter your information about your store"
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(
+                          event: React.ChangeEvent<HTMLTextAreaElement>
+                        ) => {
+                          updatePayload("bio", event.target.value);
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      Store Name
+                      <span className="text-red-500 font-bold text-lg">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Enter your Store's name"
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>
+                        ) => updatePayload("company_name", event.target.value)}
+                        required
+                      />
+
+                      <span className="absolute right-4 top-4">
+                        <FaStore size={22} />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      Website URL
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="url"
+                        placeholder="Enter your website URL"
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>
+                        ) => updatePayload("website", event.target.value)}
+                      />
+                      <span className="absolute right-4 top-4 text-gray-500">
+                        <FaGlobe size={22} />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 p-7 bg-gray-2">
+                    <form action="#" className="relative">
+                      <h2 className="font-medium text-gray-700 text-center dark:text-black">
+                        Upload Store Image
+                      </h2>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="absolute inset-0 z-50 m-0 h-full w-full cursor-pointer p-0 opacity-0 outline-none"
+                        onChange={handleStoreFile}
+                      />
+                      <div className="flex flex-col items-center justify-center space-y-3">
+                        {Payload.shop_image ? (
+                          <div className="relative">
+                            <img
+                              src={URL.createObjectURL(Payload.shop_image)}
+                              alt={Payload.shop_image.name}
+                              className="h-20 w-20 object-cover rounded-md"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleRemoveStoreFile}
+                              className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full"
+                            >
+                              X
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="flex h-10 w-10 items-center justify-center rounded-full border border-stroke bg-white dark:border-strokedark dark:bg-boxdark">
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 16 16"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              {/* Your SVG paths for the icon */}
+                            </svg>
+                          </span>
+                        )}
+                        <p>
+                          <span className="text-primary">Click to upload</span>
+                        </p>
+                        {Payload.shop_image ? (
+                          <p>{Payload.shop_image.name}</p>
+                        ) : (
+                          <>
+                            <p className="mt-1.5">SVG, PNG, JPG, or GIF</p>
+                            <p>(max, 800 X 800px)</p>
+                          </>
+                        )}
+                      </div>
+                    </form>
+                  </div>
+
+                  <div className="mb-4 ">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      Street 1
+                      <span className="text-red-500 font-bold text-lg">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        placeholder="Enter your street 1"
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>
+                        ) => updatePayload("street1", event.target.value)}
+                        required
+                      />
+
+                      <span className="absolute right-4 top-4">
+                        <FaHome size={22} />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 ">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      Street 2
+                    </label>
+                    <div className="relative">
+                      <input
+                        placeholder="Enter your street 2"
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>
+                        ) => updatePayload("street2", event.target.value)}
+                      />
+
+                      <span className="absolute right-4 top-4">
+                        <FaHome size={22} />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 ">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      Country
+                      <span className="text-red-500 font-bold text-lg">*</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(e) => handleCountrySelect(e.target.value)}
+                        required
+                      >
+                        <option value="">Select your country</option>
+                        {countries.map((country) => (
+                          <option key={country.isoCode} value={country.isoCode}>
+                            {country.name}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="absolute right-4 top-4">
+                        <FaGlobeAmericas />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 ">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      State
+                      <span className="text-red-500 font-bold text-lg">*</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(e) => handleStateSelect(e.target.value)}
+                        disabled={!states.length}
+                        required
+                      >
+                        <option value="">Select your state</option>
+                        {states.map((state) => (
+                          <option key={state.isoCode} value={state.isoCode}>
+                            {state.name}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="absolute right-4 top-4">
+                        <FaMapPin />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 ">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      City
+                      <span className="text-red-500 font-bold text-lg">*</span>
+                    </label>
+                    <div className="relative">
+                      <select
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(e) => updatePayload("city", e.target.value)}
+                        disabled={!cities.length}
+                        required
+                      >
+                        <option value="">Select your city</option>
+                        {cities.map((city) => (
+                          <option key={city.name} value={city.name}>
+                            {city.name}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="absolute right-4 top-4">
+                        <FaMapMarkerAlt size={22} />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 ">
+                    <label className="mb-2.5 block font-medium text-black dark:text-white">
+                      Zip Code
+                      <span className="text-red-500 font-bold text-lg">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="tel"
+                        placeholder="Enter your zip code"
+                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        onChange={(
+                          event: React.ChangeEvent<HTMLInputElement>
+                        ) => updatePayload("zip_code", event.target.value)}
+                        required
+                      />
+
+                      <span className="absolute right-4 top-4 text-gray-500">
+                        <FaSearch />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-5">
+                    <button
+                      type="submit"
+                      className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
+                    >
+                      {loading ? "Creating Vendor Account..." : "Create Vendor Account"}
+                    </button>
+                  </div>
+
+                  <div className="mt-6 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setStep(2)}
+                      className="text-primary"
+                    >
+                      ← Back
+                    </button>
+                  </div>
+
+                  {/* Close Step 3 for existing customers */}
+                  </>
+                  )}
+
+                  {/* Continue with Store Name for new users (Step 2) */}
+                  {step === 2 && userType === "new_user" && (
+                    <>
                   <div className="mb-4">
                     <label className="mb-2.5 block font-medium text-black dark:text-white">
                       Store Name
@@ -1023,18 +1533,25 @@ const SignUp: React.FC = () => {
                   Sign up with Google
                 </button> */}
 
-                  <div className="mt-6 text-center">
-                    <p>
-                      Already have an account?{" "}
-                      <Link
-                        className=" text-primary self-end"
-                        href="/"
-                        onClick={() => setAuthpage("signin")}
-                      >
-                        Sign In
-                      </Link>
-                    </p>
-                  </div>
+                  {/* Show "Already have an account" for new user signup only */}
+                  {userType === "new_user" && (
+                    <div className="mt-6 text-center">
+                      <p>
+                        Already have an account?{" "}
+                        <Link
+                          className=" text-primary self-end"
+                          href="/"
+                          onClick={() => setAuthpage("signin")}
+                        >
+                          Sign In
+                        </Link>
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* Close the conditional rendering block for Step 2/3 */}
+                  </>
+                  )}
                 </div>
               </form>
             </div>
