@@ -206,7 +206,8 @@ export async function signIn(payload: any) {
   try {
     const response = await axios.post(
       `https://auth.pinksurfing.com/api/token/`,
-      payload
+      payload,
+      { withCredentials: true }
     );
 
     if (response.status < 205 && response.data.access) {
