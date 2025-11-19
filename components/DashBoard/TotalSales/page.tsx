@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { FaInfoCircle, FaChevronDown, FaFileAlt } from "react-icons/fa";
 import { getMonthlySales } from "@/api/orders";
-
+import { getCookie } from "@/utils/cookies";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 const TotalSales: React.FC = () => {
@@ -48,7 +48,7 @@ const TotalSales: React.FC = () => {
   };
 
   useEffect(() => {
-    let access = localStorage.getItem("access");
+    let access = getCookie("access_token");
     if (access) {
       getMonthlySales(access).then((data)=>{
         console.log(data.data)

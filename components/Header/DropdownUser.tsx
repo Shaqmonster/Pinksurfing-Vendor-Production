@@ -9,7 +9,7 @@ import { logout as logoutAPI } from "@/api/account";
 import { deleteCookie } from "@/utils/cookies";
 import { FaUser, FaCog, FaSignOutAlt } from "react-icons/fa";
 import { MdKeyboardArrowDown } from "react-icons/md";
-
+import { getCookie } from "@/utils/cookies";
 const DropdownUser = ({ setLogged }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { setIsLoggedIn } = useContext(MyContext);
@@ -19,7 +19,7 @@ const DropdownUser = ({ setLogged }) => {
   const dropdown = useRef(null);
 
   const tokenFromLocalStorage =
-    typeof window !== "undefined" ? localStorage.getItem("access") : null;
+    typeof window !== "undefined" ? getCookie("access_token") : null;
   const [token, setToken] = useState(tokenFromLocalStorage);
 
   const [user, setUser] = useState({
@@ -56,7 +56,7 @@ const DropdownUser = ({ setLogged }) => {
 
   const signout = async () => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("access");
+      const token = getCookie("access_token");
       
       // Call logout API to clear session on server
       if (token) {

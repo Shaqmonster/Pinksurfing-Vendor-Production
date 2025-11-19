@@ -8,12 +8,12 @@ import TotalSales from "@/components/DashBoard/TotalSales/page";
 import IncomeChart from "@/components/DashBoard/BarGraph/page";
 import { getTopSellingProducts } from "@/api/products";
 import OrderTable from "@/components/Tables/OrderTable";
-
+import { getCookie } from "@/utils/cookies";
 const Dashboard: React.FC = () => {
   const [topProducts, setTopProducts] = useState([]);
   useMemo(() => {
     if (typeof window !== "undefined") {
-      let token = localStorage.getItem("access");
+      let token = getCookie("access_token");
       if (!token) return;
       (async () => {
         const res = await getTopSellingProducts(token);

@@ -12,7 +12,7 @@ import Link from "next/link";
 import Loader from "../common/Loader";
 import Parcel from "../Order/Parcel/page";
 import { toast } from "react-toastify";
-
+import { getCookie } from "@/utils/cookies";
 interface Order {
   id: string;
   product: { name: string };
@@ -55,7 +55,7 @@ const OrderTable = ({recentOrders}: any) => {
   ];
 
   const vendor_id =
-    typeof window !== "undefined" ? localStorage.getItem("access") : "";
+    typeof window !== "undefined" ? getCookie("access_token") : "";
 
   useEffect(() => {
     if (!vendor_id) return;
@@ -110,7 +110,7 @@ const OrderTable = ({recentOrders}: any) => {
       setCurrentOrder(order);
       setIsModalOpen(true);
     } else {
-      changeStatus(localStorage.getItem("access"), order.id, newStatus).then(
+      changeStatus(getCookie("access_token"), order.id, newStatus).then(
         () => {
           setOrders((prevOrders) =>
             prevOrders.map((o) =>
@@ -125,7 +125,7 @@ const OrderTable = ({recentOrders}: any) => {
   const handleParcelSubmit = (details: Package) => {
     if (currentOrder) {
       changeStatus(
-        localStorage.getItem("access"),
+        getCookie("access_token"),
         currentOrder.id,
         "PACKED",
         details.length,

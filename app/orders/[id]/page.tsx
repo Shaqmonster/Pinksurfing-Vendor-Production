@@ -9,10 +9,10 @@ import {
   getShipmentDetails
 } from "@/api/orders";
 import { fail } from "assert";
-
+import { getCookie } from "@/utils/cookies";
 const Page = ({ params }: { params: { id: string } }) => {
   const [token, setToken] = useState<string | null>(
-    typeof window !== "undefined" ? localStorage.getItem("access") : null
+    typeof window !== "undefined" ? getCookie("access_token") : null
   );
   const [loading, setLoading] = useState(true);
   const [orderData, setOrderData] = useState<any>(null);

@@ -11,7 +11,7 @@ import Loader, { Loader2 } from "@/components/common/Loader";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { handleError } from "@/utils/toast";
-
+import { getCookie } from "@/utils/cookies";
 const AddProducts = () => {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
@@ -167,7 +167,7 @@ const AddProducts = () => {
 
   const handleSave = async () => {
     if (typeof window !== "undefined") {
-      let token = localStorage.getItem("access");
+      let token = getCookie("access_token");
       let vendor_id = localStorage.getItem("vendor_id");
       const { mrp, unit_price } = productData;
       const finalUnitPrice = hasDiscount ? unit_price : mrp;

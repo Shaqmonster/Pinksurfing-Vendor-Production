@@ -11,6 +11,7 @@ import { getProducts } from "@/api/products";
 import { useRouter } from "next/navigation";
 import { FiBell, FiMenu, FiSearch } from "react-icons/fi";
 import Sidebar from "../Sidebar";
+import { getCookie } from "@/utils/cookies";
 
 const Header = (props: { loggedIn: boolean | undefined }) => {
   const pathname = usePathname();
@@ -28,7 +29,7 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
   useEffect(() => {
     if (typeof window !== "undefined") {
       console.log(sidebarOpen);
-      let access = localStorage.getItem("access");
+      let access = getCookie("access_token");
       let vendor_id = localStorage.getItem("vendor_id");
       if (
         pathname !== "/" &&
@@ -62,7 +63,7 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
         ) {
           try {
             if (typeof window !== "undefined") {
-              let refresh = localStorage.getItem("refresh");
+              let refresh = getCookie("refresh_token");
               if (!refresh) {
                 setLogged(false);
                 router.push("/");

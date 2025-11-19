@@ -15,7 +15,7 @@ import Link from "next/link";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import ConfirmationModal from "../Modals/ConfirmDelete";
 import { toast } from "react-toastify";
-
+import { getCookie } from "@/utils/cookies";
 const ProductsTable = (props: { Products: Product[] }) => {
   const rowRef = useRef<any>(null);
   const [categories, setCategories] = useState([]);
@@ -30,7 +30,7 @@ const ProductsTable = (props: { Products: Product[] }) => {
 
   const handleDelete = async (productId: string) => {
     if (typeof window !== "undefined") {
-      const token: string | null = localStorage.getItem("access");
+      const token: string | null = getCookie("access_token");
       const vendor_id: string | null = localStorage.getItem("vendor_id");
 
       if (!token || !vendor_id) {
@@ -76,7 +76,7 @@ const ProductsTable = (props: { Products: Product[] }) => {
 
   useMemo(() => {
     if (typeof window !== "undefined") {
-      const token: string | null = localStorage.getItem("access");
+      const token: string | null = getCookie("access_token");
       const store: string | null = localStorage.getItem("store");
 
       if (store) {

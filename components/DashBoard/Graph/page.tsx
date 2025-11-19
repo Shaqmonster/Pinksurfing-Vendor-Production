@@ -4,7 +4,7 @@ import React ,{useEffect}from "react";
 import dynamic from "next/dynamic";
 import { getMonthlySales } from "@/api/orders";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
-
+import { getCookie } from "@/utils/cookies";
 interface GraphSectionProps {
   height?: number;
   width?: number | string;
@@ -15,7 +15,7 @@ const GraphSection: React.FC<GraphSectionProps> = ({
   width = "100%"
 }) => {
   useEffect(() => {
-    let access = localStorage.getItem("access");
+    let access = getCookie("access_token");
     console.log(access);
     if (access) {
       (async () => {

@@ -26,9 +26,9 @@ export default function Home() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       // First check localStorage
-      let access = localStorage.getItem("access");
+      let access = getCookie("access_token");
       let vendor_id = localStorage.getItem("vendor_id");
-      let refresh = localStorage.getItem("refresh");
+      let refresh = getCookie("refresh_token");
 
       // If not in localStorage, check cookies (SSO from ecommerce site)
       if (!access || !vendor_id) {

@@ -16,7 +16,7 @@ import Loader from "@/components/common/Loader";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { useRouter } from "next/navigation";
-
+import { getCookie } from "@/utils/cookies";
 export default function EditProduct({ params }: { params: { id: string } }) {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
@@ -125,7 +125,7 @@ export default function EditProduct({ params }: { params: { id: string } }) {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("access");
+    const token = getCookie("access_token");
     if (token) {
       setLoading(true);
       getSingleProduct(token, params.id).then((data) => {
@@ -173,7 +173,7 @@ export default function EditProduct({ params }: { params: { id: string } }) {
 
   const handleSave = async () => {
     if (typeof window !== "undefined") {
-      let token = localStorage.getItem("access");
+      let token = getCookie("access_token");
       let vendor_id = localStorage.getItem("vendor_id");
       const { mrp, unit_price } = productData;
       const finalUnitPrice = hasDiscount ? unit_price : mrp;

@@ -31,7 +31,7 @@ export default function RootLayout({
     setLoggedIn(loggedIn);
   }, []);
   const checkLoginState = () => {
-    let access = localStorage.getItem("access");
+    let access = getCookie("access_token");
     let vendor_id = localStorage.getItem("vendor_id");
     
     // If not in localStorage, check cookies (SSO from ecommerce site)
@@ -69,7 +69,7 @@ export default function RootLayout({
     let access: string | null = "",
       vendor_id: string | null = "";
     if (typeof window !== "undefined") {
-      access = localStorage.getItem("access");
+      access = getCookie("access_token");
       vendor_id = localStorage.getItem("vendor_id");
       if (!access || !vendor_id) {
         setLoggedIn(false);
@@ -89,7 +89,7 @@ export default function RootLayout({
 
   useMemo(() => {
     if (typeof window !== "undefined") {
-      let token = localStorage.getItem("access");
+      let token = getCookie("access_token");
       if (!token) return;
       (async () => {
         const res = await getTopSellingProducts(token);

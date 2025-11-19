@@ -8,7 +8,7 @@ import { getOrders } from "@/api/orders";
 import { MyContext } from "../providers/context";
 import { redirect, useRouter } from "next/navigation";
 import { FaCamera } from "react-icons/fa";
-
+import { getCookie } from "@/utils/cookies";
 const Profile = () => {
   const [Profile, setProfile] = useState({
     name: "",
@@ -25,12 +25,12 @@ const Profile = () => {
   let access: string | null = "",
     vendor_id: string | null = "";
   if (typeof window !== "undefined") {
-    access = localStorage.getItem("access");
+    access = getCookie("access_token");
     vendor_id = localStorage.getItem("vendor_id");
   }
   let router = useRouter();
   useEffect(() => {
-    let access = localStorage.getItem("access");
+    let access = getCookie("access_token");
     let vendor_id = localStorage.getItem("vendor_id");
     const store: string | null = localStorage.getItem("store");
     if (access && store) {
