@@ -63,7 +63,7 @@ export async function customerVendorRegistration(token: string, payload: any) {
 export async function logout(token: string) {
   try {
     const response = await axios.post(
-      `https://auth.pinksurfing.com/logout/`,
+      `https://auth.pinksurfing.com/api/logout/`,
       {},
       {
         headers: {
