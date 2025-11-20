@@ -170,7 +170,7 @@ const SignUp: React.FC = () => {
     if (is_customer && is_vendor) {
       setUserType("existing_vendor");
       toast.info("You already have a vendor account. Redirecting to sign in...");
-      setTimeout(() => setAuthpage("signin"), 2000);
+      setAuthpage("signin");
       return;
     }
 
