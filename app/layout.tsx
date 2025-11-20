@@ -16,6 +16,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getTopSellingProducts } from "@/api/products";
 import { getCookie } from "@/utils/cookies";
+import { isVendor } from "@/api/account";
 
 export default function RootLayout({
   children
@@ -30,32 +31,34 @@ export default function RootLayout({
     console.log(loggedIn);
     setLoggedIn(loggedIn);
   }, []);
-  const checkLoginState = () => {
+  const checkLoginState = async () => {
     let access = getCookie("access_token");
-    let vendor_id = localStorage.getItem("vendor_id");
-    
+
     // If not in localStorage, check cookies (SSO from ecommerce site)
-    if (!access || !vendor_id) {
+    if (!access){
       const cookieAccess = getCookie("access_token");
-      const cookieUserId = getCookie("user_id");
       const cookieRefresh = getCookie("refresh_token");
 
-      if (cookieAccess && cookieUserId) {
+      if (cookieAccess) {
         // Store cookie values in localStorage for future use
         localStorage.setItem("access", cookieAccess);
-        localStorage.setItem("vendor_id", cookieUserId);
         if (cookieRefresh) {
           localStorage.setItem("refresh", cookieRefresh);
         }
         
         access = cookieAccess;
-        vendor_id = cookieUserId;
         
         console.log("SSO: Tokens found in cookies, stored in localStorage");
       }
     }
     
-    if (access && vendor_id) {
+    if (!access) {
+      setLoggedIn(false);
+      return;
+    }
+    
+    const vendor_access = await isVendor(access);
+    if (access && vendor_access.success) {
       setLoggedIn(true);
     } else {
       setLoggedIn(false);

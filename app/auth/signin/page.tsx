@@ -99,7 +99,7 @@ const SignIn: React.FC = () => {
         handleError(data?.message)
         localStorage.setItem("customer", JSON.stringify(parseJwt(data.token)));
         console.log(parseJwt(data.token),"going to register as vendor")
-        setAuthpage("register-as-vendor");
+        setAuthpage("signup");
       } else if (data && "token" in data) {
         let { token, refresh } = data;
         console.log(data)

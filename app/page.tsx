@@ -14,6 +14,7 @@ import ResetPassword from "./auth/reset-password/page";
 import RegisterAsVendor from "./auth/register-as-vendor.tsx/page";
 import Loader from "@/components/common/Loader";
 import { getCookie } from "@/utils/cookies";
+import { isVendor } from "@/api/account";
 
 export default function Home() {
   const { loggedIn, setIsLoggedIn, authPage } = useContext(MyContext);
@@ -24,71 +25,81 @@ export default function Home() {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // First check localStorage
-      let access = getCookie("access_token");
-      let vendor_id = localStorage.getItem("vendor_id");
-      let refresh = getCookie("refresh_token");
+    const checkAuthAndVendorStatus = async () => {
+      if (typeof window !== "undefined") {
+        // First check localStorage
+        let access = getCookie("access_token");
+        let vendor_id = localStorage.getItem("vendor_id");
+        let refresh = getCookie("refresh_token");
 
-      // If not in localStorage, check cookies (SSO from ecommerce site)
-      if (!access || !vendor_id) {
-        const cookieAccess = getCookie("access_token");
-        const cookieUserId = getCookie("user_id");
-        const cookieRefresh = getCookie("refresh_token");
+        // If not in localStorage, check cookies (SSO from ecommerce site)
+        if (!access) {
+          const cookieAccess = getCookie("access_token");
+          const cookieUserId = getCookie("user_id");
+          const cookieRefresh = getCookie("refresh_token");
 
-        if (cookieAccess && cookieUserId) {
-          // Store cookie values in localStorage for future use
-          localStorage.setItem("access", cookieAccess);
-          localStorage.setItem("vendor_id", cookieUserId);
-          if (cookieRefresh) {
-            localStorage.setItem("refresh", cookieRefresh);
-          }
-          
-          access = cookieAccess;
-          vendor_id = cookieUserId;
-          refresh = cookieRefresh;
-          
-          console.log("SSO: Tokens found in cookies, stored in localStorage");
-        }
-      }
-
-      // If still no tokens found, show login
-      if (!access || !vendor_id) {
-        setIsLoggedIn(false);
-        setLoading(false); 
-        return;
-      }
-
-      // If user is logged in and on root page, redirect to dashboard
-      if (pathname === "/") {
-        router.push("/dashboard");
-        return;
-      }
-
-      getProducts(access, vendor_id)
-        .then((response) => {
-          if (response.status < 205) {
-            setIsLoggedIn(true);
-            const productsData = response.data.Products;
-            if (productsData && productsData.length) {
-              setProducts(productsData.slice(0, 10));
-            } else {
-              if (pathname === "/inventory/products") {
-                redirect("/inventory/add_products");
-              }
+          if (cookieAccess && cookieUserId) {
+            // Store cookie values in localStorage for future use
+            localStorage.setItem("access", cookieAccess);
+            localStorage.setItem("vendor_id", cookieUserId);
+            if (cookieRefresh) {
+              localStorage.setItem("refresh", cookieRefresh);
             }
-          } else {
+
+            access = cookieAccess;
+            vendor_id = cookieUserId;
+            refresh = cookieRefresh;
+
+            console.log("SSO: Tokens found in cookies, stored in localStorage");
+          }
+        }
+
+        if (!access) {
+          setIsLoggedIn(false);
+          return;
+        }
+        const vendor_access = await isVendor(access);
+
+        // If still no tokens found, show login
+        if (!access && !vendor_access.success) {
+          setIsLoggedIn(false);
+          setLoading(false);
+          setAuthPageState(<SignUp />);
+          return;
+        }
+
+        // If user is logged in and on root page, redirect to dashboard
+        if (pathname === "/") {
+          router.push("/dashboard");
+          return;
+        }
+
+        getProducts(access, vendor_id)
+          .then((response) => {
+            if (response.status < 205) {
+              setIsLoggedIn(true);
+              const productsData = response.data.Products;
+              if (productsData && productsData.length) {
+                setProducts(productsData.slice(0, 10));
+              } else {
+                if (pathname === "/inventory/products") {
+                  redirect("/inventory/add_products");
+                }
+              }
+            } else {
+              setIsLoggedIn(false);
+              router.push("/");
+            }
+          })
+          .catch((err) => {
+            console.error(err);
             setIsLoggedIn(false);
             router.push("/");
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-          setIsLoggedIn(false);
-          router.push("/");
-        })
-        .finally(() => setLoading(false));
-    }
+          })
+          .finally(() => setLoading(false));
+      }
+    };
+    checkAuthAndVendorStatus();
   }, [setIsLoggedIn, router, pathname]);
 
   useEffect(() => {
@@ -115,7 +126,7 @@ export default function Home() {
   }, [authPage]);
 
   if (loading) {
-    return <Loader />; 
+    return <Loader />;
   }
 
   return <>{loggedIn ? <Dashboard /> : authPageState}</>;
