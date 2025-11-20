@@ -269,3 +269,22 @@ export async function getProfile(token: string | null) {
     .catch((error) => error);
   return res;
 }
+
+export async function isVendor(token: string) {
+  try {
+    const response = await axios.get(`${BASE_URL}/vendor/is-vendor/`, {
+      headers: {
+        Authorization: `Bearer ${token.replaceAll('"', "")}`,
+      },
+    });
+    return { success: response.data.is_vendor };
+  } catch (error: any) {
+    // If 404 or 403, user is not a vendor
+    if (error?.response?.status === 404 || error?.response?.status === 403 || error?.response?.status === 409) {
+      return { success: true, isVendor: false, error: error.response?.data };
+    }
+    // Other errors
+    console.error("Error checking vendor status:", error);
+    return { success: false, isVendor: false, error };
+  }
+}
