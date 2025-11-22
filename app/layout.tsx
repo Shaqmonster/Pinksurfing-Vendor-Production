@@ -66,7 +66,7 @@ export default function RootLayout({
   };
   useEffect(() => {
     checkLoginState();
-  }, [pathname]);
+  }, []);
 
   useEffect(() => {
     let access: string | null = "",
