@@ -32,7 +32,6 @@ import {
   FaUser
 } from "react-icons/fa";
 import { MdEmail } from "react-icons/md";
-import { ToastContainer, toast } from "react-toastify";
 import Loader from "@/components/common/Loader";
 import { Country, State, City } from "country-state-city";
 import { getVendorProfile } from "@/api/products";
@@ -108,7 +107,7 @@ const SignUp: React.FC = () => {
     if (selectedFile) {
       if (selectedFile.size > 50 * 1024 * 1024) {
         // 50 MB limit
-        toast.error("File size exceeds 50MB. Please choose a smaller file.");
+        handleError("File size exceeds 50MB. Please choose a smaller file.");
         return;
       }
       setPayload((prevPayload) => ({
@@ -130,7 +129,7 @@ const SignUp: React.FC = () => {
     if (selectedFile) {
       if (selectedFile.size > 50 * 1024 * 1024) {
         // 50 MB limit
-        toast.error("File size exceeds 50MB. Please choose a smaller file.");
+        handleError("File size exceeds 50MB. Please choose a smaller file.");
         return;
       }
       setPayload((prevPayload) => ({
@@ -169,7 +168,7 @@ const SignUp: React.FC = () => {
     // Scenario 3: Existing vendor - redirect to signin
     if (is_customer && is_vendor) {
       setUserType("existing_vendor");
-      toast.info("You already have a vendor account. Redirecting to sign in...");
+      handleError("You already have a vendor account. Redirecting to sign in...");
       setAuthpage("signin");
       return;
     }
@@ -769,9 +768,9 @@ const SignUp: React.FC = () => {
                           console.log(res);
                         
                           if (res.success) {
-                            toast.success(res.message);
+                            handleSuccess(res.message);
                           } else {
-                            toast.error(res.message);
+                            handleError(res.message);
                           }
                         }}
                         disabled={!Payload.email || emailError}
@@ -1556,7 +1555,6 @@ const SignUp: React.FC = () => {
               </form>
             </div>
           </div>
-          <ToastContainer />
         </div>
       )}
     </>
