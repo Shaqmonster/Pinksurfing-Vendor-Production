@@ -26,7 +26,7 @@ export default function RootLayout({
   const [loading, setLoading] = useState<boolean>(false);
   // const [loggedIn, setIsLoggedIn] = useState<boolean>(false);
   const pathname = usePathname();
-  const { sidebarOpen, setSidebarOpen,setIsLoggedIn,loggedIn } = useContext(MyContext);
+  const { sidebarOpen, setSidebarOpen,setIsLoggedIn,loggedIn,setAuthpage } = useContext(MyContext);
   const bodyScrollCallback = useCallback((loggedIn: boolean) => {
     console.log(loggedIn);
     setIsLoggedIn(loggedIn);
@@ -75,6 +75,7 @@ export default function RootLayout({
     } else {
       console.log("Layout: User is not a vendor");
       setIsLoggedIn(false);
+      setAuthpage("signup");
     }
   };
   
