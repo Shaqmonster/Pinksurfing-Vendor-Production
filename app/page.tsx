@@ -14,6 +14,7 @@ import ResetPassword from "./auth/reset-password/page";
 import RegisterAsVendor from "./auth/register-as-vendor.tsx/page";
 import Loader from "@/components/common/Loader";
 import { getCookie } from "@/utils/cookies";
+import { isVendor } from "@/api/account";
 export default function Home() {
   const { loggedIn, setIsLoggedIn, authPage } = useContext(MyContext);
   const [authPageState, setAuthPageState] = useState<JSX.Element | null>(null);
@@ -69,21 +70,22 @@ export default function Home() {
         }
         
         // Check if user is a vendor
-        // console.log("Checking vendor status...");
-        // const vendor_access = await isVendor(access);
-        // console.log("Vendor check result:", vendor_access);
+        console.log("Checking vendor status...");
+        const vendor_access = await isVendor(access);
+        console.log("Vendor check result:", vendor_access);
         
-        // if (!vendor_access.success || !vendor_access.isVendor) {
-        //   console.log("User is not a vendor, showing auth page");
-        //   setIsLoggedIn(false);
-        //   setLoading(false);
-        //   return;
-        // }
+        if (!vendor_access.success || !vendor_access.isVendor) {
+          console.log("User is not a vendor, showing auth page");
+          setIsLoggedIn(false);
+          setLoading(false);
+          setAuthPageState(<SignUp />);
+          return;
+        }
 
-        // console.log("User is a verified vendor, granting access");
+        console.log("User is a verified vendor, granting access");
         
         // // User is a verified vendor
-        // setIsLoggedIn(true);
+        setIsLoggedIn(true);
         
         // If user is on root page, redirect to dashboard
         if (pathname === "/") {
