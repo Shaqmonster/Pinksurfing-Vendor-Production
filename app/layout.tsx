@@ -60,6 +60,8 @@ export default function RootLayout({
       console.log("Vendor profile:", vendor);
       setLoggedIn(true);
     } else {
+      localStorage.clear();
+
       setLoggedIn(false);
     }
   };
