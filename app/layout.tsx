@@ -17,6 +17,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { getTopSellingProducts } from "@/api/products";
 import { getCookie } from "@/utils/cookies";
 import { isVendor } from "@/api/account";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function RootLayout({
   children
@@ -123,32 +124,34 @@ export default function RootLayout({
     <html lang="en">
       <body suppressHydrationWarning={true}>
         <MyProvider setLoggedIn={bodyScrollCallback}>
-          <div className="dark:bg-boxdark-2 dark:text-bodydark">
-            {loading ? (
-              <Loader />
-            ) : (
-              <div className="flex h-screen overflow-hidden">
-                {/* <!-- ===== Sidebar Start ===== --> */}
-                {loggedIn && <div>{loggedIn && <Sidebar />}</div>}
+          <ProtectedRoute>
+            <div className="dark:bg-boxdark-2 dark:text-bodydark">
+              {loading ? (
+                <Loader />
+              ) : (
+                <div className="flex h-screen overflow-hidden">
+                  {/* <!-- ===== Sidebar Start ===== --> */}
+                  {loggedIn && <div>{loggedIn && <Sidebar />}</div>}
 
-                {/* <!-- ===== Content Area Start ===== --> */}
-                <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
-                  {/* <!-- ===== Header Start ===== --> */}
-                  <Header loggedIn={loggedIn} />
-                  {/* <!-- ===== Header End ===== --> */}
+                  {/* <!-- ===== Content Area Start ===== --> */}
+                  <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+                    {/* <!-- ===== Header Start ===== --> */}
+                    <Header loggedIn={loggedIn} />
+                    {/* <!-- ===== Header End ===== --> */}
 
-                  {/* <!-- ===== Main Content Start ===== --> */}
-                  <main>
-                    <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
-                      {children}
-                    </div>
-                  </main>
-                  {/* <!-- ===== Main Content End ===== --> */}
+                    {/* <!-- ===== Main Content Start ===== --> */}
+                    <main>
+                      <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
+                        {children}
+                      </div>
+                    </main>
+                    {/* <!-- ===== Main Content End ===== --> */}
+                  </div>
+                  {/* <!-- ===== Content Area End ===== --> */}
                 </div>
-                {/* <!-- ===== Content Area End ===== --> */}
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          </ProtectedRoute>
         </MyProvider>
         <ToastContainer />
       </body>
