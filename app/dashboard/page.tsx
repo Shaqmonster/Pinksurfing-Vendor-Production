@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { AiOutlineArrowUp } from "react-icons/ai";
 import { BsEye } from "react-icons/bs";
 import { HiOutlineShoppingBag } from "react-icons/hi";
@@ -9,7 +9,10 @@ import IncomeChart from "@/components/DashBoard/BarGraph/page";
 import { getTopSellingProducts } from "@/api/products";
 import OrderTable from "@/components/Tables/OrderTable";
 import { getCookie } from "@/utils/cookies";
+import { isVendor } from "@/api/account";
+import { MyContext } from "../providers/context";
 const Dashboard: React.FC = () => {
+  const {  setIsLoggedIn ,setAuthpage} = useContext(MyContext);
   const [topProducts, setTopProducts] = useState([]);
   useMemo(() => {
     if (typeof window !== "undefined") {
@@ -19,6 +22,16 @@ const Dashboard: React.FC = () => {
         const res = await getTopSellingProducts(token);
         setTopProducts(res.data);
       })();
+    }
+  }, []);
+
+  useEffect(() => {
+    const vendor_access = isVendor(getCookie("access_token") || "");
+    console.log("Vendor access check:", vendor_access);
+    if (!vendor_access) {
+      console.log("Not a vendor, redirecting to vendor registration");
+      setIsLoggedIn(false);
+      setAuthpage('signup')
     }
   }, []);
 
@@ -55,7 +68,7 @@ const Dashboard: React.FC = () => {
             <h3 className="text-base font-thin">Product Performance</h3>
             <p className="text-xl font-bold mt-3">Top Performing Products</p>
             <div className="flex flex-col space-y-2">
-              {topProducts?.map((product : any, index) => (
+              {topProducts?.map((product: any, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-border-b"
@@ -134,9 +147,9 @@ const Dashboard: React.FC = () => {
             </div>
           </div> */}
         </div>
-          <div className="flex flex-col gap-10 pt-12">
-            <OrderTable recentOrders={true}/>
-          </div>
+        <div className="flex flex-col gap-10 pt-12">
+          <OrderTable recentOrders={true} />
+        </div>
       </main>
     </div>
   );
