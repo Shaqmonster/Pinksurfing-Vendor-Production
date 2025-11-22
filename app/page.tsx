@@ -70,21 +70,21 @@ export default function Home() {
         }
         
         // Check if user is a vendor
-        console.log("Checking vendor status...");
-        const vendor_access = await isVendor(access);
-        console.log("Vendor check result:", vendor_access);
+        // console.log("Checking vendor status...");
+        // const vendor_access = await isVendor(access);
+        // console.log("Vendor check result:", vendor_access);
         
-        if (!vendor_access.success || !vendor_access.isVendor) {
-          console.log("User is not a vendor, showing auth page");
-          setIsLoggedIn(false);
-          setLoading(false);
-          return;
-        }
+        // if (!vendor_access.success || !vendor_access.isVendor) {
+        //   console.log("User is not a vendor, showing auth page");
+        //   setIsLoggedIn(false);
+        //   setLoading(false);
+        //   return;
+        // }
 
-        console.log("User is a verified vendor, granting access");
+        // console.log("User is a verified vendor, granting access");
         
-        // User is a verified vendor
-        setIsLoggedIn(true);
+        // // User is a verified vendor
+        // setIsLoggedIn(true);
         
         // If user is on root page, redirect to dashboard
         if (pathname === "/") {
