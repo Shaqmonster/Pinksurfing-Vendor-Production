@@ -51,15 +51,24 @@ export default function RootLayout({
         console.log("SSO: Tokens found in cookies, stored in localStorage");
       }
     }
-    if (access) {
+    
+    if (!access) {
+      setLoggedIn(false);
+      return;
+    }
+    
+    const vendor_access = await isVendor(access);
+    if (access && vendor_access.success) {
       setLoggedIn(true);
     } else {
       setLoggedIn(false);
     }
   };
+  
+  // Only run checkLoginState once on initial mount, not on pathname changes
   useEffect(() => {
     checkLoginState();
-  }, [pathname]);
+  }, []); // Empty dependency array - runs only once
 
   useEffect(() => {
     let access: string | null = "",
