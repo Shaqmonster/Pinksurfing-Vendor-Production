@@ -68,7 +68,7 @@ export default function Home() {
       }
 
       // If user is logged in and on root page, redirect to dashboard
-      if (pathname === "/") {
+      if (pathname === "/" && access && vendor_access.success) {
         router.push("/dashboard");
         return;
       }
