@@ -16,7 +16,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getTopSellingProducts } from "@/api/products";
 import { getCookie } from "@/utils/cookies";
-import { isVendor } from "@/api/account";
+import { getProfile, isVendor } from "@/api/account";
 
 export default function RootLayout({
   children
@@ -43,7 +43,6 @@ export default function RootLayout({
         localStorage.setItem("refresh", cookieRefresh);
       }
       //storing hardcoded vendor_id for testing SSO
-      localStorage.setItem("vendor_id", "9a14b3e9-2fae-4608-851a-851b3425ef0f");
       console.log("SSO: Tokens found in cookies, stored in localStorage");
     }
 
@@ -54,6 +53,9 @@ export default function RootLayout({
 
     const vendor_access = await isVendor(access);
     if (access && vendor_access.success) {
+      const vendor = await getProfile(access);
+      localStorage.setItem("vendor_id", vendor.data.id);
+      console.log("Vendor profile:", vendor);
       setLoggedIn(true);
     } else {
       setLoggedIn(false);
