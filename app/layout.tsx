@@ -42,6 +42,8 @@ export default function RootLayout({
       if (cookieRefresh) {
         localStorage.setItem("refresh", cookieRefresh);
       }
+      //storing hardcoded vendor_id for testing SSO
+      localStorage.setItem("vendor_id", "9a14b3e9-2fae-4608-851a-851b3425ef0f");
       console.log("SSO: Tokens found in cookies, stored in localStorage");
     }
 
