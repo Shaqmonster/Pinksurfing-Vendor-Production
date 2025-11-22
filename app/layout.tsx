@@ -51,14 +51,7 @@ export default function RootLayout({
         console.log("SSO: Tokens found in cookies, stored in localStorage");
       }
     }
-    
-    if (!access) {
-      setLoggedIn(false);
-      return;
-    }
-    
-    const vendor_access = await isVendor(access);
-    if (access && vendor_access.success) {
+    if (access) {
       setLoggedIn(true);
     } else {
       setLoggedIn(false);
