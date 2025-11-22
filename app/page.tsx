@@ -99,7 +99,7 @@ export default function Home() {
     }
     };
     checkAuthAndFetchProducts();
-  }, [setIsLoggedIn, router, pathname]);
+  }, []);
 
   useEffect(() => {
     switch (authPage) {

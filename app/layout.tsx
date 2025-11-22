@@ -2,7 +2,7 @@
 import "./globals.css";
 import "./data-tables-css.css";
 import "./satoshi.css";
-import { useState, useEffect, useContext, useCallback,useMemo } from "react";
+import { useState, useEffect, useContext, useCallback, useMemo } from "react";
 import Loader from "@/components/common/Loader";
 
 import Sidebar from "@/components/Sidebar";
@@ -34,30 +34,22 @@ export default function RootLayout({
   const checkLoginState = async () => {
     console.log("Checking login state...");
     let access = getCookie("access_token");
+    const cookieRefresh = getCookie("refresh_token");
 
-    // If not in localStorage, check cookies (SSO from ecommerce site)
-    if (!access){
-      const cookieAccess = getCookie("access_token");
-      const cookieRefresh = getCookie("refresh_token");
-
-      if (cookieAccess) {
-        // Store cookie values in localStorage for future use
-        localStorage.setItem("access", cookieAccess);
-        if (cookieRefresh) {
-          localStorage.setItem("refresh", cookieRefresh);
-        }
-        
-        access = cookieAccess;
-        
-        console.log("SSO: Tokens found in cookies, stored in localStorage");
+    if (access) {
+      // Store cookie values in localStorage for future use
+      localStorage.setItem("access", access);
+      if (cookieRefresh) {
+        localStorage.setItem("refresh", cookieRefresh);
       }
+      console.log("SSO: Tokens found in cookies, stored in localStorage");
     }
-    
+
     if (!access) {
       setLoggedIn(false);
       return;
     }
-    
+
     const vendor_access = await isVendor(access);
     if (access && vendor_access.success) {
       setLoggedIn(true);
@@ -97,7 +89,7 @@ export default function RootLayout({
       if (!token) return;
       (async () => {
         const res = await getTopSellingProducts(token);
-        if(res.error){
+        if (res.error) {
           setLoggedIn(false);
         }
       })();
