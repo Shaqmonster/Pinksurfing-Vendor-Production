@@ -20,6 +20,7 @@ export default function Home() {
   const [authPageState, setAuthPageState] = useState<JSX.Element | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [vendorCheck, setVendorCheck] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const hasCheckedAuth = useRef(false);
@@ -78,6 +79,7 @@ export default function Home() {
           console.log("User is not a vendor, showing auth page");
           setIsLoggedIn(false);
           setLoading(false);
+          setVendorCheck(false);
           setAuthPageState(<SignUp />);
           return;
         }
@@ -148,5 +150,5 @@ export default function Home() {
     return <Loader />; 
   }
 
-  return <>{loggedIn ? <Dashboard /> : authPageState}</>;
+  return <>{(loggedIn && vendorCheck) ? <Dashboard /> : authPageState}</>;
 }
