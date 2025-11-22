@@ -12,7 +12,7 @@ import { getCookie } from "@/utils/cookies";
 import { isVendor } from "@/api/account";
 import { MyContext } from "../providers/context";
 const Dashboard: React.FC = () => {
-  const {  setIsLoggedIn ,setAuthpage} = useContext(MyContext);
+  const { setIsLoggedIn, setAuthpage } = useContext(MyContext);
   const [topProducts, setTopProducts] = useState([]);
   useMemo(() => {
     if (typeof window !== "undefined") {
@@ -26,13 +26,15 @@ const Dashboard: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const vendor_access = isVendor(getCookie("access_token") || "");
-    console.log("Vendor access check:", vendor_access);
-    if (!vendor_access) {
-      console.log("Not a vendor, redirecting to vendor registration");
-      setIsLoggedIn(false);
-      setAuthpage('signup')
-    }
+    (async () => {
+      const vendor_access = await isVendor(getCookie("access_token") || "");
+      console.log("Vendor access check:", vendor_access);
+      if (!vendor_access.isVendor) {
+        console.log("Not a vendor, redirecting to vendor registration");
+        setIsLoggedIn(false);
+        setAuthpage("signup");
+      }
+    })();
   }, []);
 
   return (

@@ -278,7 +278,7 @@ export async function isVendor(token: string) {
       },
     });
     console.log("isVendor API response:", response.data);
-    return { success: true, isVendor: response.data.is_vendor || true, data: response.data };
+    return { isVendor: response.data?.is_vendor };
   } catch (error: any) {
     console.log("isVendor API error:", error?.response?.status, error?.response?.data);
     // If 404 or 403, user is not a vendor
