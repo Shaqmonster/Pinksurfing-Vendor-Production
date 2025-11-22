@@ -122,7 +122,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body suppressHydrationWarning={true}>
-        <MyProvider setIsLoggedIn={bodyScrollCallback}>
+        <MyProvider setLoggedIn={bodyScrollCallback}>
           <div className="dark:bg-boxdark-2 dark:text-bodydark">
             {loading ? (
               <Loader />

@@ -9,7 +9,6 @@ import IncomeChart from "@/components/DashBoard/BarGraph/page";
 import { getTopSellingProducts } from "@/api/products";
 import OrderTable from "@/components/Tables/OrderTable";
 import { getCookie } from "@/utils/cookies";
-import { isVendor } from "@/api/account";
 import { MyContext } from "../providers/context";
 const Dashboard: React.FC = () => {
   const { setIsLoggedIn, setAuthpage } = useContext(MyContext);
@@ -25,17 +24,6 @@ const Dashboard: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      const vendor_access = await isVendor(getCookie("access_token") || "");
-      console.log("Vendor access check:", vendor_access);
-      if (!vendor_access.isVendor) {
-        console.log("Not a vendor, redirecting to vendor registration");
-        setIsLoggedIn(false);
-        setAuthpage("signup");
-      }
-    })();
-  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100 text-black dark:text-white">

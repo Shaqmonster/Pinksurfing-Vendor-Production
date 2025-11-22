@@ -14,7 +14,6 @@ import ResetPassword from "./auth/reset-password/page";
 import RegisterAsVendor from "./auth/register-as-vendor.tsx/page";
 import Loader from "@/components/common/Loader";
 import { getCookie } from "@/utils/cookies";
-import { isVendor } from "@/api/account";
 export default function Home() {
   const { loggedIn, setIsLoggedIn, authPage } = useContext(MyContext);
   const [authPageState, setAuthPageState] = useState<JSX.Element | null>(null);

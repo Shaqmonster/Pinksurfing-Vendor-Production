@@ -96,7 +96,7 @@ export async function getOnboardingUrl(token: string) {
 export async function refreshToken(token: string, refresh: string) {
   try {
     const response = await axios.post(
-      `https://auth.pinksurfing.com/api/token/refresh`,
+      `https://auth.pinksurfing.com/api/token/refresh/`,
       {
         refresh,
       },
