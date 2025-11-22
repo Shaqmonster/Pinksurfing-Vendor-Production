@@ -32,6 +32,7 @@ export default function RootLayout({
     setLoggedIn(loggedIn);
   }, []);
   const checkLoginState = async () => {
+    console.log("Checking login state...");
     let access = getCookie("access_token");
 
     // If not in localStorage, check cookies (SSO from ecommerce site)
