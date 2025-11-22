@@ -32,53 +32,62 @@ export default function Home() {
       if (typeof window !== "undefined") {
         hasCheckedAuth.current = true;
         
-        // First check localStorage
+        // Check for tokens from cookies (SSO) or localStorage
         let access = getCookie("access_token");
         let vendor_id = localStorage.getItem("vendor_id");
         let refresh = getCookie("refresh_token");
+        
+        console.log("Auth check - access token:", access ? "found" : "not found");
+        console.log("Auth check - vendor_id:", vendor_id ? "found" : "not found");
 
-        // If not in localStorage, check cookies (SSO from ecommerce site)
-        if (!access) {
-          const cookieAccess = getCookie("access_token");
+        // If vendor_id not in localStorage but we have access token, get user_id from cookie
+        if (access && !vendor_id) {
           const cookieUserId = getCookie("user_id");
-          const cookieRefresh = getCookie("refresh_token");
-
-          if (cookieAccess && cookieUserId) {
-            // Store cookie values in localStorage for future use
-            localStorage.setItem("access", cookieAccess);
-            localStorage.setItem("vendor_id", cookieUserId);
-            if (cookieRefresh) {
-              localStorage.setItem("refresh", cookieRefresh);
-            }
-            
-            access = cookieAccess;
+          if (cookieUserId) {
             vendor_id = cookieUserId;
-            refresh = cookieRefresh;
-            
-            console.log("SSO: Tokens found in cookies, checking vendor status...");
+            localStorage.setItem("vendor_id", cookieUserId);
+            console.log("SSO: Stored user_id from cookie to localStorage");
           }
+        }
+
+        // Store tokens in localStorage if found in cookies
+        if (access && !localStorage.getItem("access")) {
+          localStorage.setItem("access", access);
+          console.log("SSO: Stored access token to localStorage");
+        }
+        
+        if (refresh && !localStorage.getItem("refresh")) {
+          localStorage.setItem("refresh", refresh);
+          console.log("SSO: Stored refresh token to localStorage");
         }
 
         // If still no tokens found, show login
         if (!access) {
+          console.log("No access token found, showing login");
           setIsLoggedIn(false);
           setLoading(false); 
           return;
         }
         
+        // Check if user is a vendor
+        console.log("Checking vendor status...");
         const vendor_access = await isVendor(access);
+        console.log("Vendor check result:", vendor_access);
+        
         if (!vendor_access.success || !vendor_access.isVendor) {
-          console.log("User is not a vendor, showing signup");
+          console.log("User is not a vendor, showing auth page");
           setIsLoggedIn(false);
           setLoading(false);
           return;
         }
 
-        console.log("User is a verified vendor");
+        console.log("User is a verified vendor, granting access");
         
-        // If user is logged in and on root page, redirect to dashboard
+        // User is a verified vendor
+        setIsLoggedIn(true);
+        
+        // If user is on root page, redirect to dashboard
         if (pathname === "/") {
-          setIsLoggedIn(true);
           setLoading(false);
           router.push("/dashboard");
           return;
@@ -88,7 +97,6 @@ export default function Home() {
         getProducts(access, vendor_id)
           .then((response) => {
             if (response.status < 205) {
-              setIsLoggedIn(true);
               const productsData = response.data.Products;
               if (productsData && productsData.length) {
                 setProducts(productsData.slice(0, 10));
@@ -102,7 +110,7 @@ export default function Home() {
             }
           })
           .catch((err) => {
-            console.error(err);
+            console.error("Error fetching products:", err);
             setIsLoggedIn(false);
           })
           .finally(() => setLoading(false));

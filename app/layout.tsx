@@ -33,34 +33,47 @@ export default function RootLayout({
   }, []);
   const checkLoginState = async () => {
     let access = getCookie("access_token");
+    let vendor_id = localStorage.getItem("vendor_id");
 
-    // If not in localStorage, check cookies (SSO from ecommerce site)
-    if (!access){
-      const cookieAccess = getCookie("access_token");
-      const cookieRefresh = getCookie("refresh_token");
-
-      if (cookieAccess) {
-        // Store cookie values in localStorage for future use
-        localStorage.setItem("access", cookieAccess);
-        if (cookieRefresh) {
-          localStorage.setItem("refresh", cookieRefresh);
-        }
-        
-        access = cookieAccess;
-        
-        console.log("SSO: Tokens found in cookies, stored in localStorage");
+    console.log("Layout auth check - access:", access ? "found" : "not found");
+    
+    // If vendor_id not in localStorage but we have access token, get from cookie
+    if (access && !vendor_id) {
+      const cookieUserId = getCookie("user_id");
+      if (cookieUserId) {
+        vendor_id = cookieUserId;
+        localStorage.setItem("vendor_id", cookieUserId);
+        console.log("Layout: Stored user_id from cookie");
       }
     }
     
+    // Store access token in localStorage if not already there
+    if (access && !localStorage.getItem("access")) {
+      localStorage.setItem("access", access);
+      console.log("Layout: Stored access token");
+    }
+    
+    const refresh = getCookie("refresh_token");
+    if (refresh && !localStorage.getItem("refresh")) {
+      localStorage.setItem("refresh", refresh);
+      console.log("Layout: Stored refresh token");
+    }
+    
     if (!access) {
+      console.log("Layout: No access token, user not logged in");
       setLoggedIn(false);
       return;
     }
     
+    console.log("Layout: Checking vendor status...");
     const vendor_access = await isVendor(access);
-    if (access && vendor_access.success) {
+    console.log("Layout: Vendor check result:", vendor_access);
+    
+    if (vendor_access.success && vendor_access.isVendor) {
+      console.log("Layout: User is verified vendor");
       setLoggedIn(true);
     } else {
+      console.log("Layout: User is not a vendor");
       setLoggedIn(false);
     }
   };
