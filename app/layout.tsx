@@ -24,12 +24,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const [loading, setLoading] = useState<boolean>(false);
-  const [loggedIn, setLoggedIn] = useState<boolean>(false);
+  // const [loggedIn, setIsLoggedIn] = useState<boolean>(false);
   const pathname = usePathname();
-  const { sidebarOpen, setSidebarOpen } = useContext(MyContext);
+  const { sidebarOpen, setSidebarOpen,setIsLoggedIn,loggedIn } = useContext(MyContext);
   const bodyScrollCallback = useCallback((loggedIn: boolean) => {
     console.log(loggedIn);
-    setLoggedIn(loggedIn);
+    setIsLoggedIn(loggedIn);
   }, []);
   const checkLoginState = async () => {
     let access = getCookie("access_token");
@@ -61,7 +61,7 @@ export default function RootLayout({
     
     if (!access) {
       console.log("Layout: No access token, user not logged in");
-      setLoggedIn(false);
+      setIsLoggedIn(false);
       return;
     }
     
@@ -71,10 +71,10 @@ export default function RootLayout({
     
     if (vendor_access.success && vendor_access.isVendor) {
       console.log("Layout: User is verified vendor");
-      setLoggedIn(true);
+      setIsLoggedIn(true);
     } else {
       console.log("Layout: User is not a vendor");
-      setLoggedIn(false);
+      setIsLoggedIn(false);
     }
   };
   
@@ -90,7 +90,7 @@ export default function RootLayout({
       access = getCookie("access_token");
       vendor_id = localStorage.getItem("vendor_id");
       if (!access || !vendor_id) {
-        setLoggedIn(false);
+        setIsLoggedIn(false);
       }
     }
   }, []);
@@ -112,7 +112,7 @@ export default function RootLayout({
       (async () => {
         const res = await getTopSellingProducts(token);
         if(res.error){
-          setLoggedIn(false);
+          setIsLoggedIn(false);
         }
       })();
     }
@@ -121,7 +121,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body suppressHydrationWarning={true}>
-        <MyProvider setLoggedIn={bodyScrollCallback}>
+        <MyProvider setIsLoggedIn={bodyScrollCallback}>
           <div className="dark:bg-boxdark-2 dark:text-bodydark">
             {loading ? (
               <Loader />
