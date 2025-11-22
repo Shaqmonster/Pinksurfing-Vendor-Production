@@ -75,7 +75,7 @@ export default function RootLayout({
     if (typeof window !== "undefined") {
       access = getCookie("access_token");
       vendor_id = localStorage.getItem("vendor_id");
-      if (!access || !vendor_id) {
+      if (!access) {
         setLoggedIn(false);
       }
     }
