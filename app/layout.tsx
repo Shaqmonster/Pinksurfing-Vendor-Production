@@ -47,6 +47,8 @@ export default function RootLayout({
     }
 
     if (!access) {
+      //clearing localstorage because of the following case(loggout out from ecommerce site but still have localstorage values of access and refresh tokens)
+      localStorage.clear();
       setLoggedIn(false);
       return;
     }
