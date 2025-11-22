@@ -10,6 +10,7 @@ import { getTopSellingProducts } from "@/api/products";
 import OrderTable from "@/components/Tables/OrderTable";
 import { getCookie } from "@/utils/cookies";
 import { MyContext } from "../providers/context";
+import { isVendor } from "@/api/account";
 const Dashboard: React.FC = () => {
   const { setIsLoggedIn, setAuthpage } = useContext(MyContext);
   const [topProducts, setTopProducts] = useState([]);
@@ -24,7 +25,16 @@ const Dashboard: React.FC = () => {
     }
   }, []);
 
-
+  useEffect(() => {
+    const checkVendorStatus = async () => {
+      const vendor_access = await isVendor(getCookie("access_token") || "");
+      if(!vendor_access.isVendor){
+        setIsLoggedIn(false);
+        setAuthpage("signup");
+      }
+    };
+    checkVendorStatus();
+  }, []);
   return (
     <div className="min-h-screen bg-gray-100 text-black dark:text-white">
       <main className="container mx-auto px-4 py-8">
