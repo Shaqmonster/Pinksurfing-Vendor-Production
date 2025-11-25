@@ -400,7 +400,7 @@ export default function EditProduct({ params }: { params: { id: string } }) {
                     value={productData.short_description}
                     formats={formats}
                     onChange={(e) => {
-                      if (e.length <= 300) {
+                      if (e.length <= 255) {
                         setProductData({
                           ...productData,
                           short_description: e,
@@ -409,7 +409,7 @@ export default function EditProduct({ params }: { params: { id: string } }) {
                     }}
                   />
                   <div className="text-xs mt-2 text-gray-500 dark:text-gray-400">
-                    {productData.short_description.length}/300 characters
+                    {productData.short_description.length}/255 characters
                   </div>
                 </div>
                 <div className="w-full pt-6">
@@ -899,7 +899,7 @@ export default function EditProduct({ params }: { params: { id: string } }) {
             className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-white dark:text-gray-200 hover:bg-opacity-95 dark:bg-opacity-90 hover:shadow-lg transition duration-300 mt-3 w-1/2 md:w-1/6"
             type="submit"
           >
-            Edit Product
+            Save Changes
           </button>
         </form>
       )}

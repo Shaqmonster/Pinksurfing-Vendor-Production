@@ -378,7 +378,7 @@ const AddProducts = () => {
                     value={productData.short_description}
                     formats={formats}
                     onChange={(e) => {
-                      if (e.length <= 300) {
+                      if (e.length <= 255) {
                         setProductData({
                           ...productData,
                           short_description: e
@@ -388,12 +388,12 @@ const AddProducts = () => {
                   />
                   <div
                     className={`text-xs mt-2 ${
-                      productData.short_description.length >= 300
+                      productData.short_description.length >= 255
                         ? "text-red-500"
                         : "text-gray-500 dark:text-gray-400"
                     }`}
                   >
-                    {productData.short_description.length}/300 characters
+                    {productData.short_description.length}/255 characters
                   </div>
                 </div>
                 <div className="w-full pt-6">
@@ -777,71 +777,97 @@ const AddProducts = () => {
               {attribute?.map((att, j) => {
                 return (
                   <React.Fragment key={j}>
-                    <div className="col-span-4 flex justify-between gap-2">
-                      <select
-                        className="w-10 rounded flex-1 border border-gray-300 dark:border-none ml-4 py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
-                        name="attributeName"
-                        id="attributeName"
-                        value={att.name}
-                        onChange={(e) => {
-                          setAttribute((i) => {
-                            i[j]["name"] = e.target.value;
-                            return [...i];
-                          });
-                        }}
-                      >
-                        <option value="">Select Attribute</option>
-                        {allowedAttributes?.map(
-                          (allowedAttribute: any, index) => (
-                            <option key={index} value={allowedAttribute.name}>
-                              {allowedAttribute.name}
-                            </option>
-                          )
-                        )}
-                      </select>
+                    <div className="col-span-4 flex flex-col sm:flex-row justify-between gap-4 mb-4 p-4 border border-gray-200 rounded-lg dark:border-gray-700">
+                      <div className="flex-1">
+                        <label
+                          className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
+                          htmlFor={`attributeName-${j}`}
+                        >
+                          Variant Name
+                        </label>
+                        <select
+                          className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                          name="attributeName"
+                          id={`attributeName-${j}`}
+                          value={att.name}
+                          onChange={(e) => {
+                            setAttribute((i) => {
+                              i[j]["name"] = e.target.value;
+                              return [...i];
+                            });
+                          }}
+                        >
+                          <option value="">Select Attribute</option>
+                          {allowedAttributes?.map(
+                            (allowedAttribute: any, index) => (
+                              <option key={index} value={allowedAttribute.name}>
+                                {allowedAttribute.name}
+                              </option>
+                            )
+                          )}
+                        </select>
+                      </div>
 
-                      <input
-                        className="w-10 rounded flex-1 border border-gray-300 dark:border-none ml-4 py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
-                        type="text"
-                        name="attributeValue"
-                        id="attributeValue"
-                        placeholder="Variant Value"
-                        value={att.value}
-                        onChange={(e) => {
-                          setAttribute((i) => {
-                            i[j]["value"] = e.target.value;
-                            return [...i];
-                          });
-                        }}
-                      />
+                      <div className="flex-1">
+                        <label
+                          className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
+                          htmlFor={`attributeValue-${j}`}
+                        >
+                          Variant Value
+                        </label>
+                        <input
+                          className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                          type="text"
+                          name="attributeValue"
+                          id={`attributeValue-${j}`}
+                          placeholder="Variant Value"
+                          value={att.value}
+                          onChange={(e) => {
+                            setAttribute((i) => {
+                              i[j]["value"] = e.target.value;
+                              return [...i];
+                            });
+                          }}
+                        />
+                      </div>
 
-                      <input
-                        className="w-10 rounded flex-1 border border-gray-300 dark:border-none ml-4 py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
-                        type="number"
-                        name="attributePrice"
-                        id="attributePrice"
-                        placeholder="Variant Price"
-                        value={att.additional_price}
-                        onChange={(e) => {
-                          setAttribute((i: any) => {
-                            i[j]["additional_price"] = e.target.value;
-                            return [...i];
-                          });
-                        }}
-                      />
+                      <div className="flex-1">
+                        <label
+                          className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
+                          htmlFor={`attributePrice-${j}`}
+                        >
+                          Additional Price
+                        </label>
+                        <input
+                          className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                          type="number"
+                          name="attributePrice"
+                          id={`attributePrice-${j}`}
+                          placeholder="0"
+                          value={att.additional_price}
+                          onChange={(e) => {
+                            setAttribute((i: any) => {
+                              i[j]["additional_price"] = e.target.value;
+                              return [...i];
+                            });
+                          }}
+                        />
+                      </div>
 
-                      <button
-                        type="button"
-                        className="bg-red-500 hover:bg-red-700 text-black dark:text-white font-medium py-2 px-4 rounded"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setAttribute((i) =>
-                            i.filter((_, index) => index !== j)
-                          );
-                        }}
-                      >
-                        Delete
-                      </button>
+                      <div className="flex items-end">
+                        <button
+                          type="button"
+                          className="bg-red-500 hover:bg-red-700 text-white font-medium py-2 px-4 rounded h-fit transition duration-200"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setAttribute((i) =>
+                              i.filter((_, index) => index !== j)
+                            );
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </React.Fragment>
                 );
