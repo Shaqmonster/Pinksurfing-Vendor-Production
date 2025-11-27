@@ -143,7 +143,7 @@ const Page = ({ params }: { params: { id: string } }) => {
       } else {
         // Handle success response
         console.log("Shipment label bought successfully", response.data);
-        toast.success("Shipment label bought successfully");
+        toast.success("Order Marked as Shipped!");
         setShowDownloadShipmentLabel(true);
       }
     } catch (error) {
@@ -446,10 +446,11 @@ const Page = ({ params }: { params: { id: string } }) => {
                           className={`bg-primary text-white py-2 px-6 rounded-full block mb-4`}
                           onClick={handleBuyShipmentLabel}
                         >
-                          Buy Shipment Label
+                          Mark as Shipped
                         </button>
                       )}
 
+                    {/*
                     {(orderData?.order_status == "SHIPPED" ||
                       showDownloadShipmentLabel) && (
                       <button
@@ -460,6 +461,7 @@ const Page = ({ params }: { params: { id: string } }) => {
                         Download Shipment Label
                       </button>
                     )}
+                    */}
                   </form>
                 )}
               </div>
