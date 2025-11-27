@@ -65,7 +65,7 @@ const Profile = () => {
       <div className="overflow-hidden rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-primary">
         <div className="relative z-20 h-35 md:h-65">
           <Image
-            src={Profile.store_image || "/images/cover/cover-01.png"}
+            src={Profile.profile_pic || "/images/cover/cover-01.png"}
             alt="profile cover"
             className="h-full w-full rounded-tl-sm rounded-tr-sm object-cover object-center"
             width={970}
@@ -109,7 +109,7 @@ const Profile = () => {
             <div className="relative drop-shadow-2 w-full h-full">
               <Image
                 src={
-                  Profile.profile_picture || "/images/user/ic_dummy_user.png"
+                  Profile.store_image || "/images/user/ic_dummy_user.png"
                 }
                 width={150}
                 height={150}

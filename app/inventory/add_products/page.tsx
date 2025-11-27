@@ -103,6 +103,9 @@ const AddProducts = () => {
   useEffect(() => {
     if (selectedCategory) {
       setSubcategoriesLoading(true);
+      setSelectedSubcategory(""); // Reset subcategory when category changes
+      setAllowedAttributes([]); // Clear allowed attributes
+      setAttribute([]); // Clear attributes
       getSubcategories(selectedCategory)
         .then((data) => {
           setSubcategories(data.data);
@@ -277,6 +280,7 @@ const AddProducts = () => {
                         className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 dark:bg-[#e7e0ec] dark:border-none dark:text-black"
                         id="grid-state"
                         disabled={subcategoriesLoading || !selectedCategory}
+                        value={selectedSubcategory}
                         onChange={(e: any) => {
                           const selectedSlug = e.target.value;
                           setSelectedSubcategory(selectedSlug);
@@ -306,7 +310,7 @@ const AddProducts = () => {
                           setSubcategoriesLoading(false);
                         }}
                       >
-                        {/* <option value="0">Choose</option> */}
+                        <option value="">Choose</option>
                         {subcategories.length && selectedCategory ? (
                           subcategories.map(
                             (
@@ -324,9 +328,7 @@ const AddProducts = () => {
                               );
                             }
                           )
-                        ) : (
-                          <option value="">None</option>
-                        )}
+                        ) : null}
                       </select>
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                         <svg

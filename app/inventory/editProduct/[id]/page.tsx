@@ -131,10 +131,43 @@ export default function EditProduct({ params }: { params: { id: string } }) {
       getSingleProduct(token, params.id).then((data) => {
         setLoading(false);
         console.log("Fetched Product:", data.data.Products);
-        setAttribute(data.data.Products.attributes);
-        setProductData(data.data.Products);
-        setSelectedCategory(data.data.Products.category);
-        setHasDiscount(!!data.data.Products.unit_price);
+        const product = data.data.Products;
+        
+        setAttribute(product.attributes);
+        setProductData(product);
+        setHasDiscount(!!product.unit_price);
+        
+        // Set category and subcategory
+        const categorySlug = typeof product.category === 'string' 
+          ? product.category 
+          : product.category?.slug;
+        const subcategorySlug = typeof product.subcategory === 'string'
+          ? product.subcategory
+          : product.subcategory?.slug;
+        
+        if (categorySlug) {
+          setSelectedCategory(categorySlug);
+          
+          // Fetch subcategories for this category
+          getSubcategories(categorySlug).then((subcatData) => {
+            setSubcategories(subcatData.data);
+            
+            if (subcategorySlug) {
+              setSelectedSubcategory(subcategorySlug);
+              
+              // Find and set allowed attributes for the subcategory
+              const selectedSubcat = subcatData.data.find(
+                (subcat: any) => subcat.slug === subcategorySlug
+              );
+              
+              if (selectedSubcat && selectedSubcat.allowed_attributes) {
+                setAllowedAttributes(selectedSubcat.allowed_attributes);
+              }
+            }
+          }).catch(() => {
+            console.error("Failed to fetch subcategories");
+          });
+        }
       });
     } else {
       notifyError("No access token found");
@@ -171,7 +204,9 @@ export default function EditProduct({ params }: { params: { id: string } }) {
     );
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
     if (typeof window !== "undefined") {
       let token = getCookie("access_token");
       let vendor_id = localStorage.getItem("vendor_id");
@@ -207,21 +242,11 @@ export default function EditProduct({ params }: { params: { id: string } }) {
     }
   };
 
-  const removeProductImage = (imageKey) => {
-    const updatedProductData = { ...productData };
+  const removeProductImage = (imageKey: number) => {
+    const updatedProductData: any = { ...productData };
     delete updatedProductData[`image${imageKey}`];
     setProductData(updatedProductData);
   };
-  useEffect(() => {
-    if (productData.category?.slug) {
-      setSelectedCategory(productData.category.slug);
-    }
-  }, [productData.category]);
-  useEffect(() => {
-    if (productData.subcategory?.slug) {
-      setSelectedSubcategory(productData.subcategory.slug);
-    }
-  }, [productData.subcategory]);
 
   return (
     <div className="mx-auto max-w-270">
@@ -308,19 +333,9 @@ export default function EditProduct({ params }: { params: { id: string } }) {
                             setAllowedAttributes(
                               selectedSubcat?.allowed_attributes
                             );
-                            const initialAttributes =
-                              selectedSubcat?.allowed_attributes?.map(
-                                (attr) => ({
-                                  name: attr.name,
-                                  value: "",
-                                  additional_price: 0,
-                                })
-                              );
-                            console.log(initialAttributes);
-                            setAttribute(initialAttributes);
+                            // Don't auto-populate attributes - only set allowed attributes for dropdown
                           } else {
                             setAllowedAttributes([]);
-                            setAttribute([]);
                           }
                           setSubcategoriesLoading(false);
                         }}
@@ -665,14 +680,14 @@ export default function EditProduct({ params }: { params: { id: string } }) {
               </div>
               <div className="border-none rounded-md p-5 w-full border bg-white shadow-default dark:bg-primary mt-6">
                 <h3 className="w-full font-medium text-black dark:text-white border-b border-gray-200 pb-3 mb-5">
-                  Meta
+                  SEO Fields(This helps in search engine ranking)
                 </h3>
                 <div className="w-full">
                   <label
                     className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
                     htmlFor="Title"
                   >
-                    Meta Title
+                    SEO Title
                   </label>
                   <input
                     className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
@@ -691,7 +706,7 @@ export default function EditProduct({ params }: { params: { id: string } }) {
                     className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
                     htmlFor="Tags"
                   >
-                    Meta Tags
+                    SEO Tags
                   </label>
                   <input
                     className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
@@ -804,84 +819,117 @@ export default function EditProduct({ params }: { params: { id: string } }) {
               >
                 Variants 'different sizes of the same or main item for sale'
               </label>
-              {attribute.map((singleAttribute, j) => {
+              {attribute?.map((att, j) => {
                 return (
                   <React.Fragment key={j}>
-                    <div
-                      className="col-span-4 flex justify-between gap-2"
-                      key={j}
-                    >
-                      <input
-                        className="w-10 rounded flex-1 border border-gray-300 dark:border-none ml-4 py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
-                        type="text"
-                        name="attributeName"
-                        id="attributeName"
-                        placeholder="Variant Name"
-                        readOnly
-                        value={singleAttribute.name}
-                        onChange={(e) => {
-                          setAttribute((prevState) =>
-                            prevState.map((item, index) =>
-                              index === j
-                                ? { ...item, name: e.target.value }
-                                : item
+                    <div className="col-span-4 flex flex-col sm:flex-row justify-between gap-4 mb-4 p-4 border border-gray-200 rounded-lg dark:border-gray-700">
+                      <div className="flex-1">
+                        <label
+                          className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
+                          htmlFor={`attributeName-${j}`}
+                        >
+                          Variant Name
+                        </label>
+                        <select
+                          className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                          name="attributeName"
+                          id={`attributeName-${j}`}
+                          value={att.name}
+                          onChange={(e) => {
+                            setAttribute((prevState) =>
+                              prevState.map((item, index) =>
+                                index === j
+                                  ? { ...item, name: e.target.value }
+                                  : item
+                              )
+                            );
+                          }}
+                        >
+                          <option value="">Select Attribute</option>
+                          {allowedAttributes?.map(
+                            (allowedAttribute: any, index) => (
+                              <option key={index} value={allowedAttribute.name}>
+                                {allowedAttribute.name}
+                              </option>
                             )
-                          );
-                        }}
-                      />
-                      <input
-                        className="w-10 rounded flex-1 border border-gray-300 dark:border-none ml-4 py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
-                        type="text"
-                        name="attributeValue"
-                        id="attributeValue"
-                        placeholder="Variant Value"
-                        value={singleAttribute.value}
-                        onChange={(e) => {
-                          setAttribute((prevState) =>
-                            prevState.map((item, index) =>
-                              index === j
-                                ? { ...item, value: e.target.value }
-                                : item
-                            )
-                          );
-                        }}
-                      />
-                      <input
-                        className="w-10 rounded flex-1 border border-gray-300 dark:border-none ml-4 py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
-                        type="number"
-                        name="attributeValue"
-                        id="attributeValue"
-                        placeholder="Variant Price"
-                        value={singleAttribute.additional_price}
-                        onChange={(e) => {
-                          setAttribute((prevState) =>
-                            prevState.map((item, index) =>
-                              index === j
-                                ? { ...item, additional_price: e.target.value }
-                                : item
-                            )
-                          );
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className="bg-red-500 hover:bg-red-700 text-black dark:text-white font-medium py-2 px-4 rounded"
-                        onClick={() => {
-                          setAttribute((prevState) =>
-                            prevState.filter((_, index) => index !== j)
-                          );
-                        }}
-                      >
-                        Delete
-                      </button>
+                          )}
+                        </select>
+                      </div>
+
+                      <div className="flex-1">
+                        <label
+                          className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
+                          htmlFor={`attributeValue-${j}`}
+                        >
+                          Variant Value
+                        </label>
+                        <input
+                          className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                          type="text"
+                          name="attributeValue"
+                          id={`attributeValue-${j}`}
+                          placeholder="Variant Value"
+                          value={att.value}
+                          onChange={(e) => {
+                            setAttribute((prevState) =>
+                              prevState.map((item, index) =>
+                                index === j
+                                  ? { ...item, value: e.target.value }
+                                  : item
+                              )
+                            );
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <label
+                          className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
+                          htmlFor={`attributePrice-${j}`}
+                        >
+                          Additional Price
+                        </label>
+                        <input
+                          className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                          type="number"
+                          name="attributePrice"
+                          id={`attributePrice-${j}`}
+                          placeholder="0"
+                          value={att.additional_price}
+                          onChange={(e) => {
+                            setAttribute((prevState) =>
+                              prevState.map((item, index) =>
+                                index === j
+                                  ? { ...item, additional_price: parseFloat(e.target.value) || 0 }
+                                  : item
+                              )
+                            );
+                          }}
+                        />
+                      </div>
+
+                      <div className="flex items-end">
+                        <button
+                          type="button"
+                          className="bg-red-500 hover:bg-red-700 text-white font-medium py-2 px-4 rounded h-fit transition duration-200"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setAttribute((prevState) =>
+                              prevState.filter((_, index) => index !== j)
+                            );
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </React.Fragment>
                 );
               })}
-              <div className="flex justify-end">
+              <div className="flex justify-end mt-4">
                 <button
                   type="button"
-                  className="bg-primary hover:bg-blue-700 text-white font-medium py-2 px-4 rounded ml-auto"
+                  className="bg-primary hover:bg-blue-700 text-white font-medium py-2 px-6 rounded ml-auto transition duration-200 flex items-center gap-2"
                   onClick={(e) => {
                     e.preventDefault();
                     setAttribute((i) => [
@@ -890,7 +938,8 @@ export default function EditProduct({ params }: { params: { id: string } }) {
                     ]);
                   }}
                 >
-                  Add another Variant
+                  <span className="text-xl">+</span>
+                  Add Variant
                 </button>
               </div>
             </div>
