@@ -165,7 +165,9 @@ const AddProducts = () => {
     event.preventDefault();
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
     if (typeof window !== "undefined") {
       let token = getCookie("access_token");
       let vendor_id = localStorage.getItem("vendor_id");
@@ -197,7 +199,7 @@ const AddProducts = () => {
         }
       } catch (error: any) {
         console.log(error);
-        toast.error(error.response.data.message || "Unexpected error occurred");
+        toast.error(error.response?.data?.message || "Unexpected error occurred");
       } finally {
         setLoading(false);
       }
@@ -641,14 +643,14 @@ const AddProducts = () => {
               </div>
               <div className="border-none rounded-md p-5 w-full border bg-white shadow-default dark:bg-primary mt-6">
                 <h3 className="w-full font-medium text-black dark:text-white border-b border-gray-200 pb-3 mb-5">
-                  Meta
+                  SEO Fields(This helps in search engine ranking)
                 </h3>
                 <div className="w-full">
                   <label
                     className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
                     htmlFor="Title"
                   >
-                    Meta Title
+                    SEO Title
                   </label>
                   <input
                     className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
@@ -666,7 +668,7 @@ const AddProducts = () => {
                     className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
                     htmlFor="Tags"
                   >
-                    Meta Tags
+                    SEO Tags
                   </label>
                   <input
                     className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
