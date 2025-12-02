@@ -150,33 +150,38 @@ const Profile = () => {
                 : null}
             </p>
             {Profile.slug && (
-              <div className="flex items-center justify-center gap-2 mt-2">
-                <a 
-                  href={`https://pinksurfing.com/store/${Profile.slug}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-500 hover:text-blue-700"
-                >
-                  {`https://pinksurfing.com/store/${Profile.slug}`}
-                </a>
-                {copied ? (
-                  <FaCheck 
-                    className="text-green-500 transition-colors"
-                    size={14}
-                    title="Copied!"
-                  />
-                ) : (
-                  <FaCopy 
-                    className="cursor-pointer text-blue-500 hover:text-blue-700 transition-colors"
-                    size={14}
-                    onClick={() => {
-                      navigator.clipboard.writeText(`https://pinksurfing.com/store/${Profile.slug}`);
-                      setCopied(true);
-                      setTimeout(() => setCopied(false), 3000);
-                    }}
-                    title="Copy to clipboard"
-                  />
-                )}
+              <div className="flex flex-col items-center gap-1 mt-2">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  You can use this as a clickable link to your store
+                </span>
+                <div className="flex items-center justify-center gap-2">
+                  <a 
+                    href={`https://pinksurfing.com/store/${Profile.slug}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-500 hover:text-blue-700"
+                  >
+                    {`https://pinksurfing.com/store/${Profile.slug}`}
+                  </a>
+                  {copied ? (
+                    <FaCheck 
+                      className="text-green-500 transition-colors"
+                      size={14}
+                      title="Copied!"
+                    />
+                  ) : (
+                    <FaCopy 
+                      className="cursor-pointer text-blue-500 hover:text-blue-700 transition-colors"
+                      size={14}
+                      onClick={() => {
+                        navigator.clipboard.writeText(`https://pinksurfing.com/store/${Profile.slug}`);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 3000);
+                      }}
+                      title="Copy to clipboard"
+                    />
+                  )}
+                </div>
               </div>
             )}
             <div className="mx-auto mt-4.5 mb-5.5 grid max-w-94 grid-cols-2 rounded-md border border-stroke py-2.5 shadow-1 dark:border-strokedark dark:bg-[#37404F]">
