@@ -7,11 +7,12 @@ import { MyContext } from "@/app/providers/context";
 import { getVendorProfile } from "@/api/products";
 import { logout as logoutAPI } from "@/api/account";
 import { deleteCookie } from "@/utils/cookies";
-import { FaUser, FaCog, FaSignOutAlt } from "react-icons/fa";
+import { FaUser, FaCog, FaSignOutAlt, FaCopy, FaCheck } from "react-icons/fa";
 import { MdKeyboardArrowDown } from "react-icons/md";
 import { getCookie } from "@/utils/cookies";
 const DropdownUser = ({ setLogged }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { setIsLoggedIn } = useContext(MyContext);
   const vendor = JSON.parse(localStorage.getItem("store") || "{}");
   const router = useRouter();
@@ -26,6 +27,7 @@ const DropdownUser = ({ setLogged }) => {
     contact_person_name: "",
     store_name: "",
     profile_picture: "",
+    slug:"",
   });
 
   useEffect(() => {
@@ -42,6 +44,7 @@ const DropdownUser = ({ setLogged }) => {
             contact_person_name: data.contact_person_name,
             store_name: data.store_name,
             profile_picture: data.profile_picture,
+            slug:data.slug,
           });
         } else {
           console.error("Error fetching profile:", error);
@@ -128,6 +131,31 @@ const DropdownUser = ({ setLogged }) => {
             {user.store_name}
           </span>
           <span className="block text-xs">{user.contact_person_name}</span>
+          <span className="flex items-center gap-1 text-xs text-blue-500">
+            <a href={`https://pinksurfing.com/store/${user.slug}`} target="_blank" rel="noopener noreferrer">
+              {`https://pinksurfing.com/store/${user.slug}`}
+            </a>
+{copied ? (
+              <FaCheck 
+                className="text-green-500 transition-colors"
+                size={12}
+                title="Copied!"
+              />
+            ) : (
+              <FaCopy 
+                className="cursor-pointer hover:text-blue-700 transition-colors"
+                size={12}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  navigator.clipboard.writeText(`https://pinksurfing.com/store/${user.slug}`);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 3000);
+                }}
+                title="Copy to clipboard"
+              />
+            )}
+          </span>
         </span>
 
         <span className="h-12 w-12 rounded-full overflow-hidden">
