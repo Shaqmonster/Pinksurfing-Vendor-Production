@@ -7,7 +7,7 @@ import { getProducts } from "@/api/products";
 import { getOrders } from "@/api/orders";
 import { MyContext } from "../providers/context";
 import { redirect, useRouter } from "next/navigation";
-import { FaCamera } from "react-icons/fa";
+import { FaCamera, FaCopy, FaCheck } from "react-icons/fa";
 import { getCookie } from "@/utils/cookies";
 const Profile = () => {
   const [Profile, setProfile] = useState({
@@ -17,9 +17,11 @@ const Profile = () => {
     profile_pic: "",
     bio: "",
     store_name: "",
+    slug: "",
   });
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [copied, setCopied] = useState(false);
 
   const { setIsLoggedIn } = useContext(MyContext);
   let access: string | null = "",
@@ -147,6 +149,36 @@ const Profile = () => {
                 ? Profile.store_name
                 : null}
             </p>
+            {Profile.slug && (
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <a 
+                  href={`https://pinksurfing.com/store/${Profile.slug}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-500 hover:text-blue-700"
+                >
+                  {`https://pinksurfing.com/store/${Profile.slug}`}
+                </a>
+                {copied ? (
+                  <FaCheck 
+                    className="text-green-500 transition-colors"
+                    size={14}
+                    title="Copied!"
+                  />
+                ) : (
+                  <FaCopy 
+                    className="cursor-pointer text-blue-500 hover:text-blue-700 transition-colors"
+                    size={14}
+                    onClick={() => {
+                      navigator.clipboard.writeText(`https://pinksurfing.com/store/${Profile.slug}`);
+                      setCopied(true);
+                      setTimeout(() => setCopied(false), 3000);
+                    }}
+                    title="Copy to clipboard"
+                  />
+                )}
+              </div>
+            )}
             <div className="mx-auto mt-4.5 mb-5.5 grid max-w-94 grid-cols-2 rounded-md border border-stroke py-2.5 shadow-1 dark:border-strokedark dark:bg-[#37404F]">
               <div className="flex flex-col items-center justify-center gap-1 border-r border-stroke px-4 dark:border-strokedark xsm:flex-row">
                 <span className="font-semibold text-black dark:text-white">
