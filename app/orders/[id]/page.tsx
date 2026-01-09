@@ -139,7 +139,7 @@ const Page = ({ params }: { params: { id: string } }) => {
       if (response.error) {
         // Display error message from response
         toast.error(response.message || "Failed to buy shipment label.");
-        console.error("Failed to buy shipment label:", response.message);
+        console.error("Failed to buy shipment label:", response);
       } else {
         // Handle success response
         console.log("Shipment label bought successfully", response.data);
@@ -165,13 +165,17 @@ const Page = ({ params }: { params: { id: string } }) => {
       const response = await getShipmentDetails(orderId, token);
 
       if (response.postage_label_url) {
-        // Trigger the download
+        // Use our API route to proxy the download (bypasses CORS)
+        const proxyUrl = `/api/download-label?url=${encodeURIComponent(response.postage_label_url)}&filename=shipment_label_${orderId}.png`;
+        
         const link = document.createElement("a");
-        link.href = response.postage_label_url;
+        link.href = proxyUrl;
         link.download = `shipment_label_${orderId}.png`;
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
 
-        toast.success("Shipment label downloaded successfully!");
+        toast.success("Shipment label Will be downloaded shortly!");
         console.log("Shipment label downloaded successfully", response);
       } else {
         toast.error("Postage label URL not found in the response.");
@@ -449,8 +453,7 @@ const Page = ({ params }: { params: { id: string } }) => {
                           Mark as Shipped
                         </button>
                       )}
-
-                    {/*
+                    
                     {(orderData?.order_status == "SHIPPED" ||
                       showDownloadShipmentLabel) && (
                       <button
@@ -461,7 +464,6 @@ const Page = ({ params }: { params: { id: string } }) => {
                         Download Shipment Label
                       </button>
                     )}
-                    */}
                   </form>
                 )}
               </div>

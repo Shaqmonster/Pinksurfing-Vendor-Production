@@ -238,12 +238,13 @@ const AddProducts = () => {
                       <select
                         className="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 dark:bg-[#e7e0ec] dark:border-none dark:text-black"
                         id="grid-state"
+                        value={selectedCategory}
                         onChange={(e) => {
                           updateSubCategory(e.target.value);
                           updateProductData("category", e.target?.value);
                         }}
                       >
-                        {/* <option value="0">categories[0]</option> */}
+                        <option value="">Select Category</option>
                         {categories.length
                           ? categories.map(
                               (cat: { slug: string; name: string }, index) => {
@@ -362,6 +363,7 @@ const AddProducts = () => {
                     name="Name"
                     id="Name"
                     placeholder="Product Title"
+                    value={productData.name}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       updateProductData("name", e.target?.value)
                     }
@@ -414,6 +416,7 @@ const AddProducts = () => {
                     name="BrandName"
                     id="BrandName"
                     placeholder="Brand Name"
+                    value={productData.brand_name}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       updateProductData("brand_name", e.target?.value)
                     }
@@ -488,7 +491,7 @@ const AddProducts = () => {
                       name="stock"
                       placeholder="0"
                       id="stock"
-                      // defaultValue={0}
+                      value={productData.quantity}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         updateProductData("quantity", e.target?.value)
                       }
@@ -660,6 +663,7 @@ const AddProducts = () => {
                     name="meta_title"
                     id="meta_title"
                     placeholder="Meta Title"
+                    value={productData.meta_title}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       updateProductData("meta_title", e.target?.value)
                     }
@@ -678,6 +682,7 @@ const AddProducts = () => {
                     name="tags"
                     id="tags"
                     placeholder="Tags seperated by spaces"
+                    value={productData.tags}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       updateProductData("tags", e.target?.value)
                     }
@@ -702,6 +707,7 @@ const AddProducts = () => {
                       name="length"
                       id="length"
                       placeholder="Length"
+                      value={productData.length}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         updateProductData("length", e.target?.value)
                       }
@@ -720,6 +726,7 @@ const AddProducts = () => {
                       name="width"
                       id="width"
                       placeholder="Width"
+                      value={productData.width}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         updateProductData("width", e.target?.value)
                       }
@@ -740,6 +747,7 @@ const AddProducts = () => {
                       name="height"
                       id="height"
                       placeholder="Height"
+                      value={productData.height}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         updateProductData("height", e.target?.value)
                       }
@@ -758,6 +766,7 @@ const AddProducts = () => {
                       name="weight"
                       id="weight"
                       placeholder="Weight"
+                      value={productData.weight}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         updateProductData("weight", e.target?.value)
                       }
