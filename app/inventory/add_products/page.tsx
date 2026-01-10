@@ -12,12 +12,32 @@ import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { handleError } from "@/utils/toast";
 import { getCookie } from "@/utils/cookies";
+
+// Categories that should show Brand Name input
+const categoriesToShowBrandName: string[] = [
+  "electronics",
+  "cell-phones-accessories",
+  "computers-tablets",
+  "clothing",
+  "shoes",
+  "watches",
+  "beauty-makeup",
+  // Add more category slugs as needed
+];
+
+// Categories that should show Dimensions section
+const categoriesToShowDimensions: string[] = [
+  "electronics",
+  "trading-cards"
+  // Add more category slugs as needed
+];
+
 const AddProducts = () => {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [brandName, setBrandName] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [allowedAttributes, setAllowedAttributes] = useState([]);
+  const [allowedAttributes, setAllowedAttributes] = useState<any[]>([]);
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [subcategoriesLoading, setSubcategoriesLoading] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
@@ -34,7 +54,38 @@ const AddProducts = () => {
     value: string;
     additional_price: number;
   }
+  
+  // For non-variant attributes (is_variant: false)
   const [attribute, setAttribute] = useState<Attribute[]>([]);
+  
+  // For variant attributes (is_variant: true) - Additional Information section
+  interface VariantAttribute {
+    name: string;
+    value: string | number | boolean;
+    data_type: string;
+    additional_price: number;
+  }
+  const [variantAttributes, setVariantAttributes] = useState<VariantAttribute[]>([]);
+
+  // Get variant attributes (is_variant: true)
+  const variantAllowedAttributes = useMemo(() => {
+    return allowedAttributes.filter((attr: any) => attr.is_variant === true);
+  }, [allowedAttributes]);
+
+  // Get non-variant attributes (is_variant: false)
+  const nonVariantAllowedAttributes = useMemo(() => {
+    return allowedAttributes.filter((attr: any) => attr.is_variant === false);
+  }, [allowedAttributes]);
+
+  // Check if brand name should be shown
+  const shouldShowBrandName = useMemo(() => {
+    return categoriesToShowBrandName.includes(selectedCategory);
+  }, [selectedCategory]);
+
+  // Check if dimensions should be shown
+  const shouldShowDimensions = useMemo(() => {
+    return categoriesToShowDimensions.includes(selectedCategory);
+  }, [selectedCategory]);
 
   interface ProductData {
     name: string;
@@ -106,9 +157,11 @@ const AddProducts = () => {
       setSelectedSubcategory(""); // Reset subcategory when category changes
       setAllowedAttributes([]); // Clear allowed attributes
       setAttribute([]); // Clear attributes
+      setVariantAttributes([]); // Clear variant attributes
       getSubcategories(selectedCategory)
         .then((data) => {
           setSubcategories(data.data);
+          console.log("data",data);
           setSubcategoriesLoading(false);
         })
         .catch(() => {
@@ -180,15 +233,26 @@ const AddProducts = () => {
         ...productData,
         unit_price: finalUnitPrice
       };
+      
+      // Combine both regular attributes and variant attributes
+      const allAttributes = [
+        ...attribute,
+        ...variantAttributes.map((v) => ({
+          name: v.name,
+          value: String(v.value),
+          additional_price: v.additional_price
+        }))
+      ];
+      
       console.log(updatedProductData);
-      console.log(attribute);
+      console.log("All Attributes:", allAttributes);
       setLoading(true);
       try {
         const res: any = await saveProducts(
           token,
           vendor_id,
           updatedProductData,
-          attribute,
+          allAttributes,
           files
         );
         console.log(res);
@@ -293,20 +357,15 @@ const AddProducts = () => {
 
                           if (selectedSubcat) {
                             setAllowedAttributes(
-                              selectedSubcat?.allowed_attributes
+                              selectedSubcat?.allowed_attributes || []
                             );
-                            const initialAttributes =
-                              selectedSubcat?.allowed_attributes?.map(
-                                (attr: any) => ({
-                                  name: attr.name,
-                                  value: "",
-                                  additional_price: 0
-                                })
-                              );
-                            // setAttribute(initialAttributes);
+                            // Reset both attribute arrays when subcategory changes
+                            setAttribute([]);
+                            setVariantAttributes([]);
                           } else {
                             setAllowedAttributes([]);
                             setAttribute([]);
+                            setVariantAttributes([]);
                           }
                           setSubcategoriesLoading(false);
                         }}
@@ -408,7 +467,7 @@ const AddProducts = () => {
                     htmlFor="BrandName"
                   >
                     Brand Name
-                    <span className="text-red-500 text-[24px]">*</span>
+                    {shouldShowBrandName && <span className="text-red-500 text-[24px]">*</span>}
                   </label>
                   <input
                     className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2.5 pr-4.5 text-black dark:text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:focus:border-primary"
@@ -420,7 +479,7 @@ const AddProducts = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       updateProductData("brand_name", e.target?.value)
                     }
-                    required
+                    required={shouldShowBrandName}
                   />
                 </div>
                 <div className="flex flex-col gap-5.5 sm:flex-row pt-6">
@@ -689,6 +748,7 @@ const AddProducts = () => {
                   />
                 </div>
               </div>
+              {shouldShowDimensions && (
               <div className="border-none rounded-md p-5 w-full border bg-white shadow-default dark:bg-primary mt-6">
                 <h3 className="w-full font-medium text-black dark:text-white border-b border-gray-200 pb-3 mb-5">
                   Dimensions
@@ -774,18 +834,253 @@ const AddProducts = () => {
                   </div>
                 </div>
               </div>
+              )}
             </div>
           </div>
+          
+          {/* Additional Information Section - For Variant Attributes (is_variant: true) */}
+          {variantAllowedAttributes.length > 0 && (
+            <div className="border-none rounded-md p-5 w-full border bg-white shadow-default dark:bg-primary mt-6">
+              <h3 className="w-full font-medium text-black dark:text-white border-b border-gray-200 pb-3 mb-5">
+                Additional Information
+              </h3>
+              <div className="col-span-3 row-span-2 flex flex-col justify-between gap-2">
+                <label
+                  className="block uppercase tracking-wide text-xs font-bold mb-2 text-black dark:text-white"
+                  htmlFor="grid-state"
+                >
+                  Product Variants (e.g., RAM, Storage, Color, Condition)
+                </label>
+                {variantAttributes?.map((varAttr, j) => {
+                  const selectedAttr = variantAllowedAttributes.find(
+                    (attr: any) => attr.name === varAttr.name
+                  );
+                  
+                  return (
+                    <React.Fragment key={j}>
+                      <div className="col-span-4 flex flex-col sm:flex-row justify-between gap-4 mb-4 p-4 border border-gray-200 rounded-lg dark:border-gray-700">
+                        <div className="flex-1">
+                          <label
+                            className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
+                            htmlFor={`variantName-${j}`}
+                          >
+                            Variant Type
+                          </label>
+                          <select
+                            className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                            name="variantName"
+                            id={`variantName-${j}`}
+                            value={varAttr.name}
+                            onChange={(e) => {
+                              const newName = e.target.value;
+                              // Check if this variant type is already added
+                              const alreadyExists = variantAttributes.some(
+                                (attr, index) => index !== j && attr.name === newName
+                              );
+                              if (alreadyExists) {
+                                toast.error(`"${newName}" variant is already added. Please choose a different variant.`);
+                                return;
+                              }
+                              const selectedAttribute = variantAllowedAttributes.find(
+                                (attr: any) => attr.name === newName
+                              );
+                              setVariantAttributes((prev) => {
+                                const updated = [...prev];
+                                updated[j] = {
+                                  ...updated[j],
+                                  name: newName,
+                                  data_type: selectedAttribute?.data_type || "text",
+                                  value: selectedAttribute?.data_type === "boolean" ? false : ""
+                                };
+                                return updated;
+                              });
+                            }}
+                          >
+                            <option value="">Select Variant Type</option>
+                            {variantAllowedAttributes?.map(
+                              (allowedAttribute: any, index) => (
+                                <option key={index} value={allowedAttribute.name}>
+                                  {allowedAttribute.name}
+                                </option>
+                              )
+                            )}
+                          </select>
+                        </div>
+
+                        <div className="flex-1">
+                          <label
+                            className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
+                            htmlFor={`variantValue-${j}`}
+                          >
+                            Variant Value
+                          </label>
+                          {/* Render input based on data_type */}
+                          {varAttr.data_type === "number" && (
+                            <input
+                              className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                              type="number"
+                              name="variantValue"
+                              id={`variantValue-${j}`}
+                              placeholder="Enter numeric value"
+                              value={varAttr.value as string}
+                              onChange={(e) => {
+                                setVariantAttributes((prev) => {
+                                  const updated = [...prev];
+                                  updated[j] = { ...updated[j], value: e.target.value };
+                                  return updated;
+                                });
+                              }}
+                            />
+                          )}
+                          {varAttr.data_type === "text" && (
+                            <input
+                              className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                              type="text"
+                              name="variantValue"
+                              id={`variantValue-${j}`}
+                              placeholder="Enter text value"
+                              value={varAttr.value as string}
+                              onChange={(e) => {
+                                setVariantAttributes((prev) => {
+                                  const updated = [...prev];
+                                  updated[j] = { ...updated[j], value: e.target.value };
+                                  return updated;
+                                });
+                              }}
+                            />
+                          )}
+                          {varAttr.data_type === "boolean" && (
+                            <div className="flex items-center h-[46px]">
+                              <input
+                                type="checkbox"
+                                name="variantValue"
+                                id={`variantValue-${j}`}
+                                checked={varAttr.value as boolean}
+                                onChange={(e) => {
+                                  setVariantAttributes((prev) => {
+                                    const updated = [...prev];
+                                    updated[j] = { ...updated[j], value: e.target.checked };
+                                    return updated;
+                                  });
+                                }}
+                                className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+                              />
+                              <span className="ml-2 text-black dark:text-white">
+                                {varAttr.value ? "Yes" : "No"}
+                              </span>
+                            </div>
+                          )}
+                          {varAttr.data_type === "select" && (
+                            <select
+                              className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                              name="variantValue"
+                              id={`variantValue-${j}`}
+                              value={varAttr.value as string}
+                              onChange={(e) => {
+                                setVariantAttributes((prev) => {
+                                  const updated = [...prev];
+                                  updated[j] = { ...updated[j], value: e.target.value };
+                                  return updated;
+                                });
+                              }}
+                            >
+                              <option value="">Select Option</option>
+                              {selectedAttr?.options?.map((option: string, optIndex: number) => (
+                                <option key={optIndex} value={option}>
+                                  {option}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                          {!varAttr.data_type && (
+                            <input
+                              className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                              type="text"
+                              disabled
+                              placeholder="Select a variant type first"
+                            />
+                          )}
+                        </div>
+
+                        <div className="flex-1">
+                          <label
+                            className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
+                            htmlFor={`variantPrice-${j}`}
+                          >
+                            Additional Price
+                          </label>
+                          <input
+                            className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
+                            type="number"
+                            name="variantPrice"
+                            id={`variantPrice-${j}`}
+                            placeholder="0"
+                            value={varAttr.additional_price}
+                            onChange={(e) => {
+                              setVariantAttributes((prev) => {
+                                const updated = [...prev];
+                                updated[j] = { ...updated[j], additional_price: parseFloat(e.target.value) || 0 };
+                                return updated;
+                              });
+                            }}
+                          />
+                        </div>
+
+                        <div className="flex items-end">
+                          <button
+                            type="button"
+                            className="bg-red-500 hover:bg-red-700 text-white font-medium py-2 px-4 rounded h-fit transition duration-200"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setVariantAttributes((prev) =>
+                                prev.filter((_, index) => index !== j)
+                              );
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </React.Fragment>
+                  );
+                })}
+
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    className="bg-primary hover:bg-blue-700 text-white font-medium py-2 px-4 rounded ml-auto"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      // Check if all variant types are already used
+                      if (variantAttributes.length >= variantAllowedAttributes.length) {
+                        toast.error("All available variant types have been added.");
+                        return;
+                      }
+                      setVariantAttributes((prev) => [
+                        ...prev,
+                        { name: "", value: "", data_type: "", additional_price: 0 }
+                      ]);
+                    }}
+                  >
+                    Add Variant
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Attributes Section - For Non-Variant Attributes (is_variant: false) */}
+          {nonVariantAllowedAttributes.length > 0 && (
           <div className="border-none rounded-md p-5 w-full border bg-white shadow-default dark:bg-primary mt-6">
             <h3 className="w-full font-medium text-black dark:text-white border-b border-gray-200 pb-3 mb-5">
-              Attribute
+              Attributes
             </h3>
             <div className="col-span-3 row-span-2 flex flex-col justify-between gap-2">
               <label
                 className="block uppercase tracking-wide text-xs font-bold mb-2 text-black dark:text-white"
                 htmlFor="grid-state"
               >
-                Variants 'different sizes of the same or main item for sale'
+                Product Attributes (Brand, Processor, etc.)
               </label>
               {attribute?.map((att, j) => {
                 return (
@@ -796,7 +1091,7 @@ const AddProducts = () => {
                           className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
                           htmlFor={`attributeName-${j}`}
                         >
-                          Variant Name
+                          Attribute Name
                         </label>
                         <select
                           className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
@@ -811,7 +1106,7 @@ const AddProducts = () => {
                           }}
                         >
                           <option value="">Select Attribute</option>
-                          {allowedAttributes?.map(
+                          {nonVariantAllowedAttributes?.map(
                             (allowedAttribute: any, index) => (
                               <option key={index} value={allowedAttribute.name}>
                                 {allowedAttribute.name}
@@ -826,41 +1121,18 @@ const AddProducts = () => {
                           className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
                           htmlFor={`attributeValue-${j}`}
                         >
-                          Variant Value
+                          Attribute Value
                         </label>
                         <input
                           className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
                           type="text"
                           name="attributeValue"
                           id={`attributeValue-${j}`}
-                          placeholder="Variant Value"
+                          placeholder="Attribute Value"
                           value={att.value}
                           onChange={(e) => {
                             setAttribute((i) => {
                               i[j]["value"] = e.target.value;
-                              return [...i];
-                            });
-                          }}
-                        />
-                      </div>
-
-                      <div className="flex-1">
-                        <label
-                          className="mb-2 font-medium text-black dark:text-white block uppercase tracking-wide text-xs"
-                          htmlFor={`attributePrice-${j}`}
-                        >
-                          Additional Price
-                        </label>
-                        <input
-                          className="w-full rounded border border-gray-300 dark:border-none py-3 pl-2 text-black focus:border-primary focus-visible:outline-none dark:bg-[#e7e0ec] dark:text-black dark:focus:border-primary"
-                          type="number"
-                          name="attributePrice"
-                          id={`attributePrice-${j}`}
-                          placeholder="0"
-                          value={att.additional_price}
-                          onChange={(e) => {
-                            setAttribute((i: any) => {
-                              i[j]["additional_price"] = e.target.value;
                               return [...i];
                             });
                           }}
@@ -898,11 +1170,12 @@ const AddProducts = () => {
                     ]);
                   }}
                 >
-                  Add another Variant
+                  Add Attribute
                 </button>
               </div>
             </div>
           </div>
+          )}
           <button
             className="flex justify-center rounded bg-primary py-2 px-6 font-medium text-white dark:text-gray-200 hover:bg-opacity-95 dark:bg-opacity-90 hover:shadow-lg transition duration-300 mt-3 w-1/2 md:w-1/6"
             type="submit"
