@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   getCategories,
   getProducts,
@@ -12,21 +13,31 @@ import { deleteProduct } from "@/api/products";
 import React from "react";
 import Loader from "../common/Loader";
 import Link from "next/link";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { 
+  FiEdit2, 
+  FiTrash2, 
+  FiPackage, 
+  FiPlus, 
+  FiMoreHorizontal,
+  FiArrowRight,
+  FiSearch
+} from "react-icons/fi";
 import ConfirmationModal from "../Modals/ConfirmDelete";
 import { toast } from "react-toastify";
 import { getCookie } from "@/utils/cookies";
-const ProductsTable = (props: { Products: Product[] }) => {
+
+const ProductsTable = (props: { Products?: Product[] }) => {
   const rowRef = useRef<any>(null);
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [filteredSubcategories, setFilteredSubcategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [updateProductData, setUpdateProductData] = useState({});
-  const [products, setProducts] = useState(props.Products);
+  const [products, setProducts] = useState<any[]>(props.Products || []);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [productIdToDelete, setProductIdToDelete] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleDelete = async (productId: string) => {
     if (typeof window !== "undefined") {
@@ -43,7 +54,7 @@ const ProductsTable = (props: { Products: Product[] }) => {
 
         if (result && typeof result === "object") {
           if ("error" in result && "message" in result) {
-            alert(result.message);
+            toast.error(result.message);
           } else {
             const updatedProducts = products.filter(
               (product) => product.id !== productId
@@ -57,19 +68,15 @@ const ProductsTable = (props: { Products: Product[] }) => {
         }
       } catch (error) {
         console.error("Error during product deletion:", error);
+        toast.error("Failed to delete product");
       }
     }
   };
 
   useEffect(() => {
-    console.log(updateProductData);
-  }, [updateProductData]);
-
-  useEffect(() => {
     if (typeof window !== "undefined") {
       getCategories().then((data) => {
         setCategories(data);
-        console.log(data);
       });
     }
   }, []);
@@ -82,11 +89,10 @@ const ProductsTable = (props: { Products: Product[] }) => {
       if (store) {
         const storeObject = JSON.parse(store);
         const store_slug = storeObject.slug;
-        console.log("Store Name:", storeObject);
         if (token && store_slug) {
           setLoading(true);
           getProducts(token, store_slug).then((data) => {
-            setProducts(data.data.Products);
+            setProducts(data.data?.Products || []);
             setLoading(false);
           });
         }
@@ -95,12 +101,12 @@ const ProductsTable = (props: { Products: Product[] }) => {
   }, []);
 
   useMemo(() => {
-    categories.forEach((category : any, index) => {
+    categories.forEach((category: any) => {
       getSubcategories(category?.slug).then((data) => {
         setSubcategories(data.data);
       });
     });
-  }, []);
+  }, [categories]);
 
   useEffect(() => {
     if (selectedCategory) {
@@ -109,18 +115,19 @@ const ProductsTable = (props: { Products: Product[] }) => {
           i.category === selectedCategory
       );
       setFilteredSubcategories(filteredCategory);
-      console.log(filteredCategory);
     }
-  }, [selectedCategory]);
+  }, [selectedCategory, subcategories]);
 
-  function truncateAndConvertToText(htmlString : any, maxLength = 40) {
+  function truncateAndConvertToText(htmlString: any, maxLength = 60) {
+    if (!htmlString) return "";
     let truncatedText = htmlString.substring(0, maxLength);
     let tempElement = document.createElement("div");
     tempElement.innerHTML = truncatedText;
-    return tempElement.textContent || tempElement.innerText || "";
+    const text = tempElement.textContent || tempElement.innerText || "";
+    return text.length >= maxLength ? text + "..." : text;
   }
 
-  const openDeleteModal = (productId : any) => {
+  const openDeleteModal = (productId: any) => {
     setProductIdToDelete(productId);
     setIsModalOpen(true);
   };
@@ -130,115 +137,199 @@ const ProductsTable = (props: { Products: Product[] }) => {
     setProductIdToDelete("");
   };
 
+  const filteredProducts = products?.filter((product) =>
+    product.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <>
       {loading ? (
         <Loader />
       ) : (
-        <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-primary">
-          <div className="py-6 px-4 md:px-6 xl:px-7.5">
-            <h4 className="text-xl font-semibold text-black dark:text-white">
-              All Products
-            </h4>
-          </div>
-
-          <div className="grid grid-cols-3 sm:grid-cols-7 gap-4 border-t border-stroke py-4.5 px-4 dark:border-strokedark sm:bg-red md:px-4 2xl:px-7.5">
-            <div className=" flex items-center">
-              <p className="font-medium ">Product Image</p>
-            </div>
-            <div className=" flex items-center">
-              <p className="font-medium ">Product Name</p>
-            </div>
-            <div className=" hidden items-center sm:flex ">
-              <p className="font-medium">Category</p>
-            </div>
-            <div className=" hidden sm:flex items-center ">
-              <p className="font-medium pr-2">Description</p>
-            </div>
-            <div className=" hidden sm:flex items-center  m-auto">
-              <p className="font-medium">Stock</p>
-            </div>
-            <div className=" flex items-center m-auto">
-              <p className="font-medium">Price</p>
-            </div>
-            <div className=" flex items-center">
-              <p className="font-medium m-auto">Action</p>
-            </div>
-          </div>
-
-          {products?.map((product: any, key) => (
-            <>
-              {console.log(products)}
-              <div
-                className="grid grid-cols-3 sm:grid-cols-7  border-t border-stroke py-4.5 px-4 dark:border-strokedark  2xl:px-7.5"
-                key={key}
-                data-id={product.id}
-              >
-                <div className="flex items-center" ref={rowRef}>
-                  <div className="flex  gap-4 flex-row items-center">
-                    <div className="h-12.5 w-15 rounded-md">
-                      <img
-                        src={product.image1}
-                        width="56"
-                        height="50"
-                        className="w-full h-full rounded-md"
-                        alt="Product"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-black dark:text-white">
-                    {product.name}
-                  </p>
-                </div>
-                <div className=" hidden items-center sm:flex">
-                  <p className="text-sm text-black dark:text-white">
-                    {product?.category?.name}
-                    <br />
-                    |-
-                    {" " + product?.subcategory?.name}
-                  </p>
-                </div>
-                <div className=" hidden sm:flex items-center">
-                  <p className="text-sm text-black dark:text-white pr-4">
-                    {truncateAndConvertToText(product.short_description)}
-                  </p>
-                </div>
-                <div className=" hidden sm:flex items-center m-auto">
-                  <p className="text-sm text-black dark:text-white px-4">
-                    {product.quantity}
-                  </p>
-                </div>
-                <div className=" flex items-center gap-2 m-auto">
-                  <p className="text-sm text-meta-3">${product.unit_price}</p>
-                </div>
-                <div className=" flex items-center justify-between m-auto">
-                  <div className="flex flex-row justify-between">
-                    <Link
-                      className="hover:bg-amber-200 w-1/2"
-                      data-id={product.id}
-                      key={key}
-                      href={`/inventory/editProduct/${product.id}`}
-                    >
-                      <FaEdit
-                        className="mx-2 pointer-events-none"
-                        size={24}
-                        color="#3c50e0"
-                      />
-                    </Link>
-                    {/* For Delete */}
-                    <FaTrash
-                      size={24}
-                      color="red"
-                      className="cursor-pointer"
-                      onClick={() => openDeleteModal(product.id)}
-                    />
-                  </div>
-                </div>
+        <div className="bg-white dark:bg-dark-card rounded-2xl overflow-hidden">
+          {/* Header */}
+          <div className="p-6 border-b border-light-border dark:border-dark-border">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-surface-900 dark:text-white">
+                  All Products
+                </h2>
+                <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
+                  {products?.length || 0} products in your inventory
+                </p>
               </div>
-            </>
-          ))}
+              
+              <div className="flex items-center gap-3">
+                {/* Search */}
+                <div className="relative">
+                  <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-4 py-2 rounded-xl border border-surface-200 dark:border-dark-border bg-surface-50 dark:bg-dark-input text-surface-900 dark:text-white placeholder:text-surface-400 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all w-full sm:w-48"
+                  />
+                </div>
+                
+                <Link
+                  href="/inventory/add_products"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-pink text-white font-medium shadow-premium-sm hover:shadow-premium-md transition-all"
+                >
+                  <FiPlus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Add Product</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Table */}
+          {filteredProducts?.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-surface-50 dark:bg-dark-surface">
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                      Product
+                    </th>
+                    <th className="hidden md:table-cell px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                      Category
+                    </th>
+                    <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                      Description
+                    </th>
+                    <th className="hidden sm:table-cell px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                      Stock
+                    </th>
+                    <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                      Price
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-100 dark:divide-dark-border">
+                  <AnimatePresence>
+                    {filteredProducts.map((product: any, index: number) => (
+                      <motion.tr
+                        key={product.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ delay: index * 0.03 }}
+                        className="hover:bg-surface-50 dark:hover:bg-dark-hover transition-colors"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-4">
+                            <div className="w-14 h-14 rounded-xl overflow-hidden bg-surface-100 dark:bg-dark-surface flex-shrink-0">
+                              {product.image1 ? (
+                                <img
+                                  src={product.image1}
+                                  alt={product.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <FiPackage className="w-6 h-6 text-surface-400" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-medium text-surface-900 dark:text-white truncate max-w-[200px]">
+                                {product.name}
+                              </p>
+                              <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
+                                ID: {product.id?.slice(0, 8)}...
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="hidden md:table-cell px-6 py-4">
+                          <div>
+                            <p className="text-sm font-medium text-surface-900 dark:text-white">
+                              {product?.category?.name || "—"}
+                            </p>
+                            {product?.subcategory?.name && (
+                              <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
+                                {product.subcategory.name}
+                              </p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="hidden lg:table-cell px-6 py-4">
+                          <p className="text-sm text-surface-600 dark:text-surface-400 max-w-xs line-clamp-2">
+                            {truncateAndConvertToText(product.short_description)}
+                          </p>
+                        </td>
+                        <td className="hidden sm:table-cell px-6 py-4 text-center">
+                          <span
+                            className={`inline-flex items-center justify-center min-w-[40px] px-2.5 py-1 rounded-full text-sm font-semibold ${
+                              product.quantity > 10
+                                ? "bg-success-light text-success-dark dark:bg-success/20 dark:text-success"
+                                : product.quantity > 0
+                                ? "bg-warning-light text-warning-dark dark:bg-warning/20 dark:text-warning"
+                                : "bg-danger-light text-danger-dark dark:bg-danger/20 dark:text-danger"
+                            }`}
+                          >
+                            {product.quantity}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-lg font-bold text-success dark:text-success">
+                            ${product.unit_price}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <Link
+                              href={`/inventory/editProduct/${product.id}`}
+                              className="p-2 rounded-lg bg-accent-blue/10 dark:bg-accent-blue/20 text-accent-blue hover:bg-accent-blue/20 dark:hover:bg-accent-blue/30 transition-colors"
+                              title="Edit Product"
+                            >
+                              <FiEdit2 className="w-4 h-4" />
+                            </Link>
+                            <button
+                              onClick={() => openDeleteModal(product.id)}
+                              className="p-2 rounded-lg bg-danger-light dark:bg-danger/20 text-danger hover:bg-danger/20 dark:hover:bg-danger/30 transition-colors"
+                              title="Delete Product"
+                            >
+                              <FiTrash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            /* Empty State */
+            <div className="p-12 text-center">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-surface-100 dark:bg-dark-surface flex items-center justify-center">
+                <FiPackage className="w-10 h-10 text-surface-400 dark:text-surface-500" />
+              </div>
+              <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
+                {searchQuery ? "No products found" : "No products yet"}
+              </h3>
+              <p className="text-surface-500 dark:text-surface-400 mb-6 max-w-sm mx-auto">
+                {searchQuery
+                  ? "Try adjusting your search to find what you're looking for."
+                  : "Start by adding your first product to your inventory."}
+              </p>
+              {!searchQuery && (
+                <Link
+                  href="/inventory/add_products"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-pink text-white font-semibold shadow-premium-sm hover:shadow-premium-md transition-all"
+                >
+                  <FiPlus className="w-5 h-5" />
+                  Add Your First Product
+                </Link>
+              )}
+            </div>
+          )}
+
           <ConfirmationModal
             isOpen={isModalOpen}
             onClose={closeDeleteModal}

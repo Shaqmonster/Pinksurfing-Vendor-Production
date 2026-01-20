@@ -1,4 +1,7 @@
-import React, { ReactNode } from 'react';
+"use client";
+import React, { ReactNode } from "react";
+import { motion } from "framer-motion";
+import { FiTrendingUp, FiTrendingDown } from "react-icons/fi";
 
 interface CardDataStatsProps {
   title: string;
@@ -7,7 +10,16 @@ interface CardDataStatsProps {
   levelUp?: boolean;
   levelDown?: boolean;
   children: ReactNode;
+  gradient?: "pink" | "purple" | "blue" | "emerald" | "amber";
 }
+
+const gradients = {
+  pink: "bg-gradient-pink",
+  purple: "bg-gradient-purple",
+  blue: "bg-gradient-blue",
+  emerald: "bg-gradient-emerald",
+  amber: "bg-gradient-amber",
+};
 
 const CardDataStats: React.FC<CardDataStatsProps> = ({
   title,
@@ -16,61 +28,54 @@ const CardDataStats: React.FC<CardDataStatsProps> = ({
   levelUp,
   levelDown,
   children,
+  gradient = "pink",
 }) => {
   return (
-    <div className="rounded-sm border border-stroke bg-white py-6 px-7.5 shadow-default dark:border-strokedark dark:bg-boxdark">
-      <div className="flex h-11.5 w-11.5 items-center justify-center rounded-full bg-meta-2 dark:bg-meta-4">
-        {children}
-      </div>
-
-      <div className="mt-4 flex items-end justify-between">
-        <div>
-          <h4 className="text-title-md font-bold text-black dark:text-white">
-            {total}
-          </h4>
-          <span className="text-sm font-medium">{title}</span>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className="premium-card p-6 group cursor-pointer relative overflow-hidden"
+    >
+      {/* Decorative gradient orb */}
+      <div className={`absolute -top-10 -right-10 w-24 h-24 ${gradients[gradient]} opacity-10 rounded-full blur-2xl group-hover:opacity-20 transition-opacity`} />
+      
+      <div className="relative z-10">
+        {/* Icon Container */}
+        <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl ${gradients[gradient]} shadow-lg mb-4 group-hover:scale-110 transition-transform duration-300`}>
+          <div className="text-white">
+            {children}
+          </div>
         </div>
 
-        <span
-          className={`flex items-center gap-1 text-sm font-medium ${
-            levelUp && 'text-meta-3'
-          } ${levelDown && 'text-meta-5'} `}
-        >
-          {rate}
+        {/* Stats Content */}
+        <div className="flex items-end justify-between">
+          <div>
+            <h4 className="text-2xl md:text-3xl font-bold text-surface-900 dark:text-white mb-1">
+              {total}
+            </h4>
+            <span className="text-sm font-medium text-surface-500 dark:text-surface-400">
+              {title}
+            </span>
+          </div>
 
-          {levelUp && (
-            <svg
-              className="fill-meta-3"
-              width="10"
-              height="11"
-              viewBox="0 0 10 11"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M4.35716 2.47737L0.908974 5.82987L5.0443e-07 4.94612L5 0.0848689L10 4.94612L9.09103 5.82987L5.64284 2.47737L5.64284 10.0849L4.35716 10.0849L4.35716 2.47737Z"
-                fill=""
-              />
-            </svg>
-          )}
-          {levelDown && (
-            <svg
-              className="fill-meta-5"
-              width="10"
-              height="11"
-              viewBox="0 0 10 11"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M5.64284 7.69237L9.09102 4.33987L10 5.22362L5 10.0849L-8.98488e-07 5.22362L0.908973 4.33987L4.35716 7.69237L4.35716 0.0848701L5.64284 0.0848704L5.64284 7.69237Z"
-                fill=""
-              />
-            </svg>
-          )}
-        </span>
+          {/* Rate Badge */}
+          <div
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+              levelUp
+                ? "bg-success-light text-success-dark dark:bg-success/20 dark:text-success"
+                : levelDown
+                ? "bg-danger-light text-danger-dark dark:bg-danger/20 dark:text-danger"
+                : "bg-surface-100 text-surface-500 dark:bg-dark-surface dark:text-surface-400"
+            }`}
+          >
+            {levelUp && <FiTrendingUp className="w-3 h-3" />}
+            {levelDown && <FiTrendingDown className="w-3 h-3" />}
+            {rate}
+          </div>
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

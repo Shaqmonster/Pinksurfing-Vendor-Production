@@ -1,16 +1,28 @@
 "use client";
 import Image from "next/image";
-
+import { motion } from "framer-motion";
 import { getProfile } from "@/api/account";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { getProducts } from "@/api/products";
 import { getOrders } from "@/api/orders";
 import { MyContext } from "../providers/context";
-import { redirect, useRouter } from "next/navigation";
-import { FaCamera, FaCopy, FaCheck } from "react-icons/fa";
+import { useRouter } from "next/navigation";
+import { 
+  FaCamera, 
+  FaCopy, 
+  FaCheck, 
+  FaStore, 
+  FaBox, 
+  FaShoppingCart,
+  FaExternalLinkAlt,
+  FaEdit
+} from "react-icons/fa";
+import { FiMapPin, FiMail, FiPhone, FiGlobe, FiPackage, FiTrendingUp } from "react-icons/fi";
 import { getCookie } from "@/utils/cookies";
+import Link from "next/link";
+
 const Profile = () => {
-  const [Profile, setProfile] = useState({
+  const [profile, setProfile] = useState<any>({
     name: "",
     first_name: "",
     contact_person_name: "",
@@ -18,23 +30,25 @@ const Profile = () => {
     bio: "",
     store_name: "",
     slug: "",
+    email: "",
+    phone_number: "",
+    city: "",
+    country: "",
+    website: "",
+    store_image: "",
   });
-  const [products, setProducts] = useState([]);
-  const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState<number>(0);
+  const [orders, setOrders] = useState<number>(0);
   const [copied, setCopied] = useState(false);
 
   const { setIsLoggedIn } = useContext(MyContext);
-  let access: string | null = "",
-    vendor_id: string | null = "";
-  if (typeof window !== "undefined") {
-    access = getCookie("access_token");
-    vendor_id = localStorage.getItem("vendor_id");
-  }
-  let router = useRouter();
+  const router = useRouter();
+
   useEffect(() => {
     let access = getCookie("access_token");
     let vendor_id = localStorage.getItem("vendor_id");
     const store: string | null = localStorage.getItem("store");
+    
     if (access && store) {
       getProfile(access).then((data) => {
         if (data && "response" in data && data.response.status >= 400) {
@@ -45,11 +59,12 @@ const Profile = () => {
           setProfile(data.data);
         }
       });
+      
       const storeObject = JSON.parse(store);
       const store_name = storeObject.store_name;
 
       getProducts(access, store_name).then((data) => {
-        if (data && "data" in data && "Products" in data.data) {          
+        if (data && "data" in data && "Products" in data.data) {
           setProducts(data.data.Products.length);
         }
       });
@@ -62,153 +77,274 @@ const Profile = () => {
     }
   }, [setIsLoggedIn, router]);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
+  const stats = [
+    { icon: FiPackage, label: "Products", value: products, color: "primary" },
+    { icon: FiTrendingUp, label: "Orders", value: orders || 0, color: "purple" },
+  ];
+
   return (
-    <>
-      <div className="overflow-hidden rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-primary">
-        <div className="relative z-20 h-35 md:h-65">
-          <Image
-            src={Profile.profile_pic || "/images/cover/cover-01.png"}
-            alt="profile cover"
-            className="h-full w-full rounded-tl-sm rounded-tr-sm object-cover object-center"
-            width={970}
-            height={260}
-          />
-          <div className="absolute bottom-1 right-1 z-10 xsm:bottom-4 xsm:right-4">
-            <label
-              htmlFor="cover"
-              className="flex cursor-pointer items-center justify-center gap-2 rounded bg-primary py-1 px-2 text-sm font-medium text-white hover:bg-opacity-80 xsm:px-4"
-            >
-              <input type="file" name="cover" id="cover" className="sr-only" />
-              <span>
-                <svg
-                  className="fill-current"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 14 14"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M4.76464 1.42638C4.87283 1.2641 5.05496 1.16663 5.25 1.16663H8.75C8.94504 1.16663 9.12717 1.2641 9.23536 1.42638L10.2289 2.91663H12.25C12.7141 2.91663 13.1592 3.101 13.4874 3.42919C13.8156 3.75738 14 4.2025 14 4.66663V11.0833C14 11.5474 13.8156 11.9925 13.4874 12.3207C13.1592 12.6489 12.7141 12.8333 12.25 12.8333H1.75C1.28587 12.8333 0.840752 12.6489 0.512563 12.3207C0.184375 11.9925 0 11.5474 0 11.0833V4.66663C0 4.2025 0.184374 3.75738 0.512563 3.42919C0.840752 3.101 1.28587 2.91663 1.75 2.91663H3.77114L4.76464 1.42638ZM5.56219 2.33329L4.5687 3.82353C4.46051 3.98582 4.27837 4.08329 4.08333 4.08329H1.75C1.59529 4.08329 1.44692 4.14475 1.33752 4.25415C1.22812 4.36354 1.16667 4.51192 1.16667 4.66663V11.0833C1.16667 11.238 1.22812 11.3864 1.33752 11.4958C1.44692 11.6052 1.59529 11.6666 1.75 11.6666H12.25C12.4047 11.6666 12.5531 11.6052 12.6625 11.4958C12.7719 11.3864 12.8333 11.238 12.8333 11.0833V4.66663C12.8333 4.51192 12.7719 4.36354 12.6625 4.25415C12.5531 4.14475 12.4047 4.08329 12.25 4.08329H9.91667C9.72163 4.08329 9.53949 3.98582 9.4313 3.82353L8.43781 2.33329H5.56219Z"
-                    fill="white"
-                  />
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M6.99992 5.83329C6.03342 5.83329 5.24992 6.61679 5.24992 7.58329C5.24992 8.54979 6.03342 9.33329 6.99992 9.33329C7.96642 9.33329 8.74992 8.54979 8.74992 7.58329C8.74992 6.61679 7.96642 5.83329 6.99992 5.83329ZM4.08325 7.58329C4.08325 5.97246 5.38909 4.66663 6.99992 4.66663C8.61075 4.66663 9.91659 5.97246 9.91659 7.58329C9.91659 9.19412 8.61075 10.5 6.99992 10.5C5.38909 10.5 4.08325 9.19412 4.08325 7.58329Z"
-                    fill="white"
-                  />
-                </svg>
-              </span>
-              <span>Edit</span>
-            </label>
-          </div>
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="space-y-6"
+    >
+      {/* Profile Header Card */}
+      <motion.div variants={itemVariants} className="premium-card overflow-hidden">
+        {/* Cover Image */}
+        <div className="relative h-48 md:h-64 bg-gradient-pink">
+          <div className="absolute inset-0 bg-black/20" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/4" />
+          
+          {/* Edit Cover Button */}
+          <label className="absolute bottom-4 right-4 flex items-center gap-2 px-4 py-2 rounded-xl bg-white/20 backdrop-blur-sm text-white text-sm font-medium hover:bg-white/30 transition-colors cursor-pointer">
+            <FaCamera className="w-4 h-4" />
+            <span className="hidden sm:inline">Edit Cover</span>
+            <input type="file" className="sr-only" accept="image/*" />
+          </label>
         </div>
-        <div className="px-4 pb-6 text-center lg:pb-8 xl:pb-11.5">
-          <div className="relative z-30 mx-auto -mt-22 h-30 w-full max-w-30 rounded-full bg-white/20 p-1 backdrop-blur sm:h-44 sm:max-w-44 sm:p-3">
-            <div className="relative drop-shadow-2 w-full h-full">
-              <Image
-                src={
-                  Profile.store_image || "/images/user/ic_dummy_user.png"
-                }
-                width={150}
-                height={150}
-                alt="profile"
-                className="rounded-full object-cover aspect-square"
-              />
-              <label
-                htmlFor="profile"
-                className="absolute bottom-0 right-0 flex h-8.5 w-8.5 cursor-pointer items-center justify-center rounded-full bg-primary text-white hover:bg-opacity-90 sm:bottom-2 sm:right-2"
-              >
-                <FaCamera className="text-white" />
-                <input
-                  type="file"
-                  name="profile"
-                  id="profile"
-                  className="sr-only"
+
+        {/* Profile Info */}
+        <div className="relative px-6 pb-6">
+          {/* Profile Picture */}
+          <div className="absolute -top-16 left-6 sm:left-8">
+            <div className="relative">
+              <div className="w-32 h-32 rounded-2xl border-4 border-white dark:border-dark-card overflow-hidden bg-white dark:bg-dark-surface shadow-premium-lg">
+                <Image
+                  src={profile.store_image || "/images/user/ic_dummy_user.png"}
+                  alt="Profile"
+                  width={128}
+                  height={128}
+                  className="w-full h-full object-cover"
                 />
+              </div>
+              <label className="absolute bottom-2 right-2 w-8 h-8 rounded-lg bg-primary-500 text-white flex items-center justify-center cursor-pointer hover:bg-primary-600 transition-colors shadow-lg">
+                <FaCamera className="w-4 h-4" />
+                <input type="file" className="sr-only" accept="image/*" />
               </label>
             </div>
           </div>
-          <div className="mt-4">
-            <h3 className="mb-1.5 text-2xl font-semibold text-black dark:text-white">
-              {(typeof Profile === "object" && "contact_person_name" in Profile
-                ? Profile.contact_person_name
-                : null) ||
-                (typeof Profile === "object" && "name" in Profile
-                  ? Profile.name
-                  : null) ||
-                (typeof Profile === "object" && "first_name" in Profile
-                  ? Profile.first_name
-                  : null)}
-            </h3>
-            <p className="font-medium">
-              {typeof Profile === "object" && "store_name" in Profile
-                ? Profile.store_name
-                : null}
-            </p>
-            {Profile.slug && (
-              <div className="flex flex-col items-center gap-1 mt-2">
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  You can use this as a clickable link to your store
-                </span>
-                <div className="flex items-center justify-center gap-2">
-                  <a 
-                    href={`https://pinksurfing.com/store/${Profile.slug}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-500 hover:text-blue-700"
-                  >
-                    {`https://pinksurfing.com/store/${Profile.slug}`}
-                  </a>
-                  {copied ? (
-                    <FaCheck 
-                      className="text-green-500 transition-colors"
-                      size={14}
-                      title="Copied!"
-                    />
-                  ) : (
-                    <FaCopy 
-                      className="cursor-pointer text-blue-500 hover:text-blue-700 transition-colors"
-                      size={14}
-                      onClick={() => {
-                        navigator.clipboard.writeText(`https://pinksurfing.com/store/${Profile.slug}`);
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 3000);
-                      }}
-                      title="Copy to clipboard"
-                    />
-                  )}
-                </div>
+
+          {/* Profile Details */}
+          <div className="pt-20 sm:pt-4 sm:pl-40">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
+                  {profile.contact_person_name || profile.name || profile.first_name || "Vendor"}
+                </h1>
+                <p className="text-lg text-surface-600 dark:text-surface-400 flex items-center gap-2 mt-1">
+                  <FaStore className="w-4 h-4" />
+                  {profile.store_name || "Store Name"}
+                </p>
+
+                {/* Store Link */}
+                {profile.slug && (
+                  <div className="mt-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <a
+                        href={`https://pinksurfing.com/store/${profile.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-sm text-primary-500 hover:text-primary-600 transition-colors"
+                      >
+                        <FiGlobe className="w-4 h-4" />
+                        pinksurfing.com/store/{profile.slug}
+                        <FaExternalLinkAlt className="w-3 h-3" />
+                      </a>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(
+                            `https://pinksurfing.com/store/${profile.slug}`
+                          );
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 3000);
+                        }}
+                        className={`p-2 rounded-lg transition-colors ${
+                          copied
+                            ? "bg-success-light text-success-dark dark:bg-success/20 dark:text-success"
+                            : "bg-surface-100 dark:bg-dark-surface text-surface-500 hover:text-primary-500"
+                        }`}
+                        title={copied ? "Copied!" : "Copy to clipboard"}
+                      >
+                        {copied ? <FaCheck className="w-4 h-4" /> : <FaCopy className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
+                      Share this link with your customers
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
-            <div className="mx-auto mt-4.5 mb-5.5 grid max-w-94 grid-cols-2 rounded-md border border-stroke py-2.5 shadow-1 dark:border-strokedark dark:bg-[#37404F]">
-              <div className="flex flex-col items-center justify-center gap-1 border-r border-stroke px-4 dark:border-strokedark xsm:flex-row">
-                <span className="font-semibold text-black dark:text-white">
-                  {products}
-                </span>
-                <span className="text-sm">Products</span>
-              </div>
-              <div className="flex flex-col items-center justify-center gap-1 border-r border-stroke px-4 dark:border-strokedark xsm:flex-row">
-                <span className="font-semibold text-black dark:text-white">
-                  {orders || 0}
-                </span>
-                <span className="text-sm">Orders</span>
-              </div>
+
+              {/* Edit Profile Button */}
+              <Link
+                href="/settings"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-surface-100 dark:bg-dark-surface text-surface-700 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-dark-hover transition-colors font-medium"
+              >
+                <FaEdit className="w-4 h-4" />
+                Edit Profile
+              </Link>
             </div>
 
-            <div className="mx-auto max-w-180">
-              <h4 className="font-semibold text-black dark:text-white">
-                About Me
-              </h4>
-              <p className="mt-4.5">{Profile.bio}</p>
+            {/* Stats */}
+            <div className="flex gap-6 mt-6 pt-6 border-t border-light-border dark:border-dark-border">
+              {stats.map((stat, index) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 + index * 0.1 }}
+                  className="flex items-center gap-3"
+                >
+                  <div className={`w-10 h-10 rounded-xl ${
+                    stat.color === "primary" ? "bg-primary-100 dark:bg-primary-500/20" : "bg-accent-purple/10 dark:bg-accent-purple/20"
+                  } flex items-center justify-center`}>
+                    <stat.icon className={`w-5 h-5 ${
+                      stat.color === "primary" ? "text-primary-600 dark:text-primary-400" : "text-accent-purple"
+                    }`} />
+                  </div>
+                  <div>
+                    <p className="text-xl font-bold text-surface-900 dark:text-white">{stat.value}</p>
+                    <p className="text-sm text-surface-500 dark:text-surface-400">{stat.label}</p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
           </div>
         </div>
+      </motion.div>
+
+      {/* About & Contact Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* About Section */}
+        <motion.div variants={itemVariants} className="lg:col-span-2 premium-card p-6">
+          <h2 className="text-lg font-bold text-surface-900 dark:text-white mb-4 flex items-center gap-2">
+            <span className="w-1 h-6 bg-gradient-pink rounded-full" />
+            About
+          </h2>
+          <p className="text-surface-600 dark:text-surface-400 leading-relaxed">
+            {profile.bio || "No bio added yet. Add a bio to tell customers about your store and what makes it special."}
+          </p>
+          {!profile.bio && (
+            <Link
+              href="/settings"
+              className="inline-flex items-center gap-2 mt-4 text-primary-500 hover:text-primary-600 font-medium text-sm transition-colors"
+            >
+              Add a bio
+              <FaEdit className="w-3 h-3" />
+            </Link>
+          )}
+        </motion.div>
+
+        {/* Contact Info */}
+        <motion.div variants={itemVariants} className="premium-card p-6">
+          <h2 className="text-lg font-bold text-surface-900 dark:text-white mb-4 flex items-center gap-2">
+            <span className="w-1 h-6 bg-gradient-purple rounded-full" />
+            Contact Info
+          </h2>
+          <div className="space-y-4">
+            {profile.email && (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-surface-100 dark:bg-dark-surface flex items-center justify-center">
+                  <FiMail className="w-5 h-5 text-surface-500" />
+                </div>
+                <div>
+                  <p className="text-xs text-surface-500 dark:text-surface-400">Email</p>
+                  <p className="text-sm font-medium text-surface-900 dark:text-white">{profile.email}</p>
+                </div>
+              </div>
+            )}
+            {profile.phone_number && (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-surface-100 dark:bg-dark-surface flex items-center justify-center">
+                  <FiPhone className="w-5 h-5 text-surface-500" />
+                </div>
+                <div>
+                  <p className="text-xs text-surface-500 dark:text-surface-400">Phone</p>
+                  <p className="text-sm font-medium text-surface-900 dark:text-white">{profile.phone_number}</p>
+                </div>
+              </div>
+            )}
+            {(profile.city || profile.country) && (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-surface-100 dark:bg-dark-surface flex items-center justify-center">
+                  <FiMapPin className="w-5 h-5 text-surface-500" />
+                </div>
+                <div>
+                  <p className="text-xs text-surface-500 dark:text-surface-400">Location</p>
+                  <p className="text-sm font-medium text-surface-900 dark:text-white">
+                    {[profile.city, profile.country].filter(Boolean).join(", ") || "Not specified"}
+                  </p>
+                </div>
+              </div>
+            )}
+            {profile.website && (
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-surface-100 dark:bg-dark-surface flex items-center justify-center">
+                  <FiGlobe className="w-5 h-5 text-surface-500" />
+                </div>
+                <div>
+                  <p className="text-xs text-surface-500 dark:text-surface-400">Website</p>
+                  <a
+                    href={profile.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium text-primary-500 hover:text-primary-600"
+                  >
+                    {profile.website}
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+        </motion.div>
       </div>
-    </>
+
+      {/* Quick Actions */}
+      <motion.div variants={itemVariants} className="premium-card p-6">
+        <h2 className="text-lg font-bold text-surface-900 dark:text-white mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { icon: FaBox, label: "View Products", href: "/inventory/products", count: products },
+            { icon: FaShoppingCart, label: "View Orders", href: "/orders", count: orders },
+            { icon: FaEdit, label: "Edit Settings", href: "/settings" },
+            { icon: FaStore, label: "Add Product", href: "/inventory/add_products" },
+          ].map((action, index) => (
+            <Link
+              key={action.label}
+              href={action.href}
+              className="flex flex-col items-center gap-3 p-4 rounded-xl border-2 border-dashed border-surface-200 dark:border-dark-border hover:border-primary-500 dark:hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-500/10 transition-all group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-surface-100 dark:bg-dark-surface flex items-center justify-center group-hover:bg-primary-500 group-hover:text-white transition-colors relative">
+                <action.icon className="w-6 h-6 text-surface-600 dark:text-surface-400 group-hover:text-white" />
+                {action.count !== undefined && action.count > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    {action.count}
+                  </span>
+                )}
+              </div>
+              <span className="text-sm font-medium text-surface-600 dark:text-surface-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 text-center">
+                {action.label}
+              </span>
+            </Link>
+          ))}
+        </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

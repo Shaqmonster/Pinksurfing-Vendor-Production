@@ -9,7 +9,9 @@ import { getProfile, refreshToken } from "@/api/account";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { getProducts } from "@/api/products";
 import { useRouter } from "next/navigation";
-import { FiBell, FiMenu, FiSearch } from "react-icons/fi";
+import { FiMenu, FiSearch, FiBell, FiMessageSquare } from "react-icons/fi";
+import { FaStore } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "../Sidebar";
 import { getCookie } from "@/utils/cookies";
 
@@ -18,8 +20,10 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
   const router = useRouter();
   const { setAuthpage, authPage, vendor, setSidebarOpen, sidebarOpen } =
     useContext(MyContext);
-  const [profile, setProfile] = useState();
+  const [profile, setProfile] = useState<any>();
   const [Logged, setLogged] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [tokens, setTokens] = useState({
     access: "" || null,
     vendor_id: "" || null,
@@ -28,7 +32,6 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      console.log(sidebarOpen);
       let access = getCookie("access_token");
       let vendor_id = localStorage.getItem("vendor_id");
       if (
@@ -89,7 +92,6 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
         }
         if (data && "data" in data) {
           let Profile = data.data;
-          console.log(Profile);
           if (typeof Profile == "object") {
             setProfile(Profile);
           }
@@ -100,77 +102,125 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
       });
   }, [tokens.access, tokens.vendor_id]);
 
+  // Get page title based on current route
+  const getPageTitle = () => {
+    if (pathname.includes("dashboard")) return "Dashboard";
+    if (pathname.includes("products")) return "Products";
+    if (pathname.includes("add_products")) return "Add Product";
+    if (pathname.includes("orders")) return "Orders";
+    if (pathname.includes("profile")) return "Profile";
+    if (pathname.includes("settings")) return "Store Settings";
+    return "Welcome";
+  };
+
   return (
     <>
-      <header className="sticky top-0 z-999 flex w-full bg-white drop-shadow-1 dark:bg-primary dark:drop-shadow-none">
-        <div className="flex flex-grow items-center justify-between px-4 py-4 shadow-2 md:px-6 2xl:px-11">
-          {/* <!-- Hamburger Toggle BTN --> */}
+      <motion.header
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+        className="sticky top-0 z-40 w-full"
+      >
+        {/* Glassmorphism background */}
+        <div className="absolute inset-0 bg-white/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-light-border dark:border-dark-border" />
+        
+        <div className="relative flex items-center justify-between px-4 py-3 md:px-6 lg:px-8">
+          {/* Left Section */}
           {Logged ? (
             <>
-              <div className="flex items-center gap-2 sm:gap-4 ">
-                <button
+              <div className="flex items-center gap-4">
+                {/* Mobile Menu Toggle */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   aria-controls="sidebar"
                   onClick={(e) => {
                     e.stopPropagation();
                     setSidebarOpen(!sidebarOpen);
                   }}
-                  className="z-99999 block rounded-sm border border-stroke bg-white p-1.5 shadow-sm dark:border-strokedark dark:bg-boxdark lg:hidden"
+                  className="flex lg:hidden items-center justify-center w-10 h-10 rounded-xl bg-surface-100 dark:bg-dark-surface hover:bg-surface-200 dark:hover:bg-dark-hover transition-colors"
                 >
-                  <FiMenu size={24} className="text-black dark:text-white" />
-                </button>
-                <>
-                  <Link className="flex flex-row" href="/dashboard">
-                    <img
-                      width={46}
-                      height={46}
-                      className=""
-                      src={"/logo.jpg"}
-                      alt="Logo"
+                  <FiMenu className="w-5 h-5 text-surface-700 dark:text-surface-300" />
+                </motion.button>
+
+                {/* Logo for mobile */}
+                <Link href="/dashboard" className="flex lg:hidden items-center gap-2">
+                   <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden">
+                    <Image 
+                      src="/logo.jpg" 
+                      alt="Logo" 
+                      width={32} 
+                      height={32} 
+                      className="w-full h-full object-contain p-0.5"
                     />
-                  </Link>
-                </>
+                  </div>
+                </Link>
+
+                {/* Page Title & Breadcrumb */}
+                <div className="hidden md:block">
+                  <h1 className="text-xl font-bold text-surface-900 dark:text-white">
+                    {getPageTitle()}
+                  </h1>
+                  <p className="text-sm text-surface-500 dark:text-surface-400">
+                    {profile?.store_name ? `Welcome back, ${profile.contact_person_name || profile.store_name}` : "Manage your store"}
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center gap-3 2xsm:gap-7">
-                <ul className="flex items-center gap-2 2xsm:gap-4">
-                  <DarkModeSwitcher />
-                </ul>
-                {/* <button className="text-gray-600 dark:text-gray-400">
-                  <FiSearch size={20} />
-                </button>
-                <FiBell
-                  size={20}
-                  className="cursor-pointer text-gray-600 dark:text-gray-400"
-                /> */}
-                {
-                  Logged && (
-                    <DropdownUser setLogged={setLogged} />
-                  )
-                }
+
+              {/* Right Section */}
+              <div className="flex items-center gap-2 md:gap-4">
+
+                {/* Dark Mode Toggle */}
+                <DarkModeSwitcher />
+
+                {/* User Dropdown */}
+                {Logged && <DropdownUser setLogged={setLogged} profile={profile} />}
               </div>
             </>
           ) : (
-            <div className="flex w-full flex-grow justify-end gap-2 sm:gap-4 ">
-              {authPage === "signin" ? (
-                <Link
-                  className="font-bold text-primary self-end"
-                  href="/"
-                  onClick={() => setAuthpage("signup")}
-                >
-                  Signup
-                </Link>
-              ) : (
-                <Link
-                  className="font-bold text-primary self-end"
-                  href="/"
-                  onClick={() => setAuthpage("signin")}
-                >
-                  Sign in
-                </Link>
-              )}
+            /* Auth Header */
+            <div className="flex w-full items-center justify-between">
+              <Link href="/" className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center overflow-hidden">
+                   <Image 
+                      src="/logo.jpg" 
+                      alt="Logo" 
+                      width={40} 
+                      height={40} 
+                      className="w-full h-full object-contain p-1"
+                    />
+                </div>
+                <span className="text-xl font-bold text-surface-900 dark:text-white">
+                  PinkSurfing
+                </span>
+              </Link>
+              
+              <div className="flex items-center gap-4">
+                <DarkModeSwitcher />
+                {authPage === "signin" ? (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setAuthpage("signup")}
+                    className="btn-gradient px-5 py-2.5 text-sm"
+                  >
+                    Sign Up
+                  </motion.button>
+                ) : (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setAuthpage("signin")}
+                    className="btn-outline px-5 py-2.5 text-sm"
+                  >
+                    Sign In
+                  </motion.button>
+                )}
+              </div>
             </div>
           )}
         </div>
-      </header>
+      </motion.header>
     </>
   );
 };
