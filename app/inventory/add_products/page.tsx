@@ -82,7 +82,7 @@ const GridIcon = () => (
 const STEPS = [
   { id: 1, name: "Category", description: "Select product type", icon: GridIcon },
   { id: 2, name: "Details", description: "Basic information", icon: PackageIcon },
-  { id: 3, name: "Attributes", description: "Product specifications", icon: TagIcon },
+  { id: 3, name: "Attributes", description: "Specifications", icon: TagIcon },
   { id: 4, name: "Media", description: "Upload images", icon: ImageIcon },
   { id: 5, name: "Review", description: "Final check", icon: SparklesIcon },
 ];
@@ -92,7 +92,7 @@ const AddProducts = () => {
   // Step management
   const [currentStep, setCurrentStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
-  
+
   // Category states
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
@@ -101,12 +101,12 @@ const AddProducts = () => {
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [selectedSubcategoryName, setSelectedSubcategoryName] = useState("");
   const [subcategoriesLoading, setSubcategoriesLoading] = useState(false);
-  
+
   // Attribute states
   const [allowedAttributes, setAllowedAttributes] = useState<any[]>([]);
   const [variantAttributes, setVariantAttributes] = useState<any[]>([]);
   const [nonVariantAttributes, setNonVariantAttributes] = useState<any[]>([]);
-  
+
   // Product data
   const [productData, setProductData] = useState({
     name: "",
@@ -127,18 +127,18 @@ const AddProducts = () => {
     image: "",
     id: ""
   });
-  
+
   // Image states
   const [files, setFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
-  
+
   // UI states
   const [hasDiscount, setHasDiscount] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showDimensions, setShowDimensions] = useState(false);
-  
+
   const router = useRouter();
-  
+
   const ReactQuill = useMemo(
     () => dynamic(() => import("react-quill"), { ssr: false }),
     []
@@ -174,7 +174,7 @@ const AddProducts = () => {
       setAllowedAttributes([]);
       setVariantAttributes([]);
       setNonVariantAttributes([]);
-      
+
       getSubcategories(selectedCategory)
         .then((data) => {
           setSubcategories(data.data);
@@ -199,18 +199,32 @@ const AddProducts = () => {
     console.log("Full subcategory data:", subcat);
     console.log("Allowed attributes:", subcat.allowed_attributes);
     console.log("============================");
-    
+
     setSelectedSubcategory(subcat.slug);
     setSelectedSubcategoryName(subcat.name);
     setProductData(prev => ({ ...prev, subcategory: subcat.slug }));
-    
+
     if (subcat.allowed_attributes) {
       setAllowedAttributes(subcat.allowed_attributes);
+      
+      // Helper to get initial value based on data type
+      const getInitialValue = (dataType: string) => {
+        switch (dataType) {
+          case "boolean":
+          case "bool":
+            return false;
+          case "multi_select":
+            return [];
+          default:
+            return "";
+        }
+      };
+      
       // Initialize variant attributes
       const variants = subcat.allowed_attributes.filter((a: any) => a.is_variant);
       setVariantAttributes(variants.map((v: any) => ({
         name: v.name,
-        value: v.data_type === "boolean" ? false : "",
+        value: getInitialValue(v.data_type),
         data_type: v.data_type,
         options: v.options || [],
         additional_price: 0
@@ -219,7 +233,7 @@ const AddProducts = () => {
       const nonVariants = subcat.allowed_attributes.filter((a: any) => !a.is_variant);
       setNonVariantAttributes(nonVariants.map((nv: any) => ({
         name: nv.name,
-        value: nv.data_type === "boolean" ? false : "",
+        value: getInitialValue(nv.data_type),
         data_type: nv.data_type,
         options: nv.options || [],
         additional_price: 0
@@ -247,7 +261,7 @@ const AddProducts = () => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const droppedFiles = Array.from(e.dataTransfer.files);
       if (droppedFiles.length + files.length > 4) {
@@ -280,7 +294,7 @@ const AddProducts = () => {
       case 1:
         return selectedCategory && selectedSubcategory;
       case 2:
-        return productData.name && productData.mrp && productData.quantity;
+        return productData.name && productData.mrp;
       case 3:
         return true; // Attributes are optional
       case 4:
@@ -318,25 +332,38 @@ const AddProducts = () => {
     if (typeof window !== "undefined") {
       let token = getCookie("access_token");
       let vendor_id = localStorage.getItem("vendor_id");
-      
+
       const { mrp, unit_price } = productData;
       const finalUnitPrice = hasDiscount ? unit_price : mrp;
       const updatedProductData = { ...productData, unit_price: finalUnitPrice };
-      
+
+      // Helper to check if attribute has a value
+      const hasValue = (a: any) => {
+        if (Array.isArray(a.value)) return a.value.length > 0;
+        if (typeof a.value === "boolean") return true;
+        return a.value !== "";
+      };
+
+      // Helper to format attribute value
+      const formatValue = (value: any) => {
+        if (Array.isArray(value)) return value.join(", ");
+        return String(value);
+      };
+
       // Combine attributes
       const allAttributes = [
-        ...nonVariantAttributes.filter(a => a.value !== "").map(a => ({
+        ...nonVariantAttributes.filter(hasValue).map(a => ({
           name: a.name,
-          value: String(a.value),
+          value: formatValue(a.value),
           additional_price: a.additional_price || 0
         })),
-        ...variantAttributes.filter(a => a.value !== "").map(v => ({
+        ...variantAttributes.filter(hasValue).map(v => ({
           name: v.name,
-          value: String(v.value),
+          value: formatValue(v.value),
           additional_price: v.additional_price || 0
         }))
       ];
-      
+
       setLoading(true);
       try {
         const res: any = await saveProducts(
@@ -346,7 +373,7 @@ const AddProducts = () => {
           allAttributes,
           files
         );
-        
+
         if (!res.error) {
           toast.success(res.data.Status || "Product added successfully!");
           router.push("/inventory/products");
@@ -381,6 +408,16 @@ const AddProducts = () => {
 
     const inputClasses = "w-full px-4 py-3 rounded-xl bg-surface-50 dark:bg-dark-input border border-surface-200 dark:border-dark-border text-surface-900 dark:text-surface-50 placeholder:text-surface-400 dark:placeholder:text-surface-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300";
 
+    // Handle multi_select toggle
+    const toggleMultiSelectOption = (option: string) => {
+      const currentValues = Array.isArray(attr.value) ? attr.value : [];
+      if (currentValues.includes(option)) {
+        updateAttr(currentValues.filter((v: string) => v !== option));
+      } else {
+        updateAttr([...currentValues, option]);
+      }
+    };
+
     switch (attr.data_type) {
       case "number":
         return (
@@ -392,35 +429,32 @@ const AddProducts = () => {
             className={inputClasses}
           />
         );
-      
+
       case "boolean":
+      case "bool":
         return (
-          <div className="flex items-center gap-4 h-[50px]">
+          <div className="flex items-center justify-between h-[50px] px-4 py-3 rounded-xl bg-surface-50 dark:bg-dark-input border border-surface-200 dark:border-dark-border">
+            <span className="text-sm text-surface-600 dark:text-surface-400">
+              {attr.value ? "Enabled" : "Disabled"}
+            </span>
             <button
               type="button"
-              onClick={() => updateAttr(true)}
-              className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all duration-300 ${
-                attr.value === true
-                  ? "bg-gradient-pink text-white shadow-glow-pink"
-                  : "bg-surface-100 dark:bg-dark-surface text-surface-600 dark:text-surface-400 hover:bg-surface-200 dark:hover:bg-dark-hover"
+              onClick={() => updateAttr(!attr.value)}
+              className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                attr.value
+                  ? "bg-gradient-to-r from-primary-500 to-pink-500"
+                  : "bg-surface-300 dark:bg-dark-border"
               }`}
             >
-              Yes
-            </button>
-            <button
-              type="button"
-              onClick={() => updateAttr(false)}
-              className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all duration-300 ${
-                attr.value === false
-                  ? "bg-surface-600 text-white"
-                  : "bg-surface-100 dark:bg-dark-surface text-surface-600 dark:text-surface-400 hover:bg-surface-200 dark:hover:bg-dark-hover"
-              }`}
-            >
-              No
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${
+                  attr.value ? "translate-x-8" : "translate-x-1"
+                }`}
+              />
             </button>
           </div>
         );
-      
+
       case "select":
         return (
           <select
@@ -434,7 +468,39 @@ const AddProducts = () => {
             ))}
           </select>
         );
-      
+
+      case "multi_select":
+        const selectedValues = Array.isArray(attr.value) ? attr.value : [];
+        return (
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {attr.options?.map((opt: string, i: number) => {
+                const isSelected = selectedValues.includes(opt);
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => toggleMultiSelectOption(opt)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 border-2 ${
+                      isSelected
+                        ? "bg-gradient-to-r from-primary-500 to-pink-500 text-white border-transparent shadow-md"
+                        : "bg-surface-50 dark:bg-dark-input text-surface-700 dark:text-surface-300 border-surface-200 dark:border-dark-border hover:border-primary-400 dark:hover:border-primary-500"
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+            {selectedValues.length > 0 && (
+              <div className="text-xs text-surface-500">
+                Selected: {selectedValues.join(", ")}
+              </div>
+            )}
+          </div>
+        );
+
+      case "text":
       default:
         return (
           <input
@@ -448,47 +514,93 @@ const AddProducts = () => {
     }
   };
 
+  // Helper function to group attributes by data type
+  const groupAttributesByType = (attributes: any[]) => {
+    const groups: { [key: string]: { attr: any; index: number }[] } = {
+      text: [],
+      number: [],
+      boolean: [],
+      select: [],
+      multi_select: [],
+    };
+
+    attributes.forEach((attr, index) => {
+      const type = attr.data_type || "text";
+      if (type === "bool" || type === "boolean") {
+        groups.boolean.push({ attr, index });
+      } else if (groups[type]) {
+        groups[type].push({ attr, index });
+      } else {
+        groups.text.push({ attr, index });
+      }
+    });
+
+    return groups;
+  };
+
+  // Get label for attribute type section
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case "text": return "Text Fields";
+      case "number": return "Numeric Fields";
+      case "boolean": return "Toggle Options";
+      case "select": return "Dropdown Selections";
+      case "multi_select": return "Multi-Select Options";
+      default: return "Other Fields";
+    }
+  };
+
   // ============ STEP COMPONENTS ============
-  
+
   // Step 1: Category Selection
   const renderCategoryStep = () => (
     <div className="space-y-8 animate-fadeIn">
       {/* Category Selection */}
       <div>
-        <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-4">
+        <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-5">
           Select Category
         </h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {categories.map((cat: { slug: string; name: string }, index) => (
             <button
               key={index}
               type="button"
               onClick={() => handleCategorySelect(cat)}
-              className={`group relative p-6 rounded-2xl border-2 transition-all duration-300 text-left ${
-                selectedCategory === cat.slug
-                  ? "border-primary-500 bg-primary-50 dark:bg-primary-500/10 shadow-glow-pink"
-                  : "border-surface-200 dark:border-dark-border bg-white dark:bg-dark-card hover:border-primary-300 dark:hover:border-primary-500/50 hover:shadow-premium-sm"
-              }`}
+              className={`group relative p-5 rounded-2xl border-2 transition-all duration-300 text-center overflow-hidden ${selectedCategory === cat.slug
+                ? "border-primary-500 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-500/10 dark:to-primary-500/5 shadow-glow-pink scale-[1.02]"
+                : "border-surface-200 dark:border-dark-border bg-white dark:bg-dark-card hover:border-primary-300 dark:hover:border-primary-500/50 hover:shadow-premium-md hover:scale-[1.02]"
+                }`}
             >
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-all duration-300 ${
-                selectedCategory === cat.slug
-                  ? "bg-gradient-pink text-white"
-                  : "bg-surface-100 dark:bg-dark-surface text-surface-500 group-hover:bg-primary-100 group-hover:text-primary-500 dark:group-hover:bg-primary-500/20"
-              }`}>
-                <GridIcon />
-              </div>
-              <h4 className={`font-semibold transition-colors ${
-                selectedCategory === cat.slug
+              {/* Background Gradient Effect */}
+              <div className={`absolute inset-0 bg-gradient-to-br transition-opacity duration-300 ${selectedCategory === cat.slug
+                ? "from-primary-500/5 to-transparent opacity-100"
+                : "from-primary-500/0 to-transparent opacity-0 group-hover:opacity-100"
+                }`} />
+
+              {/* Content */}
+              <div className="relative z-10">
+                <h4 className={`font-semibold text-sm transition-colors ${selectedCategory === cat.slug
                   ? "text-primary-600 dark:text-primary-400"
-                  : "text-surface-900 dark:text-white"
-              }`}>
-                {cat.name}
-              </h4>
+                  : "text-surface-900 dark:text-white group-hover:text-primary-500 dark:group-hover:text-primary-400"
+                  }`}>
+                  {cat.name}
+                </h4>
+              </div>
+
+              {/* Selected Indicator */}
               {selectedCategory === cat.slug && (
-                <div className="absolute top-3 right-3 w-6 h-6 bg-gradient-pink rounded-full flex items-center justify-center text-white">
-                  <CheckIcon />
+                <div className="absolute top-3 right-3 w-6 h-6 bg-gradient-pink rounded-full flex items-center justify-center text-white shadow-lg animate-scaleIn">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
                 </div>
               )}
+
+              {/* Bottom Accent Line */}
+              <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-pink transition-all duration-300 ${selectedCategory === cat.slug
+                ? "opacity-100"
+                : "opacity-0 group-hover:opacity-50"
+                }`} />
             </button>
           ))}
         </div>
@@ -497,38 +609,55 @@ const AddProducts = () => {
       {/* Subcategory Selection */}
       {selectedCategory && (
         <div className="animate-slideUp">
-          <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-4">
+          <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-5">
             Select Subcategory
           </h3>
           {subcategoriesLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {subcategories.map((subcat: any, index) => (
                 <button
                   key={index}
                   type="button"
                   onClick={() => handleSubcategorySelect(subcat)}
-                  className={`group p-5 rounded-xl border-2 transition-all duration-300 text-left ${
-                    selectedSubcategory === subcat.slug
-                      ? "border-primary-500 bg-primary-50 dark:bg-primary-500/10"
-                      : "border-surface-200 dark:border-dark-border bg-white dark:bg-dark-card hover:border-primary-300 dark:hover:border-primary-500/50"
-                  }`}
+                  className={`group relative p-4 rounded-xl border-2 transition-all duration-300 text-center overflow-hidden ${selectedSubcategory === subcat.slug
+                    ? "border-primary-500 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-500/10 dark:to-primary-500/5 shadow-glow-pink"
+                    : "border-surface-200 dark:border-dark-border bg-white dark:bg-dark-card hover:border-primary-300 dark:hover:border-primary-500/50 hover:shadow-premium-sm"
+                    }`}
                 >
-                  <h4 className={`font-medium ${
-                    selectedSubcategory === subcat.slug
+                  {/* Background Effect */}
+                  <div className={`absolute inset-0 bg-gradient-to-br transition-opacity duration-300 ${selectedSubcategory === subcat.slug
+                    ? "from-primary-500/5 to-transparent opacity-100"
+                    : "from-primary-500/0 to-transparent opacity-0 group-hover:opacity-100"
+                    }`} />
+
+                  {/* Content */}
+                  <div className="relative z-10">
+                    <h4 className={`font-medium text-sm transition-colors ${selectedSubcategory === subcat.slug
                       ? "text-primary-600 dark:text-primary-400"
-                      : "text-surface-800 dark:text-surface-200"
-                  }`}>
-                    {subcat.name}
-                  </h4>
+                      : "text-surface-800 dark:text-surface-200 group-hover:text-primary-500 dark:group-hover:text-primary-400"
+                      }`}>
+                      {subcat.name}
+                    </h4>
+                  </div>
+
+                  {/* Selected Indicator */}
                   {selectedSubcategory === subcat.slug && (
-                    <div className="absolute top-2 right-2 w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center text-white text-xs">
-                      <CheckIcon />
+                    <div className="absolute top-2 right-2 w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center text-white shadow-md animate-scaleIn">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
                     </div>
                   )}
+
+                  {/* Bottom Accent */}
+                  <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-pink transition-all duration-300 ${selectedSubcategory === subcat.slug
+                    ? "opacity-100"
+                    : "opacity-0 group-hover:opacity-50"
+                    }`} />
                 </button>
               ))}
             </div>
@@ -547,7 +676,7 @@ const AddProducts = () => {
           {/* Product Title */}
           <div className="premium-card p-6">
             <label className="block text-sm font-semibold text-surface-700 dark:text-surface-200 mb-2">
-              Product Title <span className="text-danger">*</span>
+              Title <span className="text-danger">*</span>
             </label>
             <input
               type="text"
@@ -595,11 +724,10 @@ const AddProducts = () => {
                   />
                 </div>
               </div>
-              
+
               <label className="flex items-center gap-3 cursor-pointer">
-                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
-                  hasDiscount ? "bg-primary-500 border-primary-500" : "border-surface-300 dark:border-dark-border"
-                }`}>
+                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${hasDiscount ? "bg-primary-500 border-primary-500" : "border-surface-300 dark:border-dark-border"
+                  }`}>
                   {hasDiscount && <CheckIcon />}
                 </div>
                 <span className="text-sm text-surface-700 dark:text-surface-300">
@@ -636,7 +764,7 @@ const AddProducts = () => {
           {/* Stock */}
           <div className="premium-card p-6">
             <label className="block text-sm font-semibold text-surface-700 dark:text-surface-200 mb-2">
-              Stock Quantity <span className="text-danger">*</span>
+              Stock Quantity
             </label>
             <input
               type="number"
@@ -644,7 +772,6 @@ const AddProducts = () => {
               onChange={(e) => updateProductData("quantity", e.target.value)}
               placeholder="Enter available quantity"
               className="input-premium"
-              required
             />
           </div>
         </div>
@@ -669,9 +796,8 @@ const AddProducts = () => {
                 className="bg-white dark:bg-dark-input"
               />
             </div>
-            <p className={`text-xs mt-2 ${
-              productData.short_description.length >= 255 ? "text-danger" : "text-surface-500"
-            }`}>
+            <p className={`text-xs mt-2 ${productData.short_description.length >= 255 ? "text-danger" : "text-surface-500"
+              }`}>
               {productData.short_description.length}/255 characters
             </p>
           </div>
@@ -702,13 +828,12 @@ const AddProducts = () => {
               <span className="text-sm font-semibold text-surface-700 dark:text-surface-200">
                 Product Dimensions (Optional)
               </span>
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-300 ${
-                showDimensions ? "rotate-45" : ""
-              } bg-surface-100 dark:bg-dark-surface`}>
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-300 ${showDimensions ? "rotate-45" : ""
+                } bg-surface-100 dark:bg-dark-surface`}>
                 <PlusIcon />
               </div>
             </button>
-            
+
             {showDimensions && (
               <div className="grid grid-cols-2 gap-4 mt-4 animate-slideUp">
                 <div>
@@ -760,58 +885,122 @@ const AddProducts = () => {
   );
 
   // Step 3: Attributes
+  // Render grouped attributes section
+  const renderGroupedAttributes = (attributes: any[], isVariant: boolean, title: string, description: string, gradientClass: string, IconComponent: React.FC) => {
+    if (attributes.length === 0) return null;
+
+    const groups = groupAttributesByType(attributes);
+    const typeOrder = ["text", "number", "select", "multi_select", "boolean"];
+
+    return (
+      <div className="premium-card p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className={`w-10 h-10 rounded-xl ${gradientClass} flex items-center justify-center text-white`}>
+            <IconComponent />
+          </div>
+          <div>
+            <h3 className="font-semibold text-surface-900 dark:text-white">{title}</h3>
+            <p className="text-sm text-surface-500">{description}</p>
+          </div>
+        </div>
+
+        <div className="space-y-8">
+          {typeOrder.map((type) => {
+            const typeAttrs = groups[type];
+            if (!typeAttrs || typeAttrs.length === 0) return null;
+
+            return (
+              <div key={type} className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    {getTypeLabel(type)}
+                  </span>
+                  <div className="flex-1 h-px bg-surface-200 dark:bg-dark-border" />
+                </div>
+
+                {/* Text and Number fields in 2-column grid */}
+                {(type === "text" || type === "number") && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {typeAttrs.map(({ attr, index }) => (
+                      <div key={index} className="space-y-2">
+                        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">
+                          {attr.name}
+                        </label>
+                        {renderAttributeInput(attr, isVariant, index)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Select fields in 2-column grid */}
+                {type === "select" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {typeAttrs.map(({ attr, index }) => (
+                      <div key={index} className="space-y-2">
+                        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">
+                          {attr.name}
+                        </label>
+                        {renderAttributeInput(attr, isVariant, index)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Multi-select fields full width */}
+                {type === "multi_select" && (
+                  <div className="space-y-6">
+                    {typeAttrs.map(({ attr, index }) => (
+                      <div key={index} className="space-y-2">
+                        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">
+                          {attr.name}
+                        </label>
+                        {renderAttributeInput(attr, isVariant, index)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Boolean fields in responsive grid */}
+                {type === "boolean" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {typeAttrs.map(({ attr, index }) => (
+                      <div key={index} className="space-y-2">
+                        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">
+                          {attr.name}
+                        </label>
+                        {renderAttributeInput(attr, isVariant, index)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   const renderAttributesStep = () => (
     <div className="space-y-8 animate-fadeIn">
       {/* Variant Attributes */}
-      {variantAttributes.length > 0 && (
-        <div className="premium-card p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-pink flex items-center justify-center text-white">
-              <SparklesIcon />
-            </div>
-            <div>
-              <h3 className="font-semibold text-surface-900 dark:text-white">Product Variants</h3>
-              <p className="text-sm text-surface-500">Configure variant-specific details</p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {variantAttributes.map((attr, index) => (
-              <div key={index} className="space-y-2">
-                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">
-                  {attr.name}
-                </label>
-                {renderAttributeInput(attr, true, index)}
-              </div>
-            ))}
-          </div>
-        </div>
+      {renderGroupedAttributes(
+        variantAttributes,
+        true,
+        "Product Variants",
+        "Configure variant-specific details",
+        "bg-gradient-pink",
+        SparklesIcon
       )}
 
       {/* Non-Variant Attributes */}
-      {nonVariantAttributes.length > 0 && (
-        <div className="premium-card p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-purple flex items-center justify-center text-white">
-              <TagIcon />
-            </div>
-            <div>
-              <h3 className="font-semibold text-surface-900 dark:text-white">Product Specifications</h3>
-              <p className="text-sm text-surface-500">Additional product details</p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {nonVariantAttributes.map((attr, index) => (
-              <div key={index} className="space-y-2">
-                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">
-                  {attr.name}
-                </label>
-                {renderAttributeInput(attr, false, index)}
-              </div>
-            ))}
-          </div>
-        </div>
+      {renderGroupedAttributes(
+        nonVariantAttributes,
+        false,
+        "Specifications",
+        "Additional product details",
+        "bg-gradient-purple",
+        TagIcon
       )}
 
       {/* SEO Fields */}
@@ -825,7 +1014,7 @@ const AddProducts = () => {
             <p className="text-sm text-surface-500">Optimize for search engines</p>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
@@ -886,11 +1075,10 @@ const AddProducts = () => {
 
         {/* Upload Area */}
         <div
-          className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 ${
-            dragActive
-              ? "border-primary-500 bg-primary-50 dark:bg-primary-500/10"
-              : "border-surface-300 dark:border-dark-border hover:border-primary-400 dark:hover:border-primary-500/50"
-          }`}
+          className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 ${dragActive
+            ? "border-primary-500 bg-primary-50 dark:bg-primary-500/10"
+            : "border-surface-300 dark:border-dark-border hover:border-primary-400 dark:hover:border-primary-500/50"
+            }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
@@ -903,13 +1091,12 @@ const AddProducts = () => {
             onChange={handleFileInput}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           />
-          
+
           <div className="flex flex-col items-center">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${
-              dragActive
-                ? "bg-primary-500 text-white"
-                : "bg-surface-100 dark:bg-dark-surface text-surface-400"
-            }`}>
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${dragActive
+              ? "bg-primary-500 text-white"
+              : "bg-surface-100 dark:bg-dark-surface text-surface-400"
+              }`}>
               <UploadIcon />
             </div>
             <p className="text-lg font-medium text-surface-700 dark:text-surface-200 mb-1">
@@ -967,7 +1154,7 @@ const AddProducts = () => {
   const renderReviewStep = () => (
     <div className="space-y-6 animate-fadeIn">
       {/* Summary Header */}
-      <div className="premium-card p-6 bg-gradient-pink text-white">
+      <div className="premium-card p-6  text-white">
         <h3 className="text-xl font-bold mb-2">Review Your Product</h3>
         <p className="text-white/80">Please check all details before submitting</p>
       </div>
@@ -1039,7 +1226,10 @@ const AddProducts = () => {
             </h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[...variantAttributes, ...nonVariantAttributes]
-                .filter(attr => attr.value !== "" && attr.value !== false)
+                .filter(attr => {
+                  if (Array.isArray(attr.value)) return attr.value.length > 0;
+                  return attr.value !== "" && attr.value !== false;
+                })
                 .map((attr, index) => (
                   <div
                     key={index}
@@ -1047,7 +1237,11 @@ const AddProducts = () => {
                   >
                     <p className="text-xs text-surface-500 mb-1">{attr.name}</p>
                     <p className="font-medium text-surface-900 dark:text-white">
-                      {typeof attr.value === "boolean" ? (attr.value ? "Yes" : "No") : attr.value}
+                      {Array.isArray(attr.value) 
+                        ? attr.value.join(", ") 
+                        : typeof attr.value === "boolean" 
+                          ? (attr.value ? "Yes" : "No") 
+                          : attr.value}
                     </p>
                   </div>
                 ))}
@@ -1094,28 +1288,26 @@ const AddProducts = () => {
             const StepIcon = step.icon;
             const isCompleted = completedSteps.includes(step.id);
             const isCurrent = currentStep === step.id;
-            
+
             return (
               <React.Fragment key={step.id}>
                 <button
                   type="button"
                   onClick={() => goToStep(step.id)}
                   disabled={step.id > currentStep && !completedSteps.includes(step.id - 1)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
-                    isCurrent
-                      ? "bg-gradient-pink text-white shadow-glow-pink"
-                      : isCompleted
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${isCurrent
+                    ? "bg-gradient-pink text-white shadow-glow-pink"
+                    : isCompleted
                       ? "bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400"
                       : "bg-surface-100 dark:bg-dark-surface text-surface-400 hover:bg-surface-200 dark:hover:bg-dark-hover"
-                  } ${step.id > currentStep && !completedSteps.includes(step.id - 1) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    } ${step.id > currentStep && !completedSteps.includes(step.id - 1) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                 >
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    isCurrent
-                      ? "bg-white/20"
-                      : isCompleted
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isCurrent
+                    ? "bg-white/20"
+                    : isCompleted
                       ? "bg-primary-500 text-white"
                       : "bg-surface-200 dark:bg-dark-hover"
-                  }`}>
+                    }`}>
                     {isCompleted ? <CheckIcon /> : <StepIcon />}
                   </div>
                   <div className="text-left hidden sm:block">
@@ -1125,13 +1317,12 @@ const AddProducts = () => {
                     </p>
                   </div>
                 </button>
-                
+
                 {index < STEPS.length - 1 && (
-                  <div className={`w-8 md:w-16 h-0.5 mx-2 transition-colors ${
-                    completedSteps.includes(step.id)
-                      ? "bg-primary-500"
-                      : "bg-surface-200 dark:bg-dark-border"
-                  }`} />
+                  <div className={`w-8 md:w-16 h-0.5 mx-2 transition-colors ${completedSteps.includes(step.id)
+                    ? "bg-primary-500"
+                    : "bg-surface-200 dark:bg-dark-border"
+                    }`} />
                 )}
               </React.Fragment>
             );
@@ -1151,11 +1342,10 @@ const AddProducts = () => {
             type="button"
             onClick={prevStep}
             disabled={currentStep === 1}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
-              currentStep === 1
-                ? "opacity-50 cursor-not-allowed bg-surface-100 dark:bg-dark-surface text-surface-400"
-                : "bg-surface-100 dark:bg-dark-surface text-surface-700 dark:text-surface-200 hover:bg-surface-200 dark:hover:bg-dark-hover"
-            }`}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${currentStep === 1
+              ? "opacity-50 cursor-not-allowed bg-surface-100 dark:bg-dark-surface text-surface-400"
+              : "bg-surface-100 dark:bg-dark-surface text-surface-700 dark:text-surface-200 hover:bg-surface-200 dark:hover:bg-dark-hover"
+              }`}
           >
             <ChevronLeftIcon />
             <span className="hidden sm:inline">Previous</span>
@@ -1165,13 +1355,12 @@ const AddProducts = () => {
             {STEPS.map((step) => (
               <div
                 key={step.id}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  step.id === currentStep
-                    ? "bg-primary-500"
-                    : completedSteps.includes(step.id)
+                className={`w-2 h-2 rounded-full transition-colors ${step.id === currentStep
+                  ? "bg-primary-500"
+                  : completedSteps.includes(step.id)
                     ? "bg-primary-300"
                     : "bg-surface-300 dark:bg-dark-border"
-                }`}
+                  }`}
               />
             ))}
           </div>
@@ -1181,11 +1370,10 @@ const AddProducts = () => {
               type="button"
               onClick={nextStep}
               disabled={!canProceed()}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
-                canProceed()
-                  ? "bg-gradient-pink text-white shadow-glow-pink hover:opacity-90"
-                  : "opacity-50 cursor-not-allowed bg-surface-300 text-surface-500"
-              }`}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${canProceed()
+                ? "bg-gradient-pink text-white shadow-glow-pink hover:opacity-90"
+                : "opacity-50 cursor-not-allowed bg-surface-300 text-surface-500"
+                }`}
             >
               <span className="hidden sm:inline">Next</span>
               <ChevronRightIcon />
@@ -1197,7 +1385,7 @@ const AddProducts = () => {
               className="flex items-center gap-2 px-8 py-3 rounded-xl font-semibold bg-gradient-pink text-white shadow-glow-pink hover:opacity-90 transition-all duration-300"
             >
               <SparklesIcon />
-              <span>Publish Product</span>
+              <span>Publish</span>
             </button>
           )}
         </div>
