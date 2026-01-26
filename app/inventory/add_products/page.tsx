@@ -335,7 +335,14 @@ const AddProducts = () => {
 
       const { mrp, unit_price } = productData;
       const finalUnitPrice = hasDiscount ? unit_price : mrp;
-      const updatedProductData = { ...productData, unit_price: finalUnitPrice };
+      
+      // Clean product data - remove empty optional fields
+      const cleanedProductData = { ...productData, unit_price: finalUnitPrice };
+      
+      // Remove quantity if empty (it's optional)
+      if (cleanedProductData.quantity === "" || cleanedProductData.quantity === null || cleanedProductData.quantity === undefined) {
+        delete (cleanedProductData as any).quantity;
+      }
 
       // Helper to check if attribute has a value
       const hasValue = (a: any) => {
@@ -365,11 +372,12 @@ const AddProducts = () => {
       ];
 
       setLoading(true);
+      console.log("=== SUBMITTING PRODUCT DATA ===", cleanedProductData, allAttributes, files);
       try {
         const res: any = await saveProducts(
           token,
           vendor_id,
-          updatedProductData as any,
+          cleanedProductData as any,
           allAttributes,
           files
         );

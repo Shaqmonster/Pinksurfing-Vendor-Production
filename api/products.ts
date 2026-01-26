@@ -142,7 +142,10 @@ export async function saveProducts(
 
   form.append("attributes", JSON.stringify(attribute));
   form.append("vendor", vendor);
-
+  console.log("Form Data Entries:");
+  form.forEach((value, key) => {
+    console.log(`${key}: ${value}`);
+  });
   try {
     const response = await axios.post(
       `${BASE_URL}/product/add-product/`,
