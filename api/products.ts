@@ -76,6 +76,102 @@ export async function getCategories() {
   return data;
 }
 
+// ============ NEW SCHEMA API FUNCTIONS ============
+
+/**
+ * Fetch all categories from the schema endpoint
+ * Used for dynamic form generation (Step 1 - Category Selection)
+ */
+export async function getSchemaCategories() {
+  try {
+    const res = await axios.get(`${BASE_URL}/product/schema/categories/`);
+    const { data } = res;
+    if (!data) {
+      return { error: true, data: null };
+    }
+    return { error: false, data: data.categories || [] };
+  } catch (error) {
+    console.error("Error fetching schema categories:", error);
+    return { error: true, data: null };
+  }
+}
+
+/**
+ * Fetch subcategories for a specific category from the schema endpoint
+ * Used for dynamic form generation (Step 2 - Subcategory Selection)
+ */
+export async function getSchemaSubcategories(categoryId: string) {
+  if (!categoryId) {
+    return { error: true, data: null };
+  }
+
+  try {
+    const res = await axios.get(`${BASE_URL}/product/schema/subcategories/${categoryId}/`);
+    const { data } = res;
+    if (!data) {
+      return { error: true, data: null };
+    }
+    return { error: false, data: data.subcategories || [], categoryId: data.category_id };
+  } catch (error) {
+    console.error("Error fetching schema subcategories:", error);
+    return { error: true, data: null };
+  }
+}
+
+/**
+ * Fetch dynamic form fields for a specific category + subcategory
+ * Returns field definitions (type, label, required, options, etc.)
+ */
+export async function getFormSchema(categoryId: string, subcategoryId: string) {
+  if (!categoryId || !subcategoryId) {
+    return { error: true, data: null };
+  }
+
+  try {
+    const res = await axios.get(`${BASE_URL}/product/schema/form/${categoryId}/${subcategoryId}/`);
+    const { data } = res;
+    if (!data) {
+      return { error: true, data: null };
+    }
+    return { 
+      error: false, 
+      data: {
+        categoryId: data.category_id,
+        subcategoryId: data.subcategory_id,
+        fields: data.fields || []
+      }
+    };
+  } catch (error) {
+    console.error("Error fetching form schema:", error);
+    return { error: true, data: null };
+  }
+}
+
+/**
+ * Validate form data against the schema before submission
+ */
+export async function validateFormData(categoryId: string, subcategoryId: string, formData: Record<string, any>) {
+  if (!categoryId || !subcategoryId) {
+    return { error: true, valid: false, errors: { general: "Category and subcategory are required" } };
+  }
+
+  try {
+    const res = await axios.post(`${BASE_URL}/product/schema/validate/`, {
+      category_id: categoryId,
+      subcategory_id: subcategoryId,
+      data: formData
+    });
+    const { data } = res;
+    return { error: false, valid: data.valid, errors: data.errors || {} };
+  } catch (error) {
+    console.error("Error validating form data:", error);
+    return { error: true, valid: false, errors: { general: "Validation request failed" } };
+  }
+}
+
+// ============ END SCHEMA API FUNCTIONS ============
+
+
 export async function deleteProduct(
   token: string | null,
   vendor: string | null,
