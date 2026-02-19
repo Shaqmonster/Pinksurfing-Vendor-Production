@@ -94,18 +94,23 @@ const CATEGORIES_WITHOUT_MEDIA = [
 // Categories that don't require dimensions
 const CATEGORIES_WITHOUT_DIMENSIONS = [
   "Business For Sale",
+  "Commercial Real Estate",
   // Add more category names here as needed
 ];
 
 // Categories that don't require stock quantity
 const CATEGORIES_WITHOUT_STOCK = [
   "Business For Sale",
+  "Cars & Trucks",
+  "Commercial Real Estate",
   // Add more category names here as needed
 ];
 
 // Categories that don't require brand name
 const CATEGORIES_WITHOUT_BRAND = [
   "Business For Sale",
+   "Cars & Trucks",
+   "Commercial Real Estate",
   // Add more category names here as needed
 ];
 
@@ -516,7 +521,7 @@ const AddProducts = () => {
               onChange={(e) => updateAttr(e.target.value)}
               placeholder={attr.placeholder || `Enter ${attr.name.toLowerCase()}`}
               className={`${inputClasses} ${attr.suffix ? 'pl-7' : ''}`}
-              min={attr.min}
+              min={attr.min !== undefined && attr.min >= 0 ? attr.min : 0}
               max={attr.max}
               step={attr.step}
             />
@@ -1213,6 +1218,7 @@ const AddProducts = () => {
                     value={productData.mrp}
                     onChange={(e) => updateProductData("mrp", e.target.value)}
                     placeholder="0.00"
+                    min={0}
                     className="w-full pl-12 pr-4 py-4 text-2xl font-bold rounded-xl bg-surface-50 dark:bg-dark-input border-2 border-surface-200 dark:border-dark-border text-surface-900 dark:text-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all"
                     required
                   />
@@ -1259,6 +1265,7 @@ const AddProducts = () => {
                     value={productData.unit_price}
                     onChange={(e) => updateProductData("unit_price", e.target.value)}
                     placeholder="0.00"
+                    min={0}
                     className={`w-full pl-12 pr-4 py-4 text-2xl font-bold rounded-xl border-2 transition-all ${hasDiscount
                       ? 'bg-surface-50 dark:bg-dark-input border-primary-200 dark:border-primary-500/30 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20'
                       : 'bg-surface-100 dark:bg-dark-surface border-surface-200 dark:border-dark-border text-surface-400 cursor-not-allowed'
@@ -1320,6 +1327,7 @@ const AddProducts = () => {
                       value={productData.quantity}
                       onChange={(e) => updateProductData("quantity", e.target.value)}
                       placeholder="Available units"
+                      min={0}
                       className="input-premium"
                     />
                   </div>
@@ -1435,6 +1443,7 @@ const AddProducts = () => {
                               value={(productData as any)[key]}
                               onChange={(e) => updateProductData(key as keyof typeof productData, e.target.value)}
                               placeholder="0"
+                              min={0}
                               className="input-premium pr-10"
                             />
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-surface-400">{unit}</span>

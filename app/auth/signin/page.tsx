@@ -81,6 +81,7 @@ const SignIn: React.FC = () => {
         });
       setLoading(false);
       setError("");
+      console.log(data);
       if (data && data.status === 409) {
         handleError(data?.message);
         localStorage.setItem("customer", JSON.stringify(parseJwt(data.token)));

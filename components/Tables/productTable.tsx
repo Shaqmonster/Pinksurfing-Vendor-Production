@@ -20,7 +20,9 @@ import {
   FiPlus, 
   FiMoreHorizontal,
   FiArrowRight,
-  FiSearch
+  FiSearch,
+  FiCopy,
+  FiExternalLink
 } from "react-icons/fi";
 import ConfirmationModal from "../Modals/ConfirmDelete";
 import { toast } from "react-toastify";
@@ -141,6 +143,26 @@ const ProductsTable = (props: { Products?: Product[] }) => {
     product.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const getProductUrl = (product: any) =>
+    `https://pinksurfing.com/product/productDetail/${product.slug}?productId=${product.id}`;
+
+  const copyToClipboard = (text: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    navigator.clipboard
+      .writeText(text)
+      .then(() => toast.success("Product link copied!"))
+      .catch(() => toast.error("Failed to copy link"));
+  };
+
+  const handleProductClick = (product: any) => {
+    const url = getProductUrl(product);
+    window.open(url, "_blank", "noopener,noreferrer");
+    navigator.clipboard
+      .writeText(url)
+      .then(() => toast.success("Product link opened & copied!"))
+      .catch(() => {});
+  };
+
   return (
     <>
       {loading ? (
@@ -198,6 +220,9 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                     <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
                       Description
                     </th>
+                    <th className="hidden xl:table-cell px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                      Product Link
+                    </th>
                     <th className="hidden sm:table-cell px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
                       Stock
                     </th>
@@ -221,8 +246,12 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                         className="hover:bg-surface-50 dark:hover:bg-dark-hover transition-colors"
                       >
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-4">
-                            <div className="w-14 h-14 rounded-xl overflow-hidden bg-surface-100 dark:bg-dark-surface flex-shrink-0">
+                          <div
+                            className="flex items-center gap-4 cursor-pointer group"
+                            onClick={() => handleProductClick(product)}
+                            title="Open product page & copy link"
+                          >
+                            <div className="w-14 h-14 rounded-xl overflow-hidden bg-surface-100 dark:bg-dark-surface flex-shrink-0 group-hover:ring-2 group-hover:ring-primary-400 transition-all">
                               {product.image1 ? (
                                 <img
                                   src={product.image1}
@@ -236,12 +265,16 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                               )}
                             </div>
                             <div className="min-w-0">
-                              <p className="font-medium text-surface-900 dark:text-white truncate max-w-[200px]">
+                              <p className="font-medium text-surface-900 dark:text-white truncate max-w-[200px] group-hover:text-primary-500 transition-colors">
                                 {product.name}
                               </p>
                               <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
                                 ID: {product.id?.slice(0, 8)}...
                               </p>
+                              <span className="inline-flex items-center gap-1 text-xs text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
+                                <FiExternalLink className="w-3 h-3" />
+                                Open & copy link
+                              </span>
                             </div>
                           </div>
                         </td>
@@ -261,6 +294,16 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                           <p className="text-sm text-surface-600 dark:text-surface-400 max-w-xs line-clamp-2">
                             {truncateAndConvertToText(product.short_description)}
                           </p>
+                        </td>
+                        <td className="hidden xl:table-cell px-6 py-4 text-center">
+                          <button
+                            onClick={(e) => copyToClipboard(getProductUrl(product), e)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-dark-surface text-surface-600 dark:text-surface-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-500 transition-colors text-xs font-medium"
+                            title="Copy product link"
+                          >
+                            <FiCopy className="w-3.5 h-3.5" />
+                            Copy Link
+                          </button>
                         </td>
                         <td className="hidden sm:table-cell px-6 py-4 text-center">
                           <span
