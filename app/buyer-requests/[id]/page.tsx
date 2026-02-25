@@ -89,7 +89,7 @@ export default function RequestDetailPage() {
         ]);
         setRequest(reqRes.data.results);
         // Check if vendor already has a bid on this request
-        const existing = bidsRes.data.find(
+        const existing = bidsRes.data.results.find(
           (b: VendorBid & { request: string }) => b.request === requestId
         );
         if (existing) {
