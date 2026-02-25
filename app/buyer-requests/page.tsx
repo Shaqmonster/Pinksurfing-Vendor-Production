@@ -42,7 +42,7 @@ export default function BuyerRequestsPage() {
     try {
       setLoading(true);
       const res = await getOpenRequests(token);
-      setRequests(res.data);
+      setRequests(res.data.results);
     } catch (err) {
       handleError(err);
     } finally {
@@ -136,12 +136,6 @@ function RequestCard({ req, index }: { req: BuyerRequest; index: number }) {
 
       {/* Content */}
       <div className="flex-1 space-y-2">
-        {req.category_name && (
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-primary-500 bg-primary-500/10 px-2 py-0.5 rounded-full">
-            <FiTag className="text-[10px]" />
-            {req.category_name}
-          </span>
-        )}
         <h3 className="text-surface-900 dark:text-white font-semibold text-base leading-snug">
           {req.title}
         </h3>
