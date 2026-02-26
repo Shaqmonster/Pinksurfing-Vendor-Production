@@ -87,9 +87,9 @@ export default function RequestDetailPage() {
           getOpenRequestDetail(token, requestId),
           getMyBids(token),
         ]);
-        setRequest(reqRes.data.results);
+        setRequest(reqRes.data);
         // Check if vendor already has a bid on this request
-        const existing = bidsRes.data.results.find(
+        const existing = bidsRes.data.find(
           (b: VendorBid & { request: string }) => b.request === requestId
         );
         if (existing) {
