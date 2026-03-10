@@ -33,6 +33,8 @@ interface Order {
   total_price: number;
   order_status: string;
   date_of_order: string;
+  vendor_earnings?: number;
+  vendor_earnings_status?: string | null;
 }
 
 const formatDate = (dateString: string) => {
@@ -296,6 +298,9 @@ const OrderTable = ({ recentOrders }: any) => {
                       Status
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                      Earnings
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
                       Date
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
@@ -343,6 +348,30 @@ const OrderTable = ({ recentOrders }: any) => {
                               <span className={`text-xs font-semibold ${statusConfig.textColor}`}>
                                 {statusConfig.label}
                               </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div>
+                              <span className="text-sm font-bold text-surface-900 dark:text-white">
+                                ${Number(order.vendor_earnings || 0).toFixed(2)}
+                              </span>
+                              {order.vendor_earnings_status && (
+                                <span
+                                  className={`ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                                    order.vendor_earnings_status === "PAID_OUT"
+                                      ? "bg-success-light text-success-dark dark:bg-success/20 dark:text-success"
+                                      : order.vendor_earnings_status === "CLEARED"
+                                      ? "bg-info-light text-info-dark dark:bg-info/20 dark:text-info"
+                                      : "bg-warning-light text-warning-dark dark:bg-warning/20 dark:text-warning"
+                                  }`}
+                                >
+                                  {order.vendor_earnings_status === "PAID_OUT"
+                                    ? "Paid"
+                                    : order.vendor_earnings_status === "CLEARED"
+                                    ? "Cleared"
+                                    : "Pending"}
+                                </span>
+                              )}
                             </div>
                           </td>
                           <td className="px-6 py-4">

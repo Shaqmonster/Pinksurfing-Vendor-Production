@@ -9,16 +9,22 @@ import {
   FiPackage, 
   FiUsers,
   FiArrowRight,
-  FiMoreHorizontal
+  FiMoreHorizontal,
+  FiAlertTriangle,
+  FiExternalLink
 } from "react-icons/fi";
 import { HiOutlineSparkles, HiOutlineCube, HiOutlineShoppingCart, HiOutlineCurrencyDollar } from "react-icons/hi";
-import { getTopSellingProducts } from "@/api/products";
+import { getTopSellingProducts, getVendorProfile } from "@/api/products";
+import { getDotsPayoutLink } from "@/api/account";
 import OrderTable from "@/components/Tables/OrderTable";
 import { getCookie } from "@/utils/cookies";
 import Link from "next/link";
+import { toast } from "react-toastify";
 
 const Dashboard: React.FC = () => {
   const [topProducts, setTopProducts] = useState<any[]>([]);
+  const [payoutNotSetup, setPayoutNotSetup] = useState(false);
+  const [payoutLoading, setPayoutLoading] = useState(false);
   
   useMemo(() => {
     if (typeof window !== "undefined") {
@@ -27,6 +33,12 @@ const Dashboard: React.FC = () => {
       (async () => {
         const res = await getTopSellingProducts(token);
         setTopProducts(res.data || []);
+      })();
+      (async () => {
+        const res = await getVendorProfile(token);
+        if (!res.error && res.data) {
+          setPayoutNotSetup(!res.data.dots_user_id);
+        }
       })();
     }
   }, []);
@@ -94,6 +106,64 @@ const Dashboard: React.FC = () => {
       animate="show"
       className="space-y-6"
     >
+
+      {/* Payout Setup Banner */}
+      {payoutNotSetup && (
+        <motion.div
+          variants={itemVariants}
+          className="relative overflow-hidden rounded-2xl border border-amber-200 dark:border-amber-500/30 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/10 dark:to-orange-500/10 p-6"
+        >
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+              <FiAlertTriangle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-amber-900 dark:text-amber-200 mb-1">
+                Payout Method Not Set Up
+              </h3>
+              <p className="text-sm text-amber-700 dark:text-amber-300/80">
+                You cannot receive funds until you connect your bank account or PayPal.
+                Set up your payout method to start receiving earnings from your sales.
+              </p>
+            </div>
+            <button
+              onClick={async () => {
+                try {
+                  setPayoutLoading(true);
+                  const token = getCookie("access_token");
+                  if (!token) {
+                    toast.error("Please log in to continue.");
+                    return;
+                  }
+                  const response = await getDotsPayoutLink(token);
+                  const url = response?.link;
+                  if (url) {
+                    window.open(url, "_blank");
+                    toast.success("Payout setup page opened in a new tab.");
+                  } else {
+                    toast.error("Could not generate payout link. Please try again.");
+                  }
+                } catch {
+                  toast.error("Failed to generate payout link.");
+                } finally {
+                  setPayoutLoading(false);
+                }
+              }}
+              disabled={payoutLoading}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold shadow-sm transition-all flex-shrink-0 disabled:opacity-50"
+            >
+              {payoutLoading ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  Set Up Payouts
+                  <FiExternalLink className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       {/* Stats Grid */}
       {/* <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">

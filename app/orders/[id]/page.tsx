@@ -327,23 +327,68 @@ const Page = ({ params }: { params: { id: string } }) => {
                       <label className="mb-3 block text-sm font-medium">
                         Order Status : {orderStatus}
                       </label>
-                      {/* <select
-                        className="w-full rounded border bg-gray py-3 px-4.5 text-black dark:bg-meta-4"
-                        value={selectedStatus || orderData?.order_status || ""}
-                        onChange={handleStatusSelect}
-                        disabled={orderData?.order_status === "shipped".toUpperCase()}
-                      >
-                        <option value="" disabled>
-                          Select a status
-                        </option>
-                        {orderData?.order_status === "received".toUpperCase() && (
-                          <option value="packed">Packed</option>
-                        )}
-                        {orderData?.order_status === "packed".toUpperCase() && (
-                          <option value="shipped">Shipped</option>
-                        )}
-                      </select> */}
                     </div>
+
+                    {/* Payment & Earnings Section */}
+                    <div className="mb-5.5 rounded-lg border border-stroke dark:border-strokedark p-5 bg-gray-50 dark:bg-meta-4/50">
+                      <h4 className="text-base font-semibold text-black dark:text-white mb-4">
+                        Payment & Earnings
+                      </h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="rounded-lg bg-white dark:bg-boxdark p-4 border border-stroke dark:border-strokedark">
+                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                            Held in Escrow
+                          </p>
+                          <p className="text-xl font-bold text-black dark:text-white">
+                            ${Number(orderData?.held_in_escrow || 0).toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="rounded-lg bg-white dark:bg-boxdark p-4 border border-stroke dark:border-strokedark">
+                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                            Your Earnings
+                          </p>
+                          <p className="text-xl font-bold text-black dark:text-white">
+                            ${Number(orderData?.vendor_earnings || 0).toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="rounded-lg bg-white dark:bg-boxdark p-4 border border-stroke dark:border-strokedark">
+                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                            Earnings Status
+                          </p>
+                          {orderData?.vendor_earnings_status ? (
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold mt-1 ${
+                                orderData.vendor_earnings_status === "PAID_OUT"
+                                  ? "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400"
+                                  : orderData.vendor_earnings_status === "CLEARED"
+                                  ? "bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400"
+                                  : "bg-yellow-100 text-yellow-700 dark:bg-yellow-500/20 dark:text-yellow-400"
+                              }`}
+                            >
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  orderData.vendor_earnings_status === "PAID_OUT"
+                                    ? "bg-green-500"
+                                    : orderData.vendor_earnings_status === "CLEARED"
+                                    ? "bg-blue-500"
+                                    : "bg-yellow-500"
+                                }`}
+                              />
+                              {orderData.vendor_earnings_status === "PAID_OUT"
+                                ? "Paid Out"
+                                : orderData.vendor_earnings_status === "CLEARED"
+                                ? "Cleared"
+                                : "Pending (14-day hold)"}
+                            </span>
+                          ) : (
+                            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                              Not available
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="mb-5.5">
                       <label className="mb-3 block text-sm font-medium">
                         {orderData?.order_status === "RECEIVED" && (

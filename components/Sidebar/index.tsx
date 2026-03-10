@@ -16,6 +16,7 @@ import {
   FaChevronRight,
   FaStore,
   FaGavel,
+  FaWallet,
 } from "react-icons/fa";
 import { HiOutlineSparkles } from "react-icons/hi";
 
@@ -109,6 +110,12 @@ const Sidebar = () => {
       name: "Store Settings",
       href: "/settings",
       icon: FaCog,
+      badge: null,
+    },
+    {
+      name: "Payouts",
+      href: "/Stripe",
+      icon: FaWallet,
       badge: null,
     },
   ];

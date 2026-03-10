@@ -93,6 +93,23 @@ export async function getOnboardingUrl(token: string) {
   }
 }
 
+export async function getDotsPayoutLink(token: string) {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/vendor/generate-dots-payout-link/`,
+      {
+        headers: {
+          Authorization: `Bearer ${token.replaceAll('"', "")}`,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Dots payout link:", error);
+    throw error;
+  }
+}
+
 export async function refreshToken(token: string, refresh: string) {
   try {
     const response = await axios.post(
