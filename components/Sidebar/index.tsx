@@ -16,6 +16,7 @@ import {
   FaChevronRight,
   FaStore,
   FaGavel,
+  FaRobot,
 } from "react-icons/fa";
 import { HiOutlineSparkles } from "react-icons/hi";
 
@@ -104,6 +105,12 @@ const Sidebar = () => {
       href: "/buyer-requests",
       icon: FaGavel,
       badge: null,
+    },
+    {
+      name: "AI Agent",
+      href: "/ai-agent",
+      icon: FaRobot,
+      badge: "New",
     },
     {
       name: "Store Settings",
