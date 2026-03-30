@@ -378,11 +378,23 @@ export default function AIAgentPage() {
     if (!trimmed) return;
     setIsScraping(true);
     const queries = trimmed.split(",").map((q) => q.trim()).filter(Boolean);
-    await triggerFetch(queries, scrapeMax);
-    setIsScraping(false);
-    setScrapeQuery("");
-    // Refresh product list
-    loadProducts({ page: 1, limit: 15 });
+
+    // The fetch endpoint is long-running (browser may take minutes to respond).
+    // Fire it and poll the product list every 5s so the user sees results arrive
+    // in real time regardless of WebSocket state.
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+    pollTimer = setInterval(() => {
+      loadProducts({ page: 1, limit: 15 });
+    }, 5000);
+
+    try {
+      await triggerFetch(queries, scrapeMax);
+    } finally {
+      if (pollTimer) clearInterval(pollTimer);
+      setIsScraping(false);
+      setScrapeQuery("");
+      loadProducts({ page: 1, limit: 15 });
+    }
   };
 
   const handleSaveConfig = async () => {
@@ -471,14 +483,15 @@ export default function AIAgentPage() {
               {connected ? "Agent Online" : "Agent Offline"}
             </span>
             <span
+              title={wsConnected ? "Real-time updates active" : "Live updates unavailable — polling every 4s instead"}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${
                 wsConnected
                   ? "bg-accent-blue/10 text-accent-blue border-accent-blue/30"
-                  : "bg-surface-200 text-surface-500 border-surface-300 dark:bg-dark-surface dark:border-dark-border"
+                  : "bg-accent-amber/10 text-accent-amber border-accent-amber/30"
               }`}
             >
-              <span className={`w-1.5 h-1.5 rounded-full ${wsConnected ? "bg-accent-blue animate-pulse" : "bg-surface-400"}`} />
-              {wsConnected ? "Live" : "WS Offline"}
+              <span className={`w-1.5 h-1.5 rounded-full ${wsConnected ? "bg-accent-blue animate-pulse" : "bg-accent-amber"}`} />
+              {wsConnected ? "Live" : "Polling"}
             </span>
           </div>
         </motion.div>

@@ -139,8 +139,8 @@ export function useAIAgent() {
         };
 
         ws.onerror = () => {
+          // WS failing does NOT mean the REST API is down — keep connected state
           setWsConnected(false);
-          setConnected(false);
         };
       } catch {
         setConnected(false);
@@ -238,47 +238,79 @@ export function useAIAgent() {
     loadProducts();
   }, [loadStatus, loadCategories, loadLogs, loadProducts]);
 
+  // Always poll status every 5s
   useEffect(() => {
     const timer = setInterval(loadStatus, 5000);
     return () => clearInterval(timer);
   }, [loadStatus]);
 
+  // When WS is offline, fall back to polling logs every 4s so the feed still updates
+  useEffect(() => {
+    if (wsConnected) return;
+    const timer = setInterval(loadLogs, 4000);
+    return () => clearInterval(timer);
+  }, [wsConnected, loadLogs]);
+
   // ─── Agent Actions ─────────────────────────────────────────────────────────
 
   const startAgent = useCallback(async () => {
-    try { await agentStart(); } catch { /* ignore */ }
-  }, []);
+    try {
+      await agentStart();
+      // Refresh immediately so the UI reflects the new running state without
+      // waiting for the next 5s polling tick (important when WS is offline)
+      await loadStatus();
+      await loadLogs();
+    } catch { /* ignore */ }
+  }, [loadStatus, loadLogs]);
 
   const pauseAgent = useCallback(async () => {
-    try { await agentPause(); } catch { /* ignore */ }
-  }, []);
+    try {
+      await agentPause();
+      await loadStatus();
+    } catch { /* ignore */ }
+  }, [loadStatus]);
 
   const resumeAgent = useCallback(async () => {
-    try { await agentResume(); } catch { /* ignore */ }
-  }, []);
+    try {
+      await agentResume();
+      await loadStatus();
+    } catch { /* ignore */ }
+  }, [loadStatus]);
 
   const stopAgent = useCallback(async () => {
-    try { await agentStop(); } catch { /* ignore */ }
-  }, []);
+    try {
+      await agentStop();
+      await loadStatus();
+      await loadLogs();
+    } catch { /* ignore */ }
+  }, [loadStatus, loadLogs]);
 
   const resetAgent = useCallback(async () => {
     try {
       await agentReset();
       setLogs([]);
+      await loadStatus();
     } catch { /* ignore */ }
-  }, []);
+  }, [loadStatus]);
 
   const triggerFetch = useCallback(async (queries: string[], maxItems: number) => {
     try {
-      return await agentFetch(queries, maxItems);
+      const result = await agentFetch(queries, maxItems);
+      // Refresh products + status after fetch completes
+      await loadStatus();
+      await loadProducts(currentFiltersRef.current);
+      return result;
     } catch (e: any) {
       return { success: false, error: e?.message };
     }
-  }, []);
+  }, [loadStatus, loadProducts]);
 
   const saveConfig = useCallback(async (config: Record<string, unknown>) => {
-    try { await updateAgentConfig(config); } catch { /* ignore */ }
-  }, []);
+    try {
+      await updateAgentConfig(config);
+      await loadStatus();
+    } catch { /* ignore */ }
+  }, [loadStatus]);
 
   return {
     status,
