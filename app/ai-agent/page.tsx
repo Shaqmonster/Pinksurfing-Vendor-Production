@@ -484,7 +484,7 @@ export default function AIAgentPage() {
         </motion.div>
 
         {/* ── Offline Banner ── */}
-        {!connected && (
+        {/* {!connected && (
           <motion.div variants={itemVariants}>
             <div className="premium-card p-5 border-l-4 border-danger flex items-start gap-4">
               <div className="w-10 h-10 rounded-xl bg-danger/10 flex items-center justify-center flex-shrink-0">
@@ -502,7 +502,7 @@ export default function AIAgentPage() {
               </div>
             </div>
           </motion.div>
-        )}
+        )} */}
 
         {/* ── Stats Cards ── */}
         <motion.div variants={itemVariants} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
