@@ -6,9 +6,9 @@ import { toast } from "react-toastify";
 import {
   buyShipmentLabel,
   getParcelDetails,
-  getShipmentDetails
+  getShipmentDetails,
+  disputeReturn,
 } from "@/api/orders";
-import { fail } from "assert";
 import { getCookie } from "@/utils/cookies";
 const Page = ({ params }: { params: { id: string } }) => {
   const [token, setToken] = useState<string | null>(
@@ -29,6 +29,7 @@ const Page = ({ params }: { params: { id: string } }) => {
   const [showDownloadShipmentLabel, setShowDownloadShipmentLabel] =
     useState(false);
     const [orderStatus , setOrderStatus] = useState<string | null>(null);
+  const [isDisputeFiling, setIsDisputeFiling] = useState(false);
   useEffect(() => {
     const fetchSingleOrder = async () => {
       try {
@@ -186,6 +187,25 @@ const Page = ({ params }: { params: { id: string } }) => {
       console.error("Error downloading shipment label:", error);
     }
   };
+  const handleDisputeReturn = async () => {
+    if (!params.id) return;
+    setIsDisputeFiling(true);
+    try {
+      const result = await disputeReturn(params.id, token);
+      if (!result.error) {
+        toast.success("Dispute filed. The 48-hour auto-refund clock is now frozen. Admin has been notified.");
+        setOrderStatus("RETURN-DISPUTED");
+        setOrderData((prev: any) => ({ ...prev, order_status: "RETURN-DISPUTED" }));
+      } else {
+        toast.error(result.message || "Failed to file dispute.");
+      }
+    } catch {
+      toast.error("Unexpected error filing dispute.");
+    } finally {
+      setIsDisputeFiling(false);
+    }
+  };
+
   useEffect(() => {
     if (orderData?.order_status === "PACKED") {
       getParcelId();
@@ -211,16 +231,29 @@ const Page = ({ params }: { params: { id: string } }) => {
                 ) : (
                   <form>
                     {/* Order Details */}
-                    <div className="mb-5.5">
-                      <label className="mb-3 block text-sm font-medium">
-                        Order Id
-                      </label>
-                      <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
-                        type="text"
-                        value={orderData?.id || ""}
-                        readOnly
-                      />
+                    <div className="mb-5.5 flex gap-4">
+                      <div className="flex-1">
+                        <label className="mb-3 block text-sm font-medium">
+                          Order Number
+                        </label>
+                        <input
+                          className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4 font-bold tracking-widest"
+                          type="text"
+                          value={orderData?.order_number ? `#${orderData.order_number}` : "—"}
+                          readOnly
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="mb-3 block text-sm font-medium">
+                          Order UUID (internal)
+                        </label>
+                        <input
+                          className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4 text-xs text-gray-400"
+                          type="text"
+                          value={orderData?.id || ""}
+                          readOnly
+                        />
+                      </div>
                     </div>
                     <div className="mb-5.5">
                       <label className="mb-3 block text-sm font-medium">
@@ -351,6 +384,61 @@ const Page = ({ params }: { params: { id: string } }) => {
                         )}
                       </label>
                     </div>
+
+                    {/* ── RETURN-DELIVERED: 48-hour dispute window ── */}
+                    {orderStatus === "RETURN-DELIVERED" && (
+                      <div className="mb-5.5 rounded-xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-900/20 p-5">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5 w-8 h-8 rounded-full bg-amber-400/20 flex items-center justify-center flex-shrink-0">
+                            <span className="text-amber-600 text-lg">⏱</span>
+                          </div>
+                          <div>
+                            <p className="font-bold text-amber-800 dark:text-amber-300 text-[15px]">
+                              Return Delivered — 48-Hour Inspection Window Active
+                            </p>
+                            <p className="text-sm text-amber-700 dark:text-amber-400 mt-1 leading-relaxed">
+                              The returned package has arrived. You have <strong>48 hours</strong> to inspect it before the system automatically issues a full refund to the buyer. If you believe this return is fraudulent or the item is damaged, click <strong>Dispute Return</strong> below to immediately freeze the refund clock and alert the Pinksurfing admin team.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={handleDisputeReturn}
+                              disabled={isDisputeFiling}
+                              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-5 py-2.5 text-sm transition-colors"
+                            >
+                              {isDisputeFiling ? (
+                                <>
+                                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="32" strokeLinecap="round" />
+                                  </svg>
+                                  Filing Dispute…
+                                </>
+                              ) : (
+                                "🚨 Dispute Return"
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── RETURN-DISPUTED: dispute acknowledged ── */}
+                    {orderStatus === "RETURN-DISPUTED" && (
+                      <div className="mb-5.5 rounded-xl border-2 border-red-400 bg-red-50 dark:bg-red-900/20 p-5">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5 w-8 h-8 rounded-full bg-red-400/20 flex items-center justify-center flex-shrink-0">
+                            <span className="text-red-600 text-lg">🚨</span>
+                          </div>
+                          <div>
+                            <p className="font-bold text-red-800 dark:text-red-300 text-[15px]">
+                              Dispute Filed — Auto-Refund Clock Frozen
+                            </p>
+                            <p className="text-sm text-red-700 dark:text-red-400 mt-1 leading-relaxed">
+                              Your dispute has been received. The automatic refund has been halted and a high-priority alert has been sent to the Pinksurfing admin team. An administrator will contact both parties to arbitrate this return manually. Please have your unboxing evidence ready.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     {orderData?.order_status === "RECEIVED" &&
                       !(
                         showShipmentButton ||

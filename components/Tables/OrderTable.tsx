@@ -7,6 +7,7 @@ import {
   getParcelDetails,
   buyShipmentLabel,
   getShippingDetails,
+  disputeReturn,
 } from "@/api/orders";
 import { Package } from "@/types/package";
 import Link from "next/link";
@@ -28,6 +29,7 @@ import {
 
 interface Order {
   id: string;
+  order_number: string | null;
   product: { name: string };
   quantity: number;
   total_price: number;
@@ -96,6 +98,18 @@ const getStatusConfig = (status: string) => {
       bgColor: "bg-warning-light dark:bg-warning/20",
       textColor: "text-warning-dark dark:text-warning",
       label: "Return Requested",
+    },
+    "RETURN-DELIVERED": {
+      icon: FiAlertCircle,
+      bgColor: "bg-accent-amber/10 dark:bg-accent-amber/20",
+      textColor: "text-accent-amber dark:text-accent-amber",
+      label: "Return Delivered",
+    },
+    "RETURN-DISPUTED": {
+      icon: FiAlertCircle,
+      bgColor: "bg-danger-light dark:bg-danger/20",
+      textColor: "text-danger-dark dark:text-danger",
+      label: "Disputed",
     },
     RETURNED: {
       icon: FiPackage,
@@ -196,6 +210,21 @@ const OrderTable = ({ recentOrders }: any) => {
           );
         }
       );
+    }
+  };
+
+  const handleDisputeReturn = async (order: Order) => {
+    const token = getCookie("access_token");
+    const result = await disputeReturn(order.id, token);
+    if (!result.error) {
+      toast.success("Dispute filed. Admin team has been notified. The auto-refund clock is now frozen.");
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id ? { ...o, order_status: "RETURN-DISPUTED" } : o
+        )
+      );
+    } else {
+      toast.error(result.message || "Failed to file dispute.");
     }
   };
 
@@ -323,7 +352,7 @@ const OrderTable = ({ recentOrders }: any) => {
                                 {order.product.name}
                               </p>
                               <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
-                                Order #{order.id.slice(0, 8)}...
+                                Order #{order.order_number || order.id.slice(0, 8)}
                               </p>
                             </Link>
                           </td>
@@ -356,26 +385,43 @@ const OrderTable = ({ recentOrders }: any) => {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              {order.order_status === "PACKED" && labelUrls[order.id] && (
-                                <a
-                                  href={labelUrls[order.id]}
-                                  target="_blank"
-                                  download
-                                  rel="noopener noreferrer"
-                                  className="p-2 rounded-lg bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors"
-                                  title="Download Label"
-                                >
-                                  <FiDownload className="w-4 h-4" />
-                                </a>
+                            <div className="flex flex-col items-end gap-2">
+                              {/* 48-hour dispute window warning for RETURN-DELIVERED */}
+                              {order.order_status === "RETURN-DELIVERED" && (
+                                <div className="text-xs text-accent-amber font-semibold bg-accent-amber/10 border border-accent-amber/30 rounded-lg px-2 py-1 text-right max-w-[180px]">
+                                  ⏱ 48-hr window to inspect before auto-refund
+                                </div>
                               )}
-                              <Link
-                                href={`/orders/${order.id}`}
-                                className="p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-dark-hover text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200 transition-colors"
-                                title="View Details"
-                              >
-                                <FiExternalLink className="w-4 h-4" />
-                              </Link>
+                              <div className="flex items-center gap-2">
+                                {order.order_status === "PACKED" && labelUrls[order.id] && (
+                                  <a
+                                    href={labelUrls[order.id]}
+                                    target="_blank"
+                                    download
+                                    rel="noopener noreferrer"
+                                    className="p-2 rounded-lg bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors"
+                                    title="Download Label"
+                                  >
+                                    <FiDownload className="w-4 h-4" />
+                                  </a>
+                                )}
+                                {order.order_status === "RETURN-DELIVERED" && (
+                                  <button
+                                    onClick={() => handleDisputeReturn(order)}
+                                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20 transition-colors"
+                                    title="Dispute this return — freezes the 48-hour auto-refund clock"
+                                  >
+                                    Dispute Return
+                                  </button>
+                                )}
+                                <Link
+                                  href={`/orders/${order.id}`}
+                                  className="p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-dark-hover text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200 transition-colors"
+                                  title="View Details"
+                                >
+                                  <FiExternalLink className="w-4 h-4" />
+                                </Link>
+                              </div>
                             </div>
                           </td>
                         </motion.tr>
