@@ -30,6 +30,7 @@ const Page = ({ params }: { params: { id: string } }) => {
     useState(false);
     const [orderStatus , setOrderStatus] = useState<string | null>(null);
   const [isDisputeFiling, setIsDisputeFiling] = useState(false);
+  const [isDownloadingLabel, setIsDownloadingLabel] = useState(false);
   useEffect(() => {
     const fetchSingleOrder = async () => {
       try {
@@ -156,35 +157,39 @@ const Page = ({ params }: { params: { id: string } }) => {
 
   const downloadShipmentLabel = async () => {
     const orderId = orderData?.id;
-    console.log("Downloading shipment label for order:", orderId);
     if (!orderId) {
       toast.error("Order ID is missing!");
       return;
     }
 
+    setIsDownloadingLabel(true);
     try {
       const response = await getShipmentDetails(orderId, token);
 
-      if (response.postage_label_url) {
-        // Use our API route to proxy the download (bypasses CORS)
+      if (response?.postage_label_url) {
+        // Proxy the download through our API route to bypass CORS
         const proxyUrl = `/api/download-label?url=${encodeURIComponent(response.postage_label_url)}&filename=shipment_label_${orderId}.png`;
-        
         const link = document.createElement("a");
         link.href = proxyUrl;
         link.download = `shipment_label_${orderId}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-
-        toast.success("Shipment label Will be downloaded shortly!");
-        console.log("Shipment label downloaded successfully", response);
+        toast.success("Shipment label downloaded successfully!");
       } else {
-        toast.error("Postage label URL not found in the response.");
-        console.error("Postage label URL not found in the response:", response);
+        // Label URL is not ready yet — give clear, actionable feedback
+        toast.info(
+          "Label generation is still in progress. Please wait a moment and try again. If this persists, contact admin@pinksurfing.com",
+          { autoClose: 8000 }
+        );
       }
     } catch (error) {
-      toast.error("Failed to download shipment label.");
-      console.error("Error downloading shipment label:", error);
+      toast.info(
+        "Could not retrieve the label right now — it may still be generating. Please try again in a few seconds. If the issue persists, contact admin@pinksurfing.com",
+        { autoClose: 8000 }
+      );
+    } finally {
+      setIsDownloadingLabel(false);
     }
   };
   const handleDisputeReturn = async () => {
@@ -546,10 +551,20 @@ const Page = ({ params }: { params: { id: string } }) => {
                       showDownloadShipmentLabel) && (
                       <button
                         type="button"
-                        className={`bg-primary text-white py-2 px-6 rounded-full`}
+                        disabled={isDownloadingLabel}
+                        className="bg-primary disabled:opacity-60 disabled:cursor-not-allowed text-white py-2 px-6 rounded-full flex items-center gap-2"
                         onClick={downloadShipmentLabel}
                       >
-                        Download Shipment Label
+                        {isDownloadingLabel ? (
+                          <>
+                            <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="32" strokeLinecap="round" />
+                            </svg>
+                            Checking label…
+                          </>
+                        ) : (
+                          "Download Shipment Label"
+                        )}
                       </button>
                     )}
                   </form>
