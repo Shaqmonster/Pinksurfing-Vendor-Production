@@ -87,7 +87,7 @@ const STEPS = [
 
 // Categories that don't require media upload (add category names here)
 const CATEGORIES_WITHOUT_MEDIA = [
-  "Business For Sale",
+  "Stay With Us",
   // Add more category names here as needed
 ];
 
@@ -95,6 +95,9 @@ const CATEGORIES_WITHOUT_MEDIA = [
 const CATEGORIES_WITHOUT_DIMENSIONS = [
   "Business For Sale",
   "Commercial Real Estate",
+  "Residential Real Estate",
+  "Stay With Us",
+  "Building Materials",
   // Add more category names here as needed
 ];
 
@@ -103,6 +106,9 @@ const CATEGORIES_WITHOUT_STOCK = [
   "Business For Sale",
   "Cars & Trucks",
   "Commercial Real Estate",
+  "Residential Real Estate",
+  "Stay With Us",
+  "Building Materials",
   // Add more category names here as needed
 ];
 
@@ -111,6 +117,9 @@ const CATEGORIES_WITHOUT_BRAND = [
   "Business For Sale",
    "Cars & Trucks",
    "Commercial Real Estate",
+   "Residential Real Estate",
+   "Stay With Us",
+   "Building Materials",
   // Add more category names here as needed
 ];
 
@@ -161,6 +170,8 @@ const AddProducts = () => {
 
   // UI states
   const [hasDiscount, setHasDiscount] = useState(false);
+  // Plain-text character count for the short description field (tracks paste too)
+  const [shortDescPlainLen, setShortDescPlainLen] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showDimensions, setShowDimensions] = useState(false);
 
@@ -1359,11 +1370,13 @@ const AddProducts = () => {
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-1.5 rounded-full bg-surface-200 dark:bg-dark-border overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all ${productData.short_description.length > 200 ? 'bg-orange-500' : 'bg-primary-500'}`}
-                          style={{ width: `${Math.min((productData.short_description.length / 255) * 100, 100)}%` }}
+                          className={`h-full rounded-full transition-all ${shortDescPlainLen > 200 ? 'bg-orange-500' : 'bg-primary-500'}`}
+                          style={{ width: `${Math.min((shortDescPlainLen / 255) * 100, 100)}%` }}
                         />
                       </div>
-                      <span className="text-xs text-surface-400">{productData.short_description.length}/255</span>
+                      <span className={`text-xs ${shortDescPlainLen >= 255 ? 'text-orange-500 font-semibold' : 'text-surface-400'}`}>
+                        {shortDescPlainLen}/255
+                      </span>
                     </div>
                   </div>
                   <div className="rounded-xl overflow-hidden border-2 border-surface-200 dark:border-dark-border hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors">
@@ -1371,10 +1384,21 @@ const AddProducts = () => {
                       theme="snow"
                       value={productData.short_description}
                       formats={formats}
-                      onChange={(e: string) => {
-                        if (e.length <= 255) {
-                          setProductData(prev => ({ ...prev, short_description: e }));
+                      onChange={(content: string, _delta: any, _source: any, editor: any) => {
+                        // Use Quill's editor.getText() for accurate plain-text character count
+                        // (avoids counting HTML tags like <p>, <br> etc.)
+                        const raw = editor.getText() as string;
+                        // Quill appends a trailing newline – strip it for counting
+                        const plain = raw.endsWith('\n') ? raw.slice(0, -1) : raw;
+                        const len = plain.length;
+
+                        setShortDescPlainLen(Math.min(len, 255));
+
+                        if (len <= 255) {
+                          setProductData(prev => ({ ...prev, short_description: content }));
                         }
+                        // If over limit we don't update the controlled value.
+                        // ReactQuill will revert the editor to the last accepted value.
                       }}
                       className="bg-white dark:bg-dark-input [&_.ql-container]:!min-h-[120px] [&_.ql-editor]:!min-h-[120px]"
                     />

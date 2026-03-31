@@ -10,164 +10,158 @@ import {
   disputeReturn,
 } from "@/api/orders";
 import { getCookie } from "@/utils/cookies";
+import {
+  FiPackage,
+  FiTruck,
+  FiDownload,
+  FiUser,
+  FiMapPin,
+  FiCalendar,
+  FiDollarSign,
+  FiHash,
+  FiAlertTriangle,
+  FiCheckCircle,
+  FiClock,
+  FiAlertCircle,
+} from "react-icons/fi";
+
+// ─── Status badge helper ─────────────────────────────────────────────────────
+const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
+  PENDING:           { label: "Pending",         bg: "bg-warning-light dark:bg-warning/20",         text: "text-warning-dark dark:text-warning" },
+  RECEIVED:          { label: "Received",         bg: "bg-accent-blue/10 dark:bg-accent-blue/20",    text: "text-accent-blue" },
+  PACKED:            { label: "Packed",           bg: "bg-accent-purple/10 dark:bg-accent-purple/20",text: "text-accent-purple" },
+  SHIPPED:           { label: "Shipped",          bg: "bg-accent-cyan/10 dark:bg-accent-cyan/20",    text: "text-accent-cyan" },
+  DELIVERED:         { label: "Delivered",        bg: "bg-success-light dark:bg-success/20",         text: "text-success-dark dark:text-success" },
+  CANCELED:          { label: "Canceled",         bg: "bg-danger-light dark:bg-danger/20",           text: "text-danger" },
+  "RETURN-REQUESTED":{ label: "Return Requested", bg: "bg-warning-light dark:bg-warning/20",         text: "text-warning-dark dark:text-warning" },
+  "RETURN-DELIVERED":{ label: "Return Delivered", bg: "bg-accent-amber/10 dark:bg-accent-amber/20",  text: "text-accent-amber" },
+  "RETURN-DISPUTED": { label: "Disputed",         bg: "bg-danger-light dark:bg-danger/20",           text: "text-danger" },
+  RETURNED:          { label: "Returned",         bg: "bg-surface-100 dark:bg-surface-700",          text: "text-surface-600 dark:text-surface-400" },
+  ERROR:             { label: "Error",            bg: "bg-danger-light dark:bg-danger/20",           text: "text-danger" },
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.PENDING;
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.text}`}>
+      {cfg.label}
+    </span>
+  );
+}
+
+// ─── Field display component ─────────────────────────────────────────────────
+function InfoRow({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null;
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">{label}</span>
+      <span className="text-sm text-surface-900 dark:text-white font-medium break-all">{value}</span>
+    </div>
+  );
+}
+
+// ─── Page ────────────────────────────────────────────────────────────────────
 const Page = ({ params }: { params: { id: string } }) => {
-  const [token, setToken] = useState<string | null>(
+  const [token] = useState<string | null>(
     typeof window !== "undefined" ? getCookie("access_token") : null
   );
   const [loading, setLoading] = useState(true);
   const [orderData, setOrderData] = useState<any>(null);
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
-  const [additionalFields, setAdditionalFields] = useState({
-    length: "",
-    width: "",
-    height: "",
-    weight: ""
-  });
-  const [showAdditionalFields, setShowAdditionalFields] = useState(false);
+  const [orderStatus, setOrderStatus] = useState<string | null>(null);
+
+  // Dimensions for packing
+  const [dimensions, setDimensions] = useState({ length: "", width: "", height: "", weight: "" });
+
+  // Action button states
   const [showShipmentButton, setShowShipmentButton] = useState(false);
+  const [showDownloadLabel, setShowDownloadLabel] = useState(false);
   const [parcelId, setParcelId] = useState<string | null>(null);
-  const [showDownloadShipmentLabel, setShowDownloadShipmentLabel] =
-    useState(false);
-    const [orderStatus , setOrderStatus] = useState<string | null>(null);
-  const [isDisputeFiling, setIsDisputeFiling] = useState(false);
+  const [isPacking, setIsPacking] = useState(false);
+  const [isShipping, setIsShipping] = useState(false);
   const [isDownloadingLabel, setIsDownloadingLabel] = useState(false);
+  const [isDisputeFiling, setIsDisputeFiling] = useState(false);
+
+  // ── Data fetching ───────────────────────────────────────────────────────────
   useEffect(() => {
-    const fetchSingleOrder = async () => {
+    (async () => {
       try {
         const { data, error } = await getSingleOrder(token, params.id);
         if (!error) {
-          setOrderData(data["Order Details"]);
-          setOrderStatus(data["Order Details"]?.order_status);
-          console.log(data["Order Details"]);
-          const isShipped =
-            data["Order Details"]?.order_status?.trim().toUpperCase() ===
-            "SHIPPED";
-          setShowAdditionalFields(isShipped);
-          setSelectedStatus(data["Order Details"]?.order_status);
-        } else {
-          console.error("Error fetching order:", error);
+          const details = data["Order Details"];
+          setOrderData(details);
+          setOrderStatus(details?.order_status ?? null);
         }
-      } catch (error) {
-        console.error("Unexpected error:", error);
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchSingleOrder();
+    })();
   }, [token, params.id]);
 
-  const handleStatusSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedValue = e.target.value;
-    if (selectedValue !== selectedStatus) {
-      setSelectedStatus(selectedValue);
-      setAdditionalFields({
-        length: "",
-        width: "",
-        height: "",
-        weight: ""
-      }); // Reset additional fields when the status changes
-    }
-  };
-
-  const handleStatusChange = async () => {
-    if (!selectedStatus) {
-      toast.error("Please select a status to proceed.");
-      return;
-    }
-
-    // Temporarily update status while processing
-    setSelectedStatus("PACKED");
-    setOrderStatus("PACKED");
-    try {
-      const response = await changeOrderStatus(
-        token,
-        params.id,
-        "PACKED",
-        additionalFields
-      );
-
-      // Assuming `response` contains a success message or updated data
-      toast.success("Order status updated successfully!");
-      console.log("Order status updated successfully", response);
-
-      // Update the local order data state
-      setOrderData((prevData: any) => ({
-        ...prevData,
-        order_status: selectedStatus
-      }));
-
-      // Perform additional actions after status change
-      if (selectedStatus === "shipped") {
-        setShowAdditionalFields(true);
-      }
-
-      await getParcelId();
+  useEffect(() => {
+    if (orderData?.order_status === "PACKED") {
+      getParcelId();
       setShowShipmentButton(true);
-    } catch (error: any) {
-      // Handle errors gracefully
-      setOrderStatus("RECEIVED");
-      toast.error(error.message || "Failed to update order status.");
-      console.error("Error updating order status:", error);
     }
-  };
+    if (orderData?.order_status === "SHIPPED") {
+      setShowDownloadLabel(true);
+    }
+  }, [orderData]);
 
   const getParcelId = async () => {
     try {
       const response = await getParcelDetails(params.id, token);
-      if (response.error) {
-        toast.error("Failed to get parcel details:");
-        console.error("Failed to get parcel details:", response.error);
-      } else {
-        setParcelId(response.data.parcel_id);
-        console.log("Parcel details fetched successfully", response.data);
-        toast.success(response.data.Success);
-      }
-    } catch (error) {
-      console.error("Error getting parcel details:", error);
-    }
+      if (!response.error) setParcelId(response.data.parcel_id);
+    } catch {}
   };
-  const handleBuyShipmentLabel = async () => {
-    console.log("Buying shipment label for parcel:", parcelId);
 
-    if (!parcelId) {
-      toast.error("Parcel ID is missing!");
+  // ── Actions ─────────────────────────────────────────────────────────────────
+  const handlePack = async () => {
+    const { length, width, height, weight } = dimensions;
+    if (!length || !width || !height || !weight) {
+      toast.error("Please fill in all dimensions before packing.");
       return;
     }
+    setIsPacking(true);
+    try {
+      await changeOrderStatus(token, params.id, "PACKED", { length, width, height, weight });
+      toast.success("Order marked as PACKED!");
+      setOrderStatus("PACKED");
+      setOrderData((p: any) => ({ ...p, order_status: "PACKED" }));
+      await getParcelId();
+      setShowShipmentButton(true);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to update order status.");
+    } finally {
+      setIsPacking(false);
+    }
+  };
 
+  const handleShip = async () => {
+    if (!parcelId) { toast.error("Parcel ID is missing!"); return; }
+    setIsShipping(true);
     try {
       const response = await buyShipmentLabel(parcelId, token);
-
       if (response.error) {
-        // Display error message from response
         toast.error(response.message || "Failed to buy shipment label.");
-        console.error("Failed to buy shipment label:", response);
       } else {
-        // Handle success response
-        console.log("Shipment label bought successfully", response.data);
-        toast.success("Order Marked as Shipped!");
-        setShowDownloadShipmentLabel(true);
+        toast.success("Order marked as Shipped!");
+        setShowDownloadLabel(true);
+        setShowShipmentButton(false);
+        setOrderStatus("SHIPPED");
+        setOrderData((p: any) => ({ ...p, order_status: "SHIPPED" }));
       }
-    } catch (error) {
-      // Catch any unexpected errors
-      console.error("Error buying shipment label:", error);
-      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsShipping(false);
     }
   };
 
-  const downloadShipmentLabel = async () => {
+  const handleDownloadLabel = async () => {
     const orderId = orderData?.id;
-    if (!orderId) {
-      toast.error("Order ID is missing!");
-      return;
-    }
-
+    if (!orderId) { toast.error("Order ID is missing!"); return; }
     setIsDownloadingLabel(true);
     try {
       const response = await getShipmentDetails(orderId, token);
-
       if (response?.postage_label_url) {
-        // Proxy the download through our API route to bypass CORS
         const proxyUrl = `/api/download-label?url=${encodeURIComponent(response.postage_label_url)}&filename=shipment_label_${orderId}.png`;
         const link = document.createElement("a");
         link.href = proxyUrl;
@@ -175,23 +169,23 @@ const Page = ({ params }: { params: { id: string } }) => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        toast.success("Shipment label downloaded successfully!");
+        toast.success("Shipment label downloaded!");
       } else {
-        // Label URL is not ready yet — give clear, actionable feedback
         toast.info(
-          "Label generation is still in progress. Please wait a moment and try again. If this persists, contact admin@pinksurfing.com",
+          "Label generation is still in progress. Please wait and try again. If this persists, contact admin@pinksurfing.com",
           { autoClose: 8000 }
         );
       }
-    } catch (error) {
+    } catch {
       toast.info(
-        "Could not retrieve the label right now — it may still be generating. Please try again in a few seconds. If the issue persists, contact admin@pinksurfing.com",
+        "Could not retrieve the label right now — it may still be generating. Please try again shortly.",
         { autoClose: 8000 }
       );
     } finally {
       setIsDownloadingLabel(false);
     }
   };
+
   const handleDisputeReturn = async () => {
     if (!params.id) return;
     setIsDisputeFiling(true);
@@ -200,7 +194,7 @@ const Page = ({ params }: { params: { id: string } }) => {
       if (!result.error) {
         toast.success("Dispute filed. The 48-hour auto-refund clock is now frozen. Admin has been notified.");
         setOrderStatus("RETURN-DISPUTED");
-        setOrderData((prev: any) => ({ ...prev, order_status: "RETURN-DISPUTED" }));
+        setOrderData((p: any) => ({ ...p, order_status: "RETURN-DISPUTED" }));
       } else {
         toast.error(result.message || "Failed to file dispute.");
       }
@@ -211,370 +205,239 @@ const Page = ({ params }: { params: { id: string } }) => {
     }
   };
 
-  useEffect(() => {
-    if (orderData?.order_status === "PACKED") {
-      getParcelId();
-      setShowShipmentButton(true);
-    }
-  }, [orderData]);
+  const dimField = (key: keyof typeof dimensions, label: string, unit: string) => (
+    <div>
+      <label className="block text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 mb-1.5">
+        {label} <span className="normal-case font-normal">({unit})</span>
+        <span className="text-danger ml-0.5">*</span>
+      </label>
+      <input
+        type="number"
+        min="0"
+        step="0.1"
+        value={dimensions[key]}
+        onChange={e => setDimensions(p => ({ ...p, [key]: e.target.value }))}
+        placeholder={`e.g. 10`}
+        className="input-premium text-sm"
+      />
+    </div>
+  );
+
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
-    <>
-      <div className="mx-auto max-w-270">
-        <Breadcrumb pageName="Order Information" />
+    <div className="space-y-6 max-w-4xl mx-auto">
+      <Breadcrumb pageName="Order Details" />
 
-        <div className="grid grid-cols-5 gap-8">
-          <div className="col-span-5">
-            <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
-              <div className="border-b border-stroke py-4 px-7 dark:border-strokedark">
-                <h3 className="font-medium text-black dark:text-white">
-                  Order Information
-                </h3>
-              </div>
-              <div className="p-7">
-                {loading ? (
-                  <p>Loading...</p>
-                ) : (
-                  <form>
-                    {/* Order Details */}
-                    <div className="mb-5.5 flex gap-4">
-                      <div className="flex-1">
-                        <label className="mb-3 block text-sm font-medium">
-                          Order Number
-                        </label>
-                        <input
-                          className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4 font-bold tracking-widest"
-                          type="text"
-                          value={orderData?.order_number ? `#${orderData.order_number}` : "—"}
-                          readOnly
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <label className="mb-3 block text-sm font-medium">
-                          Order UUID (internal)
-                        </label>
-                        <input
-                          className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4 text-xs text-gray-400"
-                          type="text"
-                          value={orderData?.id || ""}
-                          readOnly
-                        />
-                      </div>
-                    </div>
-                    <div className="mb-5.5">
-                      <label className="mb-3 block text-sm font-medium">
-                        Quantity
-                      </label>
-                      <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
-                        type="text"
-                        value={orderData?.quantity || ""}
-                        readOnly
-                      />
-                    </div>
+      {loading ? (
+        <div className="premium-card p-12 flex items-center justify-center">
+          <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : !orderData ? (
+        <div className="premium-card p-12 text-center text-surface-500 dark:text-surface-400">
+          Order not found.
+        </div>
+      ) : (
+        <>
+          {/* ── Header ── */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-bold text-surface-900 dark:text-white flex items-center gap-2">
+                <FiPackage className="w-6 h-6 text-primary-500" />
+                Order{" "}
+                {orderData.order_number
+                  ? <span className="text-primary-500">#{orderData.order_number}</span>
+                  : <span className="text-sm text-surface-400 font-normal">{orderData.id?.slice(0, 8)}…</span>}
+              </h1>
+              <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
+                {orderData.product || "Product details below"}
+              </p>
+            </div>
+            <StatusBadge status={orderStatus ?? ""} />
+          </div>
 
-                    <div className="mb-5.5">
-                      <label className="mb-3 block text-sm font-medium">
-                        Total Price
-                      </label>
-                      <input
-                        className="w-full rounded border bg-gray py-3 px-4.5  dark:bg-meta-4"
-                        type="text"
-                        value={orderData?.total_price || ""}
-                        readOnly
-                      />
-                    </div>
-                    <div className="mb-5.5">
-                      <label className="mb-3 block text-sm font-medium">
-                        Customer Name
-                      </label>
-                      <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
-                        type="text"
-                        value={orderData?.customer_name || ""}
-                        readOnly
-                      />
-                    </div>
-                    <div className="mb-5.5">
-                      <label className="mb-3 block text-sm font-medium">
-                        Customer Email
-                      </label>
-                      <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
-                        type="text"
-                        value={orderData?.customer || ""}
-                        readOnly
-                      />
-                    </div>
-                    <div className="mb-5.5">
-                      <label className="mb-3 block text-sm font-medium">
-                        Customer Mobile Number
-                      </label>
-                      <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
-                        type="text"
-                        value={orderData?.phone || ""}
-                        readOnly
-                      />
-                    </div>
-                    <div className="mb-5.5">
-                      <label className="mb-3 block text-sm font-medium">
-                        product
-                      </label>
-                      <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
-                        type="text"
-                        value={orderData?.product || ""}
-                        readOnly
-                      />
-                    </div>
-                    <div className="mb-5.5">
-                      <label className="mb-3 block text-sm font-medium">
-                        delivery_address
-                      </label>
-                      <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
-                        type="text"
-                        value={orderData?.delivery_address || ""}
-                        readOnly
-                      />
-                    </div>
-                    <div className="mb-5.5">
-                      <label className="mb-3 block text-sm font-medium">
-                        order_date
-                      </label>
-                      <input
-                        className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
-                        type="text"
-                        value={orderData?.order_date || ""}
-                        readOnly
-                      />
-                    </div>
-                    <div className="mb-5.5">
-                      <label className="mb-3 block text-sm font-medium">
-                        vendor
-                      </label>
-                      <input
-                        className="w-full rounded border bg-gray py-3 px-4.5  dark:bg-meta-4"
-                        type="text"
-                        value={orderData?.vendor || ""}
-                        readOnly
-                      />
-                    </div>
-
-                    <div className="mb-5.5">
-                      <label className="mb-3 block text-sm font-medium">
-                        Order Status : {orderStatus}
-                      </label>
-                      {/* <select
-                        className="w-full rounded border bg-gray py-3 px-4.5 text-black dark:bg-meta-4"
-                        value={selectedStatus || orderData?.order_status || ""}
-                        onChange={handleStatusSelect}
-                        disabled={orderData?.order_status === "shipped".toUpperCase()}
-                      >
-                        <option value="" disabled>
-                          Select a status
-                        </option>
-                        {orderData?.order_status === "received".toUpperCase() && (
-                          <option value="packed">Packed</option>
-                        )}
-                        {orderData?.order_status === "packed".toUpperCase() && (
-                          <option value="shipped">Shipped</option>
-                        )}
-                      </select> */}
-                    </div>
-                    <div className="mb-5.5">
-                      <label className="mb-3 block text-sm font-medium">
-                        {orderData?.order_status === "RECEIVED" && (
-                          <p>Payment Completed</p>
-                        )}
-                      </label>
-                    </div>
-
-                    {/* ── RETURN-DELIVERED: 48-hour dispute window ── */}
-                    {orderStatus === "RETURN-DELIVERED" && (
-                      <div className="mb-5.5 rounded-xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-900/20 p-5">
-                        <div className="flex items-start gap-3">
-                          <div className="mt-0.5 w-8 h-8 rounded-full bg-amber-400/20 flex items-center justify-center flex-shrink-0">
-                            <span className="text-amber-600 text-lg">⏱</span>
-                          </div>
-                          <div>
-                            <p className="font-bold text-amber-800 dark:text-amber-300 text-[15px]">
-                              Return Delivered — 48-Hour Inspection Window Active
-                            </p>
-                            <p className="text-sm text-amber-700 dark:text-amber-400 mt-1 leading-relaxed">
-                              The returned package has arrived. You have <strong>48 hours</strong> to inspect it before the system automatically issues a full refund to the buyer. If you believe this return is fraudulent or the item is damaged, click <strong>Dispute Return</strong> below to immediately freeze the refund clock and alert the Pinksurfing admin team.
-                            </p>
-                            <button
-                              type="button"
-                              onClick={handleDisputeReturn}
-                              disabled={isDisputeFiling}
-                              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-5 py-2.5 text-sm transition-colors"
-                            >
-                              {isDisputeFiling ? (
-                                <>
-                                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="32" strokeLinecap="round" />
-                                  </svg>
-                                  Filing Dispute…
-                                </>
-                              ) : (
-                                "🚨 Dispute Return"
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+          {/* ── RETURN-DELIVERED: 48-hour dispute panel ── */}
+          {orderStatus === "RETURN-DELIVERED" && (
+            <div className="premium-card p-5 border-l-4 border-accent-amber">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-accent-amber/20 flex items-center justify-center flex-shrink-0">
+                  <FiClock className="w-5 h-5 text-accent-amber" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-surface-900 dark:text-white">
+                    Return Delivered — 48-Hour Inspection Window Active
+                  </p>
+                  <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
+                    You have <strong className="text-surface-900 dark:text-white">48 hours</strong> to inspect the returned package before the system issues an automatic refund to the buyer. If the return is fraudulent or the item is damaged, click <strong>Dispute Return</strong> to freeze the refund clock and alert the Pinksurfing admin team.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleDisputeReturn}
+                    disabled={isDisputeFiling}
+                    className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-danger text-white font-semibold text-sm hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isDisputeFiling ? (
+                      <><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="32" strokeLinecap="round" /></svg> Filing…</>
+                    ) : (
+                      <><FiAlertTriangle className="w-4 h-4" /> Dispute Return</>
                     )}
-
-                    {/* ── RETURN-DISPUTED: dispute acknowledged ── */}
-                    {orderStatus === "RETURN-DISPUTED" && (
-                      <div className="mb-5.5 rounded-xl border-2 border-red-400 bg-red-50 dark:bg-red-900/20 p-5">
-                        <div className="flex items-start gap-3">
-                          <div className="mt-0.5 w-8 h-8 rounded-full bg-red-400/20 flex items-center justify-center flex-shrink-0">
-                            <span className="text-red-600 text-lg">🚨</span>
-                          </div>
-                          <div>
-                            <p className="font-bold text-red-800 dark:text-red-300 text-[15px]">
-                              Dispute Filed — Auto-Refund Clock Frozen
-                            </p>
-                            <p className="text-sm text-red-700 dark:text-red-400 mt-1 leading-relaxed">
-                              Your dispute has been received. The automatic refund has been halted and a high-priority alert has been sent to the Pinksurfing admin team. An administrator will contact both parties to arbitrate this return manually. Please have your unboxing evidence ready.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {orderData?.order_status === "RECEIVED" &&
-                      !(
-                        showShipmentButton ||
-                        orderData?.order_status == "PACKED"
-                      ) && (
-                        <>
-                          <div className="mb-5.5">
-                            <label className="mb-3 block text-sm font-medium">
-                              Length
-                            </label>
-                            <input
-                              className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
-                              type="text"
-                              value={additionalFields.length || ""}
-                              onChange={(e) =>
-                                setAdditionalFields((prev: any) => ({
-                                  ...prev,
-                                  length: e.target.value
-                                }))
-                              }
-                              placeholder="Enter length"
-                            />
-                          </div>
-                          <div className="mb-5.5">
-                            <label className="mb-3 block text-sm font-medium">
-                              Width
-                            </label>
-                            <input
-                              className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
-                              type="text"
-                              value={additionalFields.width || ""}
-                              onChange={(e) =>
-                                setAdditionalFields((prev: any) => ({
-                                  ...prev,
-                                  width: e.target.value
-                                }))
-                              }
-                              placeholder="Enter width"
-                            />
-                          </div>
-                          <div className="mb-5.5">
-                            <label className="mb-3 block text-sm font-medium">
-                              Height
-                            </label>
-                            <input
-                              className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
-                              type="text"
-                              value={additionalFields.height || ""}
-                              onChange={(e) =>
-                                setAdditionalFields((prev: any) => ({
-                                  ...prev,
-                                  height: e.target.value
-                                }))
-                              }
-                              placeholder="Enter height"
-                            />
-                          </div>
-                          <div className="mb-5.5">
-                            <label className="mb-3 block text-sm font-medium">
-                              Weight
-                            </label>
-                            <input
-                              className="w-full rounded border bg-gray py-3 px-4.5 dark:bg-meta-4"
-                              type="text"
-                              value={additionalFields.weight || ""}
-                              onChange={(e) =>
-                                setAdditionalFields((prev: any) => ({
-                                  ...prev,
-                                  weight: e.target.value
-                                }))
-                              }
-                              placeholder="Enter weight"
-                            />
-                          </div>
-                          <button
-                            type="button"
-                            className={`bg-primary text-white py-2 px-6 rounded-full ${
-                              (!selectedStatus ||
-                                !additionalFields.length ||
-                                !additionalFields.width ||
-                                !additionalFields.height ||
-                                !additionalFields.weight) &&
-                              "opacity-50 cursor-not-allowed"
-                            }`}
-                            onClick={handleStatusChange}
-                          >
-                            Product Packed
-                          </button>
-                        </>
-                      )}
-                    {(showShipmentButton ||
-                      orderData?.order_status == "PACKED") &&
-                      !(orderData?.order_status == "SHIPPED" ||
-                        showDownloadShipmentLabel) && (
-                        <button
-                          type="button"
-                          className={`bg-primary text-white py-2 px-6 rounded-full block mb-4`}
-                          onClick={handleBuyShipmentLabel}
-                        >
-                          Mark as Shipped
-                        </button>
-                      )}
-                    
-                    {(orderData?.order_status == "SHIPPED" ||
-                      showDownloadShipmentLabel) && (
-                      <button
-                        type="button"
-                        disabled={isDownloadingLabel}
-                        className="bg-primary disabled:opacity-60 disabled:cursor-not-allowed text-white py-2 px-6 rounded-full flex items-center gap-2"
-                        onClick={downloadShipmentLabel}
-                      >
-                        {isDownloadingLabel ? (
-                          <>
-                            <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="32" strokeLinecap="round" />
-                            </svg>
-                            Checking label…
-                          </>
-                        ) : (
-                          "Download Shipment Label"
-                        )}
-                      </button>
-                    )}
-                  </form>
-                )}
+                  </button>
+                </div>
               </div>
             </div>
+          )}
+
+          {/* ── RETURN-DISPUTED ── */}
+          {orderStatus === "RETURN-DISPUTED" && (
+            <div className="premium-card p-5 border-l-4 border-danger">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-danger/10 flex items-center justify-center flex-shrink-0">
+                  <FiAlertCircle className="w-5 h-5 text-danger" />
+                </div>
+                <div>
+                  <p className="font-bold text-surface-900 dark:text-white">Dispute Filed — Auto-Refund Clock Frozen</p>
+                  <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
+                    Your dispute has been received and the automatic refund has been halted. A high-priority alert has been sent to the Pinksurfing admin team. Please prepare your unboxing evidence for manual arbitration.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── ACTIONS CARD (always at top) ── */}
+          <div className="premium-card p-6 space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-light-border dark:border-dark-border">
+              <div className="w-9 h-9 rounded-xl bg-gradient-pink flex items-center justify-center">
+                <FiTruck className="w-5 h-5 text-white" />
+              </div>
+              <h2 className="text-lg font-bold text-surface-900 dark:text-white">Fulfillment Actions</h2>
+            </div>
+
+            {/* STEP 1: Dimensions + Pack (only when RECEIVED) */}
+            {orderStatus === "RECEIVED" && !showShipmentButton && (
+              <div className="space-y-4">
+                <p className="text-sm font-semibold text-surface-700 dark:text-surface-300">
+                  Step 1 — Enter package dimensions, then mark as Packed
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {dimField("length", "Length", "in")}
+                  {dimField("width",  "Width",  "in")}
+                  {dimField("height", "Height", "in")}
+                  {dimField("weight", "Weight", "oz")}
+                </div>
+                <button
+                  type="button"
+                  onClick={handlePack}
+                  disabled={isPacking || !dimensions.length || !dimensions.width || !dimensions.height || !dimensions.weight}
+                  className="btn-gradient flex items-center gap-2 px-6 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isPacking ? (
+                    <><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="32" strokeLinecap="round" /></svg> Packing…</>
+                  ) : (
+                    <><FiPackage className="w-4 h-4" /> Mark as Packed</>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* STEP 2: Buy shipment label / Mark as Shipped */}
+            {(showShipmentButton || orderStatus === "PACKED") && !showDownloadLabel && orderStatus !== "SHIPPED" && (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-surface-700 dark:text-surface-300">
+                  Step 2 — Purchase shipment label &amp; mark as Shipped
+                </p>
+                <button
+                  type="button"
+                  onClick={handleShip}
+                  disabled={isShipping}
+                  className="btn-gradient flex items-center gap-2 px-6 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isShipping ? (
+                    <><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="32" strokeLinecap="round" /></svg> Processing…</>
+                  ) : (
+                    <><FiTruck className="w-4 h-4" /> Mark as Shipped</>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* STEP 3: Download label */}
+            {(showDownloadLabel || orderStatus === "SHIPPED") && (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-surface-700 dark:text-surface-300">
+                  Step 3 — Download shipment label
+                </p>
+                <button
+                  type="button"
+                  onClick={handleDownloadLabel}
+                  disabled={isDownloadingLabel}
+                  className="btn-gradient flex items-center gap-2 px-6 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isDownloadingLabel ? (
+                    <><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="32" strokeLinecap="round" /></svg> Checking label…</>
+                  ) : (
+                    <><FiDownload className="w-4 h-4" /> Download Shipment Label</>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* Idle state — nothing to do */}
+            {!["RECEIVED", "PACKED"].includes(orderStatus ?? "") && !showShipmentButton && !showDownloadLabel && orderStatus !== "SHIPPED" && (
+              <p className="text-sm text-surface-500 dark:text-surface-400 flex items-center gap-2">
+                <FiCheckCircle className="w-4 h-4 text-success" />
+                No fulfillment actions required for this order status.
+              </p>
+            )}
           </div>
-        </div>
-      </div>
-    </>
+
+          {/* ── ORDER DETAILS CARD ── */}
+          <div className="premium-card p-6 space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-light-border dark:border-dark-border">
+              <div className="w-9 h-9 rounded-xl bg-gradient-purple flex items-center justify-center">
+                <FiHash className="w-5 h-5 text-white" />
+              </div>
+              <h2 className="text-lg font-bold text-surface-900 dark:text-white">Order Information</h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Order IDs */}
+              <div className="space-y-1">
+                <span className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">Order Number</span>
+                <p className="text-lg font-bold text-primary-500">
+                  {orderData.order_number ? `#${orderData.order_number}` : "—"}
+                </p>
+              </div>
+              <div className="space-y-1 sm:col-span-2 lg:col-span-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">Internal UUID</span>
+                <p className="text-xs text-surface-400 dark:text-surface-500 font-mono break-all">{orderData.id}</p>
+              </div>
+
+              <InfoRow label="Product"          value={orderData.product} />
+              <InfoRow label="Quantity"          value={orderData.quantity} />
+              <InfoRow label="Total Price"       value={orderData.total_price ? `$${orderData.total_price}` : undefined} />
+              <InfoRow label="Customer Name"     value={orderData.customer_name} />
+              <InfoRow label="Customer Email"    value={orderData.customer} />
+              <InfoRow label="Mobile Number"     value={orderData.phone} />
+              <InfoRow label="Vendor"            value={orderData.vendor} />
+              <InfoRow label="Delivery Address"  value={orderData.delivery_address} />
+              <InfoRow label="Order Date"        value={orderData.order_date} />
+              <InfoRow label="Shipping Speed"    value={orderData.shipping_speed} />
+              <InfoRow label="Tracking Code"     value={orderData.tracking_code} />
+            </div>
+
+            {/* Payment status note */}
+            {orderStatus === "RECEIVED" && (
+              <div className="mt-4 flex items-center gap-2 px-4 py-3 rounded-xl bg-success-light dark:bg-success/10 border border-success/30">
+                <FiCheckCircle className="w-4 h-4 text-success flex-shrink-0" />
+                <span className="text-sm font-medium text-success-dark dark:text-success">
+                  Payment completed — ready to pack
+                </span>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
   );
 };
 

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { getVendorProfile, updateVendorProfile } from "@/api/products";
@@ -16,9 +16,100 @@ import {
   FiX,
   FiHome,
   FiMap,
+  FiChevronDown,
+  FiSearch,
 } from "react-icons/fi";
 import { FaStore } from "react-icons/fa";
 import Link from "next/link";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface CountryOption { name: string; code: string; }
+interface StateOption  { name: string; code: string; }
+
+// ─── Searchable dropdown ──────────────────────────────────────────────────────
+function SearchableSelect({
+  label,
+  value,
+  options,
+  loading,
+  placeholder,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: { label: string; value: string }[];
+  loading?: boolean;
+  placeholder?: string;
+  disabled?: boolean;
+  onChange: (value: string, label: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  const filtered = options.filter(o =>
+    o.label.toLowerCase().includes(search.toLowerCase())
+  );
+  const selected = options.find(o => o.value === value);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => { setOpen(o => !o); setSearch(""); }}
+        className="input-premium w-full flex items-center justify-between text-left disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <span className={selected ? "text-surface-900 dark:text-white" : "text-surface-400 dark:text-surface-500"}>
+          {loading ? "Loading…" : (selected?.label ?? placeholder ?? `Select ${label}`)}
+        </span>
+        <FiChevronDown className={`w-4 h-4 text-surface-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-dark-card rounded-xl border border-light-border dark:border-dark-border shadow-premium-lg max-h-60 flex flex-col overflow-hidden">
+          <div className="p-2 border-b border-light-border dark:border-dark-border flex-shrink-0">
+            <div className="relative">
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-surface-400" />
+              <input
+                autoFocus
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder={`Search ${label}…`}
+                className="w-full pl-8 pr-3 py-1.5 text-sm rounded-lg bg-surface-50 dark:bg-dark-input border border-surface-200 dark:border-dark-border focus:outline-none focus:border-primary-500 text-surface-900 dark:text-white"
+              />
+            </div>
+          </div>
+          <ul className="overflow-y-auto flex-1">
+            {filtered.length === 0 ? (
+              <li className="px-4 py-3 text-sm text-surface-400 text-center">No results</li>
+            ) : filtered.map(opt => (
+              <li key={opt.value}>
+                <button
+                  type="button"
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-surface-50 dark:hover:bg-dark-hover transition-colors ${opt.value === value ? "text-primary-500 font-medium bg-primary-50 dark:bg-primary-500/10" : "text-surface-900 dark:text-white"}`}
+                  onClick={() => { onChange(opt.value, opt.label); setOpen(false); }}
+                >
+                  {opt.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const Settings = () => {
   const tokenFromLocalStorage =
@@ -40,6 +131,15 @@ const Settings = () => {
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // ── Address API data ──────────────────────────────────────────────────────
+  const [allCountries, setAllCountries] = useState<CountryOption[]>([]);
+  const [allStates, setAllStates] = useState<StateOption[]>([]);
+  const [allCities, setAllCities] = useState<string[]>([]);
+  const [selectedCountryName, setSelectedCountryName] = useState(""); // full name for state API calls
+  const [selectedStateName, setSelectedStateName] = useState("");     // full name for city API calls
+  const [loadingStates, setLoadingStates] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -71,6 +171,77 @@ const Settings = () => {
   useEffect(() => {
     fetchProfile();
   }, [token]);
+
+  // Load all countries once
+  useEffect(() => {
+    fetch("https://restcountries.com/v3.1/all?fields=name,cca2")
+      .then(r => r.json())
+      .then((data: any[]) => {
+        const sorted: CountryOption[] = data
+          .map(c => ({ name: c.name.common as string, code: c.cca2 as string }))
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setAllCountries(sorted);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Load states when country changes
+  useEffect(() => {
+    if (!selectedCountryName) { setAllStates([]); setAllCities([]); return; }
+    setLoadingStates(true);
+    setAllStates([]);
+    setAllCities([]);
+    fetch("https://countriesnow.space/api/v0.1/countries/states", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ country: selectedCountryName }),
+    })
+      .then(r => r.json())
+      .then((data: any) => {
+        if (!data.error && data.data?.states) {
+          const states: StateOption[] = data.data.states.map((s: any) => ({
+            name: s.name as string,
+            code: (s.state_code || s.name) as string,
+          }));
+          setAllStates(states);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingStates(false));
+  }, [selectedCountryName]);
+
+  // Load cities when state changes
+  useEffect(() => {
+    if (!selectedCountryName || !selectedStateName) { setAllCities([]); return; }
+    setLoadingCities(true);
+    fetch("https://countriesnow.space/api/v0.1/countries/state/cities", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ country: selectedCountryName, state: selectedStateName }),
+    })
+      .then(r => r.json())
+      .then((data: any) => {
+        if (!data.error && Array.isArray(data.data)) {
+          setAllCities(data.data as string[]);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingCities(false));
+  }, [selectedCountryName, selectedStateName]);
+
+  // When profile loads, sync the country/state display names
+  useEffect(() => {
+    if (!country || allCountries.length === 0) return;
+    // Stored value may be a code (e.g. "US") or a name (e.g. "United States")
+    const match = allCountries.find(c => c.code === country || c.name === country);
+    if (match) setSelectedCountryName(match.name);
+  }, [country, allCountries]);
+
+  useEffect(() => {
+    if (!state || allStates.length === 0) return;
+    const match = allStates.find(s => s.code === state || s.name === state);
+    if (match) setSelectedStateName(match.name);
+  }, [state, allStates]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -306,16 +477,22 @@ const Settings = () => {
               <div>
                 <label className={labelClasses}>
                   <span className="flex items-center gap-2">
-                    <FiMap className="w-4 h-4" />
-                    City
+                    <FiGlobe className="w-4 h-4" />
+                    Country
                   </span>
                 </label>
-                <input
-                  className={inputClasses}
-                  type="text"
-                  placeholder="City"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                <SearchableSelect
+                  label="Country"
+                  value={country}
+                  options={allCountries.map(c => ({ label: c.name, value: c.code }))}
+                  placeholder="Select country"
+                  onChange={(code, name) => {
+                    setCountry(code);           // send ISO code to backend
+                    setSelectedCountryName(name);
+                    setState("");               // reset dependent fields
+                    setSelectedStateName("");
+                    setCity("");
+                  }}
                 />
               </div>
               <div>
@@ -325,28 +502,58 @@ const Settings = () => {
                     State / Province
                   </span>
                 </label>
-                <input
-                  className={inputClasses}
-                  type="text"
-                  placeholder="State"
-                  value={state}
-                  onChange={(e) => setState(e.target.value)}
-                />
+                {allStates.length > 0 ? (
+                  <SearchableSelect
+                    label="State"
+                    value={state}
+                    options={allStates.map(s => ({ label: s.name, value: s.code }))}
+                    loading={loadingStates}
+                    placeholder="Select state"
+                    disabled={!country}
+                    onChange={(code, name) => {
+                      setState(code);           // send state code to backend
+                      setSelectedStateName(name);
+                      setCity("");
+                    }}
+                  />
+                ) : (
+                  <input
+                    className={inputClasses}
+                    type="text"
+                    placeholder={loadingStates ? "Loading states…" : "State / Province"}
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    disabled={loadingStates}
+                  />
+                )}
               </div>
               <div>
                 <label className={labelClasses}>
                   <span className="flex items-center gap-2">
-                    <FiGlobe className="w-4 h-4" />
-                    Country
+                    <FiMap className="w-4 h-4" />
+                    City
                   </span>
                 </label>
-                <input
-                  className={inputClasses}
-                  type="text"
-                  placeholder="Country"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                />
+                {allCities.length > 0 ? (
+                  <SearchableSelect
+                    label="City"
+                    value={city}
+                    options={allCities.map(c => ({ label: c, value: c }))}
+                    loading={loadingCities}
+                    placeholder="Select city"
+                    disabled={!state}
+                    onChange={(val) => setCity(val)}
+                  />
+                ) : (
+                  <input
+                    className={inputClasses}
+                    type="text"
+                    placeholder={loadingCities ? "Loading cities…" : "City"}
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    disabled={loadingCities}
+                  />
+                )}
               </div>
               <div>
                 <label className={labelClasses}>

@@ -143,24 +143,49 @@ const ProductsTable = (props: { Products?: Product[] }) => {
     product.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getProductUrl = (product: any) =>
-    `https://pinksurfing.com/product/productDetail/${product.slug}?productId=${product.id}`;
+  const storefrontBase =
+    process.env.NEXT_PUBLIC_ENV === "production"
+      ? "https://pinksurfing.com"
+      : "https://dev.pinksurfing.com";
 
-  const copyToClipboard = (text: string, e?: React.MouseEvent) => {
+  const getProductUrl = (product: any) =>
+    `${storefrontBase}/product/productDetail/${product.slug}?productId=${product.id}`;
+
+  // Make clipboard async/await so the toast fires in the same tick as the
+  // clipboard write completes — prevents stale toasts appearing on other pages.
+  const copyToClipboard = async (text: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    navigator.clipboard
-      .writeText(text)
-      .then(() => toast.success("Product link copied!"))
-      .catch(() => toast.error("Failed to copy link"));
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Product link copied!");
+    } catch {
+      // Fallback for browsers / contexts where clipboard API is unavailable
+      try {
+        const el = document.createElement("textarea");
+        el.value = text;
+        el.style.position = "fixed";
+        el.style.opacity = "0";
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand("copy");
+        document.body.removeChild(el);
+        toast.success("Product link copied!");
+      } catch {
+        toast.error("Failed to copy link");
+      }
+    }
   };
 
-  const handleProductClick = (product: any) => {
+  const handleProductClick = async (product: any) => {
     const url = getProductUrl(product);
     window.open(url, "_blank", "noopener,noreferrer");
-    navigator.clipboard
-      .writeText(url)
-      .then(() => toast.success("Product link opened & copied!"))
-      .catch(() => {});
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Clipboard write may fail when focus moved to new tab — that's fine
+    }
+    // Show toast immediately after open, regardless of clipboard result
+    toast.success("Product link opened & copied!");
   };
 
   return (
