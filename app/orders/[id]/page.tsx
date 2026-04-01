@@ -303,7 +303,7 @@ const Page = ({ params }: { params: { id: string } }) => {
             </div>
           )}
 
-          {/* ── ACTIONS CARD (always at top) ── */}
+
           <div className="premium-card p-6 space-y-6">
             <div className="flex items-center gap-3 pb-4 border-b border-light-border dark:border-dark-border">
               <div className="w-9 h-9 rounded-xl bg-gradient-pink flex items-center justify-center">
@@ -312,7 +312,6 @@ const Page = ({ params }: { params: { id: string } }) => {
               <h2 className="text-lg font-bold text-surface-900 dark:text-white">Fulfillment Actions</h2>
             </div>
 
-            {/* STEP 1: Dimensions + Pack (only when RECEIVED) */}
             {orderStatus === "RECEIVED" && !showShipmentButton && (
               <div className="space-y-4">
                 <p className="text-sm font-semibold text-surface-700 dark:text-surface-300">
