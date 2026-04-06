@@ -199,10 +199,10 @@ const ProductsTable = (props: { Products?: Product[] }) => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold text-surface-900 dark:text-white">
-                  All Products
+                  All Listings
                 </h2>
                 <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
-                  {products?.length || 0} products in your inventory
+                  {products?.length || 0} listings in your inventory
                 </p>
               </div>
               
@@ -212,7 +212,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                   <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
                   <input
                     type="text"
-                    placeholder="Search products..."
+                    placeholder="Search listings..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 pr-4 py-2 rounded-xl border border-surface-200 dark:border-dark-border bg-surface-50 dark:bg-dark-input text-surface-900 dark:text-white placeholder:text-surface-400 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all w-full sm:w-48"
@@ -224,7 +224,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-pink text-white font-medium shadow-premium-sm hover:shadow-premium-md transition-all"
                 >
                   <FiPlus className="w-4 h-4" />
-                  <span className="hidden sm:inline">Add Product</span>
+                  <span className="hidden sm:inline">Add Listing</span>
                 </Link>
               </div>
             </div>
@@ -237,7 +237,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                 <thead>
                   <tr className="bg-surface-50 dark:bg-dark-surface">
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
-                      Product
+                      Listing
                     </th>
                     <th className="hidden md:table-cell px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
                       Category
@@ -246,7 +246,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                       Description
                     </th>
                     <th className="hidden xl:table-cell px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
-                      Product Link
+                        Listing Link
                     </th>
                     <th className="hidden sm:table-cell px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
                       Stock

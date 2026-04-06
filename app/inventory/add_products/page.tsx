@@ -1124,7 +1124,7 @@ const AddProducts = () => {
         {(variantAttributes.length > 0 || nonVariantAttributes.length > 0) && (
           <div className="premium-card p-6 lg:col-span-2">
             <h4 className="font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2">
-              <TagIcon /> Product Attributes
+              <TagIcon /> Specifications
             </h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[...variantAttributes, ...nonVariantAttributes]
@@ -1186,13 +1186,13 @@ const AddProducts = () => {
                 <div className="relative">
                   <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-primary-500 to-pink-500 rounded-full" />
                   <label className="block text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 mb-3">
-                    Product Title <span className="text-danger">*</span>
+                    Listing Title <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
                     value={productData.name}
                     onChange={(e) => updateProductData("name", e.target.value)}
-                    placeholder="Enter a product title..."
+                    placeholder="Enter a Listing title..."
                     className="w-full px-0 py-3 text-xl md:text-2xl font-semibold bg-transparent border-0 border-b-2 border-surface-200 dark:border-dark-border text-surface-900 dark:text-white placeholder:text-surface-300 dark:placeholder:text-surface-600 focus:border-primary-500 focus:ring-0 transition-colors"
                     required
                   />
@@ -1355,8 +1355,8 @@ const AddProducts = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-surface-900 dark:text-white">Product Description</h3>
-                  <p className="text-xs text-surface-500">Help customers understand your product</p>
+                  <h3 className="font-semibold text-surface-900 dark:text-white">Description</h3>
+                  <p className="text-xs text-surface-500">Help customers understand the listing</p>
                 </div>
               </div>
 
@@ -1489,7 +1489,7 @@ const AddProducts = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-surface-900 dark:text-white">Product Attributes</h3>
-                    <p className="text-xs text-surface-500">Specific details for this product type</p>
+                    <p className="text-xs text-surface-500">Specific details for this listing</p>
                   </div>
                 </div>
                 {renderAttributesStep()}
@@ -1504,7 +1504,7 @@ const AddProducts = () => {
                     <ImageIcon />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-surface-900 dark:text-white">Product Images <span className="text-danger">*</span></h3>
+                    <h3 className="font-semibold text-surface-900 dark:text-white">Images <span className="text-danger">*</span></h3>
                   </div>
                 </div>
                 {renderMediaStep()}

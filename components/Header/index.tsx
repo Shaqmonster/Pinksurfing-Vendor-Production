@@ -105,8 +105,8 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
   // Get page title based on current route
   const getPageTitle = () => {
     if (pathname.includes("dashboard")) return "Dashboard";
-    if (pathname.includes("products")) return "Products";
-    if (pathname.includes("add_products")) return "Add Product";
+    if (pathname.includes("products")) return "Listings";
+    if (pathname.includes("add_products")) return "Add Listing";
     if (pathname.includes("orders")) return "Orders";
     if (pathname.includes("profile")) return "Profile";
     if (pathname.includes("settings")) return "Store Settings";

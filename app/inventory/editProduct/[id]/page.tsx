@@ -1,15 +1,31 @@
 "use client";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  getSchemaCategories,
+  getSchemaSubcategories,
+  getFormSchema,
+  saveProducts,
+  getSingleProduct,
+  updateProducts,
+} from "@/api/products";
+import { Product } from "@/types/product";
 import { useParams, useRouter } from "next/navigation";
-import { toast } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
+// @ts-ignore
 import "react-toastify/dist/ReactToastify.css";
 import { Loader2 } from "@/components/common/Loader";
 import dynamic from "next/dynamic";
+// @ts-ignore
 import "react-quill/dist/quill.snow.css";
+import { handleError } from "@/utils/toast";
 import { getCookie } from "@/utils/cookies";
-import { getSingleProduct, updateProducts } from "@/api/products";
 
-// ============ ICONS (same as add_products) ============
+// ============ ICONS (identical to add_products) ============
+const CheckIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+  </svg>
+);
 const PackageIcon = () => (
   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -25,9 +41,19 @@ const TagIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
   </svg>
 );
-const UploadIcon = () => (
-  <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+const SparklesIcon = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+  </svg>
+);
+const ChevronLeftIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+  </svg>
+);
+const ChevronRightIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
   </svg>
 );
 const TrashIcon = () => (
@@ -35,18 +61,24 @@ const TrashIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
   </svg>
 );
-const SaveIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+const UploadIcon = () => (
+  <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
   </svg>
 );
-const BackIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+const GridIcon = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
   </svg>
 );
 
-// Categories that don't require certain fields (same logic as add_products)
+// ============ STEP CONFIGURATION ============
+const STEPS = [
+  { id: 1, name: "Category", description: "Select product type", icon: GridIcon },
+  { id: 2, name: "Details", description: "Product information", icon: PackageIcon },
+  { id: 3, name: "Review", description: "Final check", icon: SparklesIcon },
+];
+
 const CATEGORIES_WITHOUT_MEDIA = ["Stay With Us"];
 const CATEGORIES_WITHOUT_DIMENSIONS = ["Business For Sale","Commercial Real Estate","Residential Real Estate","Stay With Us","Building Materials"];
 const CATEGORIES_WITHOUT_STOCK = ["Business For Sale","Cars & Trucks","Commercial Real Estate","Residential Real Estate","Stay With Us","Building Materials"];
@@ -55,165 +87,331 @@ const CATEGORIES_WITHOUT_BRAND = ["Business For Sale","Cars & Trucks","Commercia
 // ============ MAIN COMPONENT ============
 const EditProduct = () => {
   const params = useParams();
-  const router = useRouter();
   const productId = params?.id as string;
+  const router = useRouter();
 
-  // UI state
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [showDimensions, setShowDimensions] = useState(false);
-  const [shortDescPlainLen, setShortDescPlainLen] = useState(0);
+  // Step management
+  const [currentStep, setCurrentStep] = useState(1);
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
-  // Product data
+  // Category states
+  const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategoryName, setSelectedCategoryName] = useState("");
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
+  const [selectedSubcategoryName, setSelectedSubcategoryName] = useState("");
+  const [subcategoriesLoading, setSubcategoriesLoading] = useState(false);
+
+  // Attribute states
+  const [allowedAttributes, setAllowedAttributes] = useState<any[]>([]);
+  const [variantAttributes, setVariantAttributes] = useState<any[]>([]);
+  const [nonVariantAttributes, setNonVariantAttributes] = useState<any[]>([]);
+
+  // Product data (includes id for update)
   const [productData, setProductData] = useState({
-    id: "",
-    name: "",
-    unit_price: "",
-    mrp: "",
-    category: "",
-    subcategory: "",
-    brand_name: "",
-    tags: "",
-    meta_title: "",
-    length: "",
-    width: "",
-    height: "",
-    weight: "",
-    quantity: "",
-    short_description: "",
-    description: "",
+    name: "", unit_price: "", mrp: "", category: "", subcategory: "",
+    brand_name: "", tags: "", meta_title: "", length: "", width: "",
+    height: "", weight: "", quantity: "", short_description: "", description: "",
+    image: "", id: productId || "",
   });
 
-  // Category info for display
-  const [categoryName, setCategoryName] = useState("");
-  const [subcategoryName, setSubcategoryName] = useState("");
-
-  // Discount toggle
-  const [hasDiscount, setHasDiscount] = useState(false);
-
-  // Attributes
-  const [attributes, setAttributes] = useState<any[]>([]);
-
-  // Existing images (URL strings from the server)
-  const [existingImages, setExistingImages] = useState<string[]>([]);
-  // New images uploaded by user
-  const [newFiles, setNewFiles] = useState<File[]>([]);
+  // Image states
+  const [files, setFiles] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]); // URLs from server
   const [dragActive, setDragActive] = useState(false);
+
+  // UI states
+  const [hasDiscount, setHasDiscount] = useState(false);
+  const [shortDescPlainLen, setShortDescPlainLen] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [showDimensions, setShowDimensions] = useState(false);
 
   const ReactQuill = useMemo(
     () => dynamic(() => import("react-quill"), { ssr: false }),
     []
   );
-
-  const formats = [
-    "header", "bold", "italic", "underline", "strike", "blockquote",
-    "list", "bullet", "indent", "link", "color", "clean",
-  ];
+  const formats = ["header","bold","italic","underline","strike","blockquote","list","bullet","indent","link","color","clean"];
 
   // Derived
-  const shouldHideMedia = CATEGORIES_WITHOUT_MEDIA.some(
-    (c) => c.toLowerCase() === categoryName.toLowerCase()
-  );
-  const shouldHideDimensions = CATEGORIES_WITHOUT_DIMENSIONS.some(
-    (c) => c.toLowerCase() === categoryName.toLowerCase()
-  );
-  const shouldHideStock = CATEGORIES_WITHOUT_STOCK.some(
-    (c) => c.toLowerCase() === categoryName.toLowerCase()
-  );
-  const shouldHideBrand = CATEGORIES_WITHOUT_BRAND.some(
-    (c) => c.toLowerCase() === categoryName.toLowerCase()
-  );
+  const variantAllowedAttributes = useMemo(() => allowedAttributes.filter((a: any) => a.is_variant === true), [allowedAttributes]);
+  const nonVariantAllowedAttributes = useMemo(() => allowedAttributes.filter((a: any) => a.is_variant === false), [allowedAttributes]);
+  const shouldHideMedia = useMemo(() => CATEGORIES_WITHOUT_MEDIA.some((c) => c.toLowerCase() === selectedCategoryName.toLowerCase()), [selectedCategoryName]);
+  const shouldHideDimensions = useMemo(() => CATEGORIES_WITHOUT_DIMENSIONS.some((c) => c.toLowerCase() === selectedCategoryName.toLowerCase()), [selectedCategoryName]);
+  const shouldHideStock = useMemo(() => CATEGORIES_WITHOUT_STOCK.some((c) => c.toLowerCase() === selectedCategoryName.toLowerCase()), [selectedCategoryName]);
+  const shouldHideBrand = useMemo(() => CATEGORIES_WITHOUT_BRAND.some((c) => c.toLowerCase() === selectedCategoryName.toLowerCase()), [selectedCategoryName]);
 
-  // ---- Fetch existing product ----
+  // Total image count (existing + new uploads)
+  const totalImages = existingImages.length + files.length;
+
+  // ============================================================
+  // LOAD EXISTING PRODUCT AND PRE-POPULATE
+  // ============================================================
   useEffect(() => {
-    if (!productId) return;
-    const token = getCookie("access_token");
-    if (!token) {
-      router.push("/auth/signin");
+    if (!productId) {
+      setInitialLoading(false);
       return;
     }
+    const token = getCookie("access_token");
+    if (!token) { router.push("/auth/signin"); return; }
 
-    getSingleProduct(token, productId).then((res: any) => {
-      if (res.error || !res.data) {
-        toast.error("Failed to load product.");
-        setLoading(false);
-        return;
-      }
-      const p = res.data;
+    (async () => {
+      try {
+        const res: any = await getSingleProduct(token, productId);
+        if (res.error || !res.data) {
+          toast.error("Failed to load product data.");
+          setInitialLoading(false);
+          return;
+        }
+        const p = res.data;
 
-      setProductData({
-        id: p.id || productId,
-        name: p.name || "",
-        mrp: p.mrp ? String(p.mrp) : "",
-        unit_price: p.unit_price ? String(p.unit_price) : "",
-        category: p.category?.id || "",
-        subcategory: p.subcategory?.id || "",
-        brand_name: p.brand_name || "",
-        tags: p.tags || "",
-        meta_title: p.meta_title || "",
-        length: p.length ? String(p.length) : "",
-        width: p.width ? String(p.width) : "",
-        height: p.height ? String(p.height) : "",
-        weight: p.weight ? String(p.weight) : "",
-        quantity: p.quantity !== undefined && p.quantity !== null ? String(p.quantity) : "",
-        short_description: p.short_description || "",
-        description: p.description || "",
-      });
-
-      setCategoryName(p.category?.name || "");
-      setSubcategoryName(p.subcategory?.name || "");
-
-      // Detect discount
-      if (
-        p.unit_price &&
-        p.mrp &&
-        parseFloat(p.unit_price) < parseFloat(p.mrp)
-      ) {
-        setHasDiscount(true);
-      }
-
-      // Existing attributes
-      if (Array.isArray(p.attributes)) {
-        setAttributes(
-          p.attributes.map((a: any) => ({
-            name: a.name,
-            value: a.value || "",
-            additional_price: a.additional_price || 0,
-            data_type: "text",
-          }))
-        );
-      }
-
-      // Existing images (image1..image4)
-      const imgs = [p.image1, p.image2, p.image3, p.image4]
-        .filter(Boolean)
-        .map((img: string) => {
-          // If the image is a relative path, prefix with the API base URL
-          if (img && !img.startsWith("http")) {
-            return `${process.env.NEXT_PUBLIC_BASE_URL?.replace("/api", "") || ""}${img}`;
-          }
-          return img;
+        // Pre-fill basic product fields
+        setProductData({
+          name: p.name || "",
+          mrp: p.mrp ? String(p.mrp) : "",
+          unit_price: p.unit_price ? String(p.unit_price) : "",
+          category: p.category?.id || "",
+          subcategory: p.subcategory?.id || "",
+          brand_name: p.brand_name || "",
+          tags: p.tags || "",
+          meta_title: p.meta_title || "",
+          length: p.length ? String(p.length) : "",
+          width: p.width ? String(p.width) : "",
+          height: p.height ? String(p.height) : "",
+          weight: p.weight ? String(p.weight) : "",
+          quantity: p.quantity !== undefined && p.quantity !== null ? String(p.quantity) : "",
+          short_description: p.short_description || "",
+          description: p.description || "",
+          image: "",
+          id: p.id || productId,
         });
-      setExistingImages(imgs);
 
-      // Show dimensions if any are set
-      if (p.length || p.width || p.height || p.weight) {
-        setShowDimensions(true);
+        // Detect discount
+        if (p.unit_price && p.mrp && parseFloat(p.unit_price) < parseFloat(p.mrp)) {
+          setHasDiscount(true);
+        }
+
+        // Show dimensions if any are set
+        if (p.length || p.width || p.height || p.weight) setShowDimensions(true);
+
+        // Existing images: image1..image4
+        const BASE_URL_ROOT = process.env.NEXT_PUBLIC_BASE_URL?.replace("/api", "") ?? "";
+        const imgs = [p.image1, p.image2, p.image3, p.image4]
+          .filter(Boolean)
+          .map((img: string) => (img.startsWith("http") ? img : `${BASE_URL_ROOT}${img}`));
+        setExistingImages(imgs);
+
+        // Load categories (needed for Step 1 display)
+        const catResult = await getSchemaCategories();
+        if (!catResult.error && catResult.data) setCategories(catResult.data);
+
+        // Pre-select category
+        const cat = p.category;
+        if (cat?.id) {
+          setSelectedCategory(cat.id);
+          setSelectedCategoryName(cat.name || "");
+          setProductData((prev) => ({ ...prev, category: cat.id }));
+
+          // Load subcategories for this category
+          setSubcategoriesLoading(true);
+          const subcatResult = await getSchemaSubcategories(cat.id);
+          if (!subcatResult.error && subcatResult.data) setSubcategories(subcatResult.data);
+          setSubcategoriesLoading(false);
+
+          // Pre-select subcategory
+          const subcat = p.subcategory;
+          if (subcat?.id) {
+            setSelectedSubcategory(subcat.id);
+            setSelectedSubcategoryName(subcat.name || "");
+            setProductData((prev) => ({ ...prev, subcategory: subcat.id }));
+
+            // Load schema and prefill attributes with existing values
+            await loadSchemaAndPrefillAttributes(cat.id, subcat.id, p.attributes || []);
+          }
+        }
+
+        // Jump straight to Step 2 with Step 1 marked complete
+        setCompletedSteps([1]);
+        setCurrentStep(2);
+      } catch (err) {
+        console.error("Error loading product:", err);
+        toast.error("Unexpected error loading product.");
+      } finally {
+        setInitialLoading(false);
       }
+    })();
+  }, [productId]);
 
-      setLoading(false);
-    });
-  }, [productId, router]);
+  /** Load form schema for a category+subcategory and prefill attribute values
+   *  from the existing product attributes array. */
+  const loadSchemaAndPrefillAttributes = async (
+    categoryId: string,
+    subcategoryId: string,
+    existingAttrs: { name: string; value: string; additional_price?: number }[]
+  ) => {
+    try {
+      const schemaResult = await getFormSchema(categoryId, subcategoryId);
+      if (!schemaResult.error && schemaResult.data) {
+        const fields = schemaResult.data.fields || [];
 
-  const updateProductData = (key: string, value: string) => {
-    setProductData((prev) => ({ ...prev, [key]: value }));
+        // Build lookup: attribute name (lowercase) → value
+        const existingMap = new Map<string, string>();
+        existingAttrs.forEach((a) => {
+          if (a.name) existingMap.set(a.name.toLowerCase(), a.value ?? "");
+        });
+
+        const mapFieldType = (type: string) => {
+          switch (type) {
+            case "checkbox": return "bool";
+            case "select": return "select";
+            case "multi_select": return "multi_select";
+            case "number": return "number";
+            case "textarea": return "textarea";
+            default: return "text";
+          }
+        };
+
+        const getPrefilledValue = (fieldType: string, existingVal: string | undefined) => {
+          if (existingVal !== undefined && existingVal !== "") {
+            if (fieldType === "bool") return existingVal === "true" || existingVal === "True" || existingVal === "1";
+            if (fieldType === "multi_select") {
+              return existingVal.split(",").map((v) => v.trim()).filter(Boolean);
+            }
+            return existingVal;
+          }
+          // Default empty values
+          if (fieldType === "bool") return false;
+          if (fieldType === "multi_select") return [];
+          return "";
+        };
+
+        const schemaAttributes = fields.map((field: any) => {
+          const labelKey = (field.label || field.key || "").toLowerCase();
+          const existingVal = existingMap.get(labelKey);
+          const mappedType = mapFieldType(field.type);
+
+          return {
+            name: field.label || field.key,
+            key: field.key,
+            value: getPrefilledValue(mappedType, existingVal),
+            data_type: mappedType,
+            options: field.options || [],
+            required: field.required || false,
+            placeholder: field.placeholder || "",
+            suffix: field.suffix || "",
+            min: field.min,
+            max: field.max,
+            step: field.step,
+            additional_price: 0,
+          };
+        });
+
+        setNonVariantAttributes(schemaAttributes);
+        setAllowedAttributes(schemaAttributes);
+        setVariantAttributes([]);
+      }
+    } catch (err) {
+      console.error("Schema load error:", err);
+    }
   };
 
-  // ---- Image handling ----
+  // Load categories on mount (also needed for add flow — but edit already handles this above)
+  useEffect(() => {
+    if (productId) return; // edit handles separately
+    getSchemaCategories().then((result) => {
+      if (!result.error && result.data) setCategories(result.data);
+    });
+  }, [productId]);
+
+  // Load subcategories when category changes (for add flow or when user changes category in edit)
+  useEffect(() => {
+    if (!selectedCategory || productId) return; // edit pre-loads subcategories in the init effect
+    setSubcategoriesLoading(true);
+    setSelectedSubcategory("");
+    setSelectedSubcategoryName("");
+    setAllowedAttributes([]);
+    setVariantAttributes([]);
+    setNonVariantAttributes([]);
+
+    getSchemaSubcategories(selectedCategory)
+      .then((result) => {
+        if (!result.error && result.data) setSubcategories(result.data);
+        setSubcategoriesLoading(false);
+      })
+      .catch(() => setSubcategoriesLoading(false));
+  }, [selectedCategory, productId]);
+
+  // ============================================================
+  // CATEGORY & SUBCATEGORY HANDLERS
+  // ============================================================
+  const handleCategorySelect = (cat: { id: string; name: string }) => {
+    setSelectedCategory(cat.id);
+    setSelectedCategoryName(cat.name);
+    setProductData((prev) => ({ ...prev, category: cat.id }));
+  };
+
+  const handleSubcategorySelect = async (subcat: { id: string; name: string }) => {
+    setSelectedSubcategory(subcat.id);
+    setSelectedSubcategoryName(subcat.name);
+    setProductData((prev) => ({ ...prev, subcategory: subcat.id }));
+
+    try {
+      const schemaResult = await getFormSchema(selectedCategory, subcat.id);
+      if (!schemaResult.error && schemaResult.data) {
+        const fields = schemaResult.data.fields || [];
+        const getInitialValue = (fieldType: string) => {
+          switch (fieldType) {
+            case "checkbox": return false;
+            case "multi_select": return [];
+            default: return "";
+          }
+        };
+        const mapFieldType = (type: string) => {
+          switch (type) {
+            case "checkbox": return "bool";
+            case "select": return "select";
+            case "multi_select": return "multi_select";
+            case "number": return "number";
+            case "textarea": return "textarea";
+            default: return "text";
+          }
+        };
+        const schemaAttributes = fields.map((field: any) => ({
+          name: field.label || field.key,
+          key: field.key,
+          value: getInitialValue(field.type),
+          data_type: mapFieldType(field.type),
+          options: field.options || [],
+          required: field.required || false,
+          placeholder: field.placeholder || "",
+          suffix: field.suffix || "",
+          min: field.min,
+          max: field.max,
+          step: field.step,
+          additional_price: 0,
+        }));
+        setNonVariantAttributes(schemaAttributes);
+        setAllowedAttributes(schemaAttributes);
+        setVariantAttributes([]);
+      }
+    } catch (err) {
+      console.error("Schema load error:", err);
+    }
+  };
+
+  const updateProductData = (key: string, value: string | number) => {
+    setProductData((prev) => ({ ...prev, [key]: value.toString() }));
+  };
+
+  // ============================================================
+  // IMAGE HANDLERS
+  // ============================================================
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setDragActive(e.type === "dragenter" || e.type === "dragover");
+    if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
+    else if (e.type === "dragleave") setDragActive(false);
   }, []);
 
   const handleDrop = useCallback(
@@ -221,258 +419,579 @@ const EditProduct = () => {
       e.preventDefault();
       e.stopPropagation();
       setDragActive(false);
-      const dropped = Array.from(e.dataTransfer.files).filter((f) =>
-        f.type.startsWith("image/")
-      );
-      const totalSlots = existingImages.length + newFiles.length;
-      if (totalSlots + dropped.length > 4) {
-        toast.error("Maximum 4 images allowed");
-        return;
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        const dropped = Array.from(e.dataTransfer.files);
+        if (dropped.length + totalImages > 4) { toast.error("Maximum 4 images allowed"); return; }
+        const imageFiles = dropped.filter((f) => f.type.startsWith("image/"));
+        setFiles((prev) => [...prev, ...imageFiles]);
       }
-      setNewFiles((prev) => [...prev, ...dropped]);
     },
-    [existingImages.length, newFiles.length]
+    [totalImages]
   );
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    const selected = Array.from(e.target.files).filter((f) =>
-      f.type.startsWith("image/")
-    );
-    const totalSlots = existingImages.length + newFiles.length;
-    if (totalSlots + selected.length > 4) {
-      toast.error("Maximum 4 images allowed");
-      return;
+    if (e.target.files) {
+      const selected = Array.from(e.target.files);
+      if (selected.length + totalImages > 4) { toast.error("Maximum 4 images allowed"); return; }
+      setFiles((prev) => [...prev, ...selected]);
     }
-    setNewFiles((prev) => [...prev, ...selected]);
   };
 
-  const removeExistingImage = (idx: number) => {
-    setExistingImages((prev) => prev.filter((_, i) => i !== idx));
+  const removeFile = (index: number) => setFiles((prev) => prev.filter((_, i) => i !== index));
+  const removeExistingImage = (index: number) => setExistingImages((prev) => prev.filter((_, i) => i !== index));
+
+  // ============================================================
+  // STEP NAVIGATION
+  // ============================================================
+  const canProceed = () => {
+    switch (currentStep) {
+      case 1: return selectedCategory && selectedSubcategory;
+      case 2:
+        // Images required unless category hides them OR existing images are present
+        const hasImages = shouldHideMedia || files.length > 0 || existingImages.length > 0;
+        return productData.name && productData.mrp && hasImages;
+      case 3: return true;
+      default: return false;
+    }
   };
 
-  const removeNewFile = (idx: number) => {
-    setNewFiles((prev) => prev.filter((_, i) => i !== idx));
+  const nextStep = () => {
+    if (canProceed() && currentStep < 3) {
+      setCompletedSteps((prev) => [...prev, currentStep]);
+      setCurrentStep((prev) => prev + 1);
+    } else if (!canProceed()) {
+      if (currentStep === 2 && !shouldHideMedia && files.length === 0 && existingImages.length === 0) {
+        toast.error("Please upload at least one image");
+      } else {
+        toast.error("Please complete all required fields");
+      }
+    }
   };
 
-  // ---- Attribute update ----
-  const updateAttribute = (index: number, value: string) => {
-    setAttributes((prev) => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], value };
-      return updated;
-    });
+  const prevStep = () => { if (currentStep > 1) setCurrentStep((prev) => prev - 1); };
+
+  const goToStep = (step: number) => {
+    if (step <= currentStep || completedSteps.includes(step - 1)) setCurrentStep(step);
   };
 
-  // ---- Save / submit ----
+  // ============================================================
+  // SAVE HANDLER — calls updateProducts (edit) or saveProducts (add)
+  // ============================================================
   const handleSave = async () => {
-    if (!productData.name.trim()) {
-      toast.error("Product title is required.");
-      return;
-    }
-    if (!productData.mrp) {
-      toast.error("Regular price is required.");
-      return;
-    }
+    if (typeof window === "undefined") return;
 
     const token = getCookie("access_token");
     const vendor_id = localStorage.getItem("vendor_id");
-    if (!token || !vendor_id) {
-      toast.error("Session expired. Please log in again.");
-      router.push("/auth/signin");
-      return;
+
+    const { mrp, unit_price } = productData;
+    const finalUnitPrice = hasDiscount ? unit_price : mrp;
+    const cleanedProductData: any = { ...productData, unit_price: finalUnitPrice };
+
+    if (cleanedProductData.quantity === "" || cleanedProductData.quantity === null || cleanedProductData.quantity === undefined) {
+      delete cleanedProductData.quantity;
     }
 
-    const finalUnitPrice = hasDiscount ? productData.unit_price : productData.mrp;
-
-    const payload: any = {
-      ...productData,
-      unit_price: finalUnitPrice,
+    const hasValue = (a: any) => {
+      if (Array.isArray(a.value)) return a.value.length > 0;
+      if (typeof a.value === "boolean") return true;
+      return a.value !== "";
     };
+    const formatValue = (value: any) => {
+      if (Array.isArray(value)) return value.join(", ");
+      return String(value);
+    };
+    const allAttributes = [
+      ...nonVariantAttributes.filter(hasValue).map((a) => ({ name: a.name, value: formatValue(a.value), additional_price: a.additional_price || 0 })),
+      ...variantAttributes.filter(hasValue).map((v) => ({ name: v.name, value: formatValue(v.value), additional_price: v.additional_price || 0 })),
+    ];
 
-    // Remove blank optional fields
-    if (!payload.quantity && payload.quantity !== 0) delete payload.quantity;
-
-    // Attributes
-    payload.attributes = attributes.filter((a) => a.value !== "").map((a) => ({
-      name: a.name,
-      value: String(a.value),
-      additional_price: a.additional_price || 0,
-    }));
-
-    setSaving(true);
+    setLoading(true);
     try {
-      const res: any = await updateProducts(token, vendor_id, payload, newFiles);
-      if (res && !res.error) {
-        toast.success("Product updated successfully!");
-        router.push("/inventory/products");
+      // ---- EDIT ----
+      const payload = { ...cleanedProductData, id: productId, attributes: allAttributes };
+      const res: any = await updateProducts(token, vendor_id, payload, files);
+      if (!res || res.error) {
+        handleError(res?.data?.data?.Status || res?.message || "Error updating product");
       } else {
-        toast.error(res?.data?.data?.Status || res?.message || "Failed to update product.");
+        toast.success(res.data?.Status || "Product updated successfully!");
+        router.push("/inventory/products");
       }
-    } catch (err: any) {
-      toast.error(err?.message || "Unexpected error occurred.");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Unexpected error occurred");
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
-  // ============ RENDER ============
-  if (loading) return <Loader2 />;
+  // ============================================================
+  // ATTRIBUTE INPUT RENDERER (identical to add_products)
+  // ============================================================
+  const renderAttributeInput = (attr: any, isVariant: boolean, index: number) => {
+    const updateAttr = (value: any) => {
+      if (isVariant) {
+        setVariantAttributes((prev) => { const u = [...prev]; u[index] = { ...u[index], value }; return u; });
+      } else {
+        setNonVariantAttributes((prev) => { const u = [...prev]; u[index] = { ...u[index], value }; return u; });
+      }
+    };
 
-  const inputClasses =
-    "w-full px-4 py-3 rounded-xl bg-surface-50 dark:bg-dark-input border border-surface-200 dark:border-dark-border text-surface-900 dark:text-surface-50 placeholder:text-surface-400 dark:placeholder:text-surface-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300";
+    const inputClasses = "w-full px-4 py-3 rounded-xl bg-surface-50 dark:bg-dark-input border border-surface-200 dark:border-dark-border text-surface-900 dark:text-surface-50 placeholder:text-surface-400 dark:placeholder:text-surface-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300";
 
-  return (
-    <div className="min-h-screen pb-28">
-      {/* ---- Page Header ---- */}
-      <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-100 dark:bg-dark-surface text-surface-700 dark:text-surface-200 hover:bg-surface-200 dark:hover:bg-dark-hover transition-colors font-medium text-sm"
-          >
-            <BackIcon />
-            Back
-          </button>
+    const toggleMultiSelectOption = (option: string) => {
+      const cur = Array.isArray(attr.value) ? attr.value : [];
+      updateAttr(cur.includes(option) ? cur.filter((v: string) => v !== option) : [...cur, option]);
+    };
+
+    switch (attr.data_type) {
+      case "number":
+        return (
+          <div className="relative">
+            {attr.suffix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm">{attr.suffix}</span>}
+            <input type="number" value={attr.value} onChange={(e) => updateAttr(e.target.value)} placeholder={attr.placeholder || `Enter ${attr.name.toLowerCase()}`} className={`${inputClasses} ${attr.suffix ? "pl-7" : ""}`} min={attr.min !== undefined && attr.min >= 0 ? attr.min : 0} max={attr.max} step={attr.step} />
+          </div>
+        );
+      case "textarea":
+        return <textarea value={attr.value} onChange={(e) => updateAttr(e.target.value)} placeholder={attr.placeholder || `Enter ${attr.name.toLowerCase()}`} className={`${inputClasses} min-h-[100px] resize-y`} rows={3} />;
+      case "boolean": case "bool": case "checkbox":
+        return (
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => updateAttr(!attr.value)} className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${attr.value ? "bg-gradient-to-r from-primary-500 to-pink-500" : "bg-surface-300 dark:bg-dark-border"}`}>
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300 ${attr.value ? "translate-x-6" : "translate-x-1"}`} />
+            </button>
+            <span className="text-sm font-medium text-surface-700 dark:text-surface-300">{attr.name}</span>
+          </div>
+        );
+      case "select":
+        return (
+          <select value={attr.value} onChange={(e) => updateAttr(e.target.value)} className={inputClasses}>
+            <option value="">Select {attr.name}</option>
+            {attr.options?.map((opt: string, i: number) => <option key={i} value={opt}>{opt}</option>)}
+          </select>
+        );
+      case "multi_select": {
+        const selectedValues = Array.isArray(attr.value) ? attr.value : [];
+        return (
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {attr.options?.map((opt: string, i: number) => {
+                const isSelected = selectedValues.includes(opt);
+                return (
+                  <button key={i} type="button" onClick={() => toggleMultiSelectOption(opt)} className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 border-2 ${isSelected ? "bg-gradient-to-r from-primary-500 to-pink-500 text-white border-transparent shadow-md" : "bg-surface-50 dark:bg-dark-input text-surface-700 dark:text-surface-300 border-surface-200 dark:border-dark-border hover:border-primary-400"}`}>{opt}</button>
+                );
+              })}
+            </div>
+            {selectedValues.length > 0 && <div className="text-xs text-surface-500">Selected: {selectedValues.join(", ")}</div>}
+          </div>
+        );
+      }
+      default:
+        return <input type="text" value={attr.value} onChange={(e) => updateAttr(e.target.value)} placeholder={`Enter ${attr.name.toLowerCase()}`} className={inputClasses} />;
+    }
+  };
+
+  const groupAttributesByType = (attributes: any[]) => {
+    const groups: { [key: string]: { attr: any; index: number }[] } = { text: [], number: [], boolean: [], select: [], multi_select: [], textarea: [] };
+    attributes.forEach((attr, index) => {
+      const type = attr.data_type || "text";
+      if (type === "bool" || type === "boolean" || type === "checkbox") groups.boolean.push({ attr, index });
+      else if (groups[type]) groups[type].push({ attr, index });
+      else groups.text.push({ attr, index });
+    });
+    return groups;
+  };
+
+  const renderGroupedAttributes = (attributes: any[], isVariant: boolean, title: string, description: string, gradientClass: string, IconComponent: React.FC) => {
+    if (attributes.length === 0) return null;
+    const groups = groupAttributesByType(attributes);
+    const typeOrder = ["text", "number", "select", "multi_select", "textarea", "boolean"];
+    return (
+      <div className="premium-card p-6">
+        <div className="space-y-8">
+          {typeOrder.map((type) => {
+            const typeAttrs = groups[type];
+            if (!typeAttrs || typeAttrs.length === 0) return null;
+            return (
+              <div key={type} className="space-y-4">
+                {(type === "text" || type === "number") && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {typeAttrs.map(({ attr, index }) => (
+                      <div key={index} className="space-y-2">
+                        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">{attr.name}{attr.required && <span className="text-red-500 ml-1">*</span>}</label>
+                        {renderAttributeInput(attr, isVariant, index)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {type === "select" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {typeAttrs.map(({ attr, index }) => (
+                      <div key={index} className="space-y-2">
+                        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">{attr.name}{attr.required && <span className="text-red-500 ml-1">*</span>}</label>
+                        {renderAttributeInput(attr, isVariant, index)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {type === "multi_select" && (
+                  <div className="space-y-6">
+                    {typeAttrs.map(({ attr, index }) => (
+                      <div key={index} className="space-y-2">
+                        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">{attr.name}{attr.required && <span className="text-red-500 ml-1">*</span>}</label>
+                        {renderAttributeInput(attr, isVariant, index)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {type === "textarea" && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {typeAttrs.map(({ attr, index }) => (
+                      <div key={index} className="space-y-2">
+                        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">{attr.name}{attr.required && <span className="text-red-500 ml-1">*</span>}</label>
+                        {renderAttributeInput(attr, isVariant, index)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {type === "boolean" && (
+                  <div className="flex flex-wrap gap-6">
+                    {typeAttrs.map(({ attr, index }) => <div key={index}>{renderAttributeInput(attr, isVariant, index)}</div>)}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // ============================================================
+  // STEP RENDERERS
+  // ============================================================
+
+  // Step 1: Category Selection
+  const renderCategoryStep = () => (
+    <div className="space-y-8 animate-fadeIn">
+      <div>
+        <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-5">Select Category</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {categories.map((cat: { id: string; name: string }, index) => (
+            <button key={cat.id || index} type="button" onClick={() => handleCategorySelect(cat)}
+              className={`group relative p-5 rounded-2xl border-2 transition-all duration-300 text-center overflow-hidden ${selectedCategory === cat.id ? "border-primary-500 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-500/10 dark:to-primary-500/5 shadow-glow-pink scale-[1.02]" : "border-surface-200 dark:border-dark-border bg-white dark:bg-dark-card hover:border-primary-300 dark:hover:border-primary-500/50 hover:shadow-premium-md hover:scale-[1.02]"}`}>
+              <div className={`absolute inset-0 bg-gradient-to-br transition-opacity duration-300 ${selectedCategory === cat.id ? "from-primary-500/5 to-transparent opacity-100" : "from-primary-500/0 to-transparent opacity-0 group-hover:opacity-100"}`} />
+              <div className="relative z-10">
+                <h4 className={`font-semibold text-sm transition-colors ${selectedCategory === cat.id ? "text-primary-600 dark:text-primary-400" : "text-surface-900 dark:text-white group-hover:text-primary-500"}`}>{cat.name}</h4>
+              </div>
+              {selectedCategory === cat.id && (
+                <div className="absolute top-3 right-3 w-6 h-6 bg-gradient-pink rounded-full flex items-center justify-center text-white shadow-lg animate-scaleIn">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                </div>
+              )}
+              <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-pink transition-all duration-300 ${selectedCategory === cat.id ? "opacity-100" : "opacity-0 group-hover:opacity-50"}`} />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {selectedCategory && (
+        <div className="animate-slideUp">
+          <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-5">Select Subcategory</h3>
+          {subcategoriesLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {subcategories.map((subcat: { id: string; name: string }, index) => (
+                <button key={subcat.id || index} type="button" onClick={() => handleSubcategorySelect(subcat)}
+                  className={`group relative p-4 rounded-xl border-2 transition-all duration-300 text-center overflow-hidden ${selectedSubcategory === subcat.id ? "border-primary-500 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-500/10 dark:to-primary-500/5 shadow-glow-pink" : "border-surface-200 dark:border-dark-border bg-white dark:bg-dark-card hover:border-primary-300 dark:hover:border-primary-500/50 hover:shadow-premium-sm"}`}>
+                  <div className={`absolute inset-0 bg-gradient-to-br transition-opacity duration-300 ${selectedSubcategory === subcat.id ? "from-primary-500/5 to-transparent opacity-100" : "opacity-0 group-hover:opacity-100"}`} />
+                  <div className="relative z-10">
+                    <h4 className={`font-medium text-sm transition-colors ${selectedSubcategory === subcat.id ? "text-primary-600 dark:text-primary-400" : "text-surface-800 dark:text-surface-200 group-hover:text-primary-500"}`}>{subcat.name}</h4>
+                  </div>
+                  {selectedSubcategory === subcat.id && (
+                    <div className="absolute top-2 right-2 w-5 h-5 bg-primary-500 rounded-full flex items-center justify-center text-white shadow-md animate-scaleIn">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                    </div>
+                  )}
+                  <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-pink transition-all duration-300 ${selectedSubcategory === subcat.id ? "opacity-100" : "opacity-0 group-hover:opacity-50"}`} />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  // Attributes step content
+  const renderAttributesStep = () => (
+    <div className="space-y-8 animate-fadeIn">
+      {renderGroupedAttributes(variantAttributes, true, "Product Variants", "Configure variant-specific details", "bg-gradient-pink", SparklesIcon)}
+      {renderGroupedAttributes(nonVariantAttributes, false, "Specifications", "Additional product details", "bg-gradient-purple", TagIcon)}
+      <div className="premium-card p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-gradient-blue flex items-center justify-center text-white"><TagIcon /></div>
           <div>
-            <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
-              Edit Product
-            </h1>
-            {productData.name && (
-              <p className="text-sm text-surface-500 dark:text-surface-400 mt-0.5 truncate max-w-xs">
-                {productData.name}
-              </p>
-            )}
+            <h3 className="font-semibold text-surface-900 dark:text-white">SEO Settings (Optional)</h3>
+            <p className="text-sm text-surface-500">Helps rank your listing in search results</p>
           </div>
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">SEO Title</label>
+            <input type="text" value={productData.meta_title} onChange={(e) => updateProductData("meta_title", e.target.value)} placeholder="Meta title for search engines" className="input-premium" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">SEO Tags</label>
+            <input type="text" value={productData.tags} onChange={(e) => updateProductData("tags", e.target.value)} placeholder="Tags separated by commas" className="input-premium" />
+          </div>
+        </div>
+      </div>
+      {allowedAttributes.length === 0 && (
+        <div className="premium-card p-8 text-center">
+          <div className="w-16 h-16 rounded-full bg-surface-100 dark:bg-dark-surface mx-auto mb-4 flex items-center justify-center"><TagIcon /></div>
+          <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">No Specific Attributes Required</h3>
+          <p className="text-surface-500">This category doesn't require any specific attributes.</p>
+        </div>
+      )}
+    </div>
+  );
 
-        {/* Category breadcrumb */}
-        {categoryName && (
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-primary-500/10 to-pink-500/10 border border-primary-200 dark:border-primary-500/20">
-              <span className="w-2 h-2 rounded-full bg-primary-500" />
-              <span className="text-xs font-semibold text-primary-600 dark:text-primary-400">{categoryName}</span>
-            </span>
-            {subcategoryName && (
-              <>
-                <svg className="w-4 h-4 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-                <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-surface-100 dark:bg-dark-surface border border-surface-200 dark:border-dark-border">
-                  <span className="text-xs font-medium text-surface-600 dark:text-surface-400">{subcategoryName}</span>
-                </span>
-              </>
-            )}
+  // Media step — shows EXISTING images + upload zone for new ones
+  const renderMediaStep = () => (
+    <div className="space-y-6 animate-fadeIn">
+      <div className="premium-card p-6">
+        {/* Existing images from the server */}
+        {existingImages.length > 0 && (
+          <div className="mb-6">
+            <p className="text-sm font-medium text-surface-700 dark:text-surface-200 mb-4 flex items-center gap-2">
+              Current Images ({existingImages.length})
+              <span className="text-xs text-surface-400">— click × to remove, or upload new images below to replace</span>
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {existingImages.map((src, index) => (
+                <div key={index} className="relative group aspect-square rounded-xl overflow-hidden bg-surface-100 dark:bg-dark-surface border-2 border-surface-200 dark:border-dark-border">
+                  <img src={src} alt={`Existing ${index + 1}`} className="w-full h-full object-cover" />
+                  {index === 0 && <div className="absolute top-2 left-2 px-2 py-1 bg-primary-500 text-white text-xs font-medium rounded-lg">Cover</div>}
+                  <button type="button" onClick={() => removeExistingImage(index)} className="absolute top-2 right-2 w-8 h-8 bg-danger text-white rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-danger-dark">
+                    <TrashIcon />
+                  </button>
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                    <p className="text-white text-xs">Image {index + 1}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Upload zone for new images */}
+        {totalImages < 4 && (
+          <div
+            className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 ${dragActive ? "border-primary-500 bg-primary-50 dark:bg-primary-500/10" : "border-surface-300 dark:border-dark-border hover:border-primary-400 dark:hover:border-primary-500/50"}`}
+            onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
+          >
+            <input type="file" accept="image/*" multiple onChange={handleFileInput} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+            <div className="flex flex-col items-center">
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${dragActive ? "bg-primary-500 text-white" : "bg-surface-100 dark:bg-dark-surface text-surface-400"}`}>
+                <UploadIcon />
+              </div>
+              <p className="text-lg font-medium text-surface-700 dark:text-surface-200 mb-1">
+                {existingImages.length > 0 ? "Upload replacement images" : "Drag and drop images here"}
+              </p>
+              <p className="text-sm text-surface-500 mb-4">or click to browse</p>
+              <p className="text-xs text-surface-400">PNG, JPG, GIF up to 10MB each · {4 - totalImages} slot{4 - totalImages !== 1 ? "s" : ""} remaining</p>
+            </div>
+          </div>
+        )}
+
+        {/* New file previews */}
+        {files.length > 0 && (
+          <div className="mt-6">
+            <p className="text-sm font-medium text-surface-700 dark:text-surface-200 mb-4">New Images to Upload ({files.length})</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {files.map((file, index) => (
+                <div key={index} className="relative group aspect-square rounded-xl overflow-hidden bg-surface-100 dark:bg-dark-surface border-2 border-dashed border-primary-400">
+                  <img src={URL.createObjectURL(file)} alt={file.name} className="w-full h-full object-cover" />
+                  <div className="absolute top-2 left-2 px-2 py-1 bg-accent-blue text-white text-xs font-medium rounded-lg">New</div>
+                  <button type="button" onClick={() => removeFile(index)} className="absolute top-2 right-2 w-8 h-8 bg-danger text-white rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-danger-dark">
+                    <TrashIcon />
+                  </button>
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                    <p className="text-white text-xs truncate">{file.name}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
+    </div>
+  );
 
-      {/* ---- Product Title (hero input) ---- */}
+  // Review step
+  const renderReviewStep = () => (
+    <div className="space-y-6 animate-fadeIn">
+      <div className="premium-card p-6 text-white">
+        <h3 className="text-xl font-bold mb-2">Review Your Changes</h3>
+        <p className="text-white/80">Please check all details before updating</p>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="premium-card p-6">
+          <h4 className="font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2"><PackageIcon /> Product Information</h4>
+          <dl className="space-y-3">
+            {[
+              ["Category", selectedCategoryName],
+              ["Subcategory", selectedSubcategoryName],
+              ["Title", productData.name],
+              ...(productData.brand_name ? [["Brand", productData.brand_name]] : []),
+            ].map(([label, val]) => (
+              <div key={label} className="flex justify-between py-2 border-b border-surface-100 dark:border-dark-border">
+                <dt className="text-surface-500">{label}</dt>
+                <dd className="font-medium text-surface-900 dark:text-white text-right max-w-[200px] truncate">{val}</dd>
+              </div>
+            ))}
+            <div className="flex justify-between py-2 border-b border-surface-100 dark:border-dark-border">
+              <dt className="text-surface-500">Price</dt>
+              <dd className="font-medium text-primary-500">
+                ${hasDiscount ? productData.unit_price : productData.mrp}
+                {hasDiscount && <span className="text-surface-400 line-through ml-2 text-sm">${productData.mrp}</span>}
+              </dd>
+            </div>
+            {productData.quantity && (
+              <div className="flex justify-between py-2">
+                <dt className="text-surface-500">Stock</dt>
+                <dd className="font-medium text-surface-900 dark:text-white">{productData.quantity} units</dd>
+              </div>
+            )}
+          </dl>
+        </div>
+
+        {/* Images summary */}
+        {(existingImages.length > 0 || files.length > 0) && (
+          <div className="premium-card p-6">
+            <h4 className="font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2"><ImageIcon /> Product Images</h4>
+            <div className="grid grid-cols-4 gap-2">
+              {existingImages.map((src, i) => (
+                <div key={`ex-${i}`} className="aspect-square rounded-lg overflow-hidden">
+                  <img src={src} alt={`Existing ${i + 1}`} className="w-full h-full object-cover" />
+                </div>
+              ))}
+              {files.map((file, i) => (
+                <div key={`new-${i}`} className="aspect-square rounded-lg overflow-hidden border-2 border-dashed border-primary-400">
+                  <img src={URL.createObjectURL(file)} alt={`New ${i + 1}`} className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Attributes summary */}
+        {(variantAttributes.length > 0 || nonVariantAttributes.length > 0) && (
+          <div className="premium-card p-6 lg:col-span-2">
+            <h4 className="font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2"><TagIcon /> Product Attributes</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[...variantAttributes, ...nonVariantAttributes]
+                .filter((attr) => { if (Array.isArray(attr.value)) return attr.value.length > 0; return attr.value !== "" && attr.value !== false; })
+                .map((attr, index) => (
+                  <div key={index} className="p-3 rounded-xl bg-surface-50 dark:bg-dark-surface">
+                    <p className="text-xs text-surface-500 mb-1">{attr.name}</p>
+                    <p className="font-medium text-surface-900 dark:text-white">
+                      {Array.isArray(attr.value) ? attr.value.join(", ") : typeof attr.value === "boolean" ? (attr.value ? "Yes" : "No") : attr.value}
+                    </p>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Step 2: Details (combined form — identical layout to add_products)
+  const renderDetailsStep = () => (
+    <div className="animate-fadeIn">
+      {/* Hero title */}
       <div className="relative mb-8">
         <div className="absolute inset-0 bg-gradient-to-r from-primary-500/5 via-pink-500/5 to-purple-500/5 rounded-2xl" />
         <div className="relative premium-card p-6 md:p-8 border-0 bg-white/80 dark:bg-dark-card/80 backdrop-blur-sm">
+          <div className="flex flex-wrap items-center gap-2 mb-6">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-primary-500/10 to-pink-500/10 border border-primary-200 dark:border-primary-500/20">
+              <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
+              <span className="text-xs font-semibold text-primary-600 dark:text-primary-400">{selectedCategoryName}</span>
+            </span>
+            <svg className="w-4 h-4 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-surface-100 dark:bg-dark-surface border border-surface-200 dark:border-dark-border">
+              <span className="text-xs font-medium text-surface-600 dark:text-surface-400">{selectedSubcategoryName}</span>
+            </span>
+          </div>
           <div className="relative">
             <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-primary-500 to-pink-500 rounded-full" />
-            <label className="block text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 mb-3">
-              Product Title <span className="text-danger">*</span>
-            </label>
-            <input
-              type="text"
-              value={productData.name}
-              onChange={(e) => updateProductData("name", e.target.value)}
-              placeholder="Enter product title…"
-              className="w-full px-0 py-3 text-xl md:text-2xl font-semibold bg-transparent border-0 border-b-2 border-surface-200 dark:border-dark-border text-surface-900 dark:text-white placeholder:text-surface-300 dark:placeholder:text-surface-600 focus:border-primary-500 focus:ring-0 transition-colors"
-            />
+            <label className="block text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 mb-3">Product Title <span className="text-danger">*</span></label>
+            <input type="text" value={productData.name} onChange={(e) => updateProductData("name", e.target.value)} placeholder="Enter a product title..." className="w-full px-0 py-3 text-xl md:text-2xl font-semibold bg-transparent border-0 border-b-2 border-surface-200 dark:border-dark-border text-surface-900 dark:text-white placeholder:text-surface-300 dark:placeholder:text-surface-600 focus:border-primary-500 focus:ring-0 transition-colors" required />
           </div>
         </div>
       </div>
 
-      {/* ---- Pricing ---- */}
+      {/* Pricing */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Regular Price */}
-        <div className="premium-card p-6 relative overflow-hidden">
+        <div className="premium-card p-6 relative overflow-hidden group hover:shadow-premium transition-shadow duration-300">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-emerald-500" />
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-white shadow-lg shadow-green-500/25">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-white shadow-lg shadow-green-500/25">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              </div>
+              <div><h4 className="font-semibold text-surface-900 dark:text-white">Regular Price</h4><p className="text-xs text-surface-500">Base price before any discounts</p></div>
             </div>
-            <div>
-              <h4 className="font-semibold text-surface-900 dark:text-white">Regular Price</h4>
-              <p className="text-xs text-surface-500">Base price (required)</p>
-            </div>
+            <span className="text-xs font-medium text-danger">Required</span>
           </div>
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-surface-400">$</span>
-            <input
-              type="number"
-              value={productData.mrp}
-              onChange={(e) => updateProductData("mrp", e.target.value)}
-              placeholder="0.00"
-              min={0}
-              className="w-full pl-12 pr-4 py-4 text-2xl font-bold rounded-xl bg-surface-50 dark:bg-dark-input border-2 border-surface-200 dark:border-dark-border text-surface-900 dark:text-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all"
-            />
+            <input type="number" value={productData.mrp} onChange={(e) => updateProductData("mrp", e.target.value)} placeholder="0.00" min={0} className="w-full pl-12 pr-4 py-4 text-2xl font-bold rounded-xl bg-surface-50 dark:bg-dark-input border-2 border-surface-200 dark:border-dark-border text-surface-900 dark:text-white focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all" required />
           </div>
         </div>
 
         {/* Sale Price */}
         <div className={`premium-card p-6 relative overflow-hidden transition-all duration-500 ${hasDiscount ? "ring-2 ring-primary-500 shadow-glow-pink" : "opacity-75 hover:opacity-100"}`}>
           <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-500 to-pink-500 transition-opacity ${hasDiscount ? "opacity-100" : "opacity-30"}`} />
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg transition-all ${hasDiscount ? "bg-gradient-to-br from-primary-500 to-pink-500 shadow-pink-500/25" : "bg-surface-400 shadow-surface-500/25"}`}>
-                <TagIcon />
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
               </div>
-              <div>
-                <h4 className="font-semibold text-surface-900 dark:text-white">Sale Price</h4>
-                <p className="text-xs text-surface-500">Discounted price</p>
-              </div>
+              <div><h4 className="font-semibold text-surface-900 dark:text-white">Sale Price</h4><p className="text-xs text-surface-500">Discounted price for buyers</p></div>
             </div>
-            <button
-              type="button"
-              onClick={() => setHasDiscount(!hasDiscount)}
-              className={`relative inline-flex h-7 w-14 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${hasDiscount ? "bg-gradient-to-r from-primary-500 to-pink-500" : "bg-surface-300 dark:bg-dark-border"}`}
-            >
+            <button type="button" onClick={() => setHasDiscount(!hasDiscount)} className={`relative inline-flex h-7 w-14 items-center rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${hasDiscount ? "bg-gradient-to-r from-primary-500 to-pink-500" : "bg-surface-300 dark:bg-dark-border"}`}>
               <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform duration-300 ${hasDiscount ? "translate-x-8" : "translate-x-1"}`} />
             </button>
           </div>
           <div className="relative">
             <span className={`absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold transition-colors ${hasDiscount ? "text-primary-500" : "text-surface-300"}`}>$</span>
-            <input
-              type="number"
-              value={productData.unit_price}
-              onChange={(e) => updateProductData("unit_price", e.target.value)}
-              placeholder="0.00"
-              min={0}
-              disabled={!hasDiscount}
-              className={`w-full pl-12 pr-4 py-4 text-2xl font-bold rounded-xl border-2 transition-all ${hasDiscount ? "bg-surface-50 dark:bg-dark-input border-primary-200 dark:border-primary-500/30 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20" : "bg-surface-100 dark:bg-dark-surface border-surface-200 dark:border-dark-border text-surface-400 cursor-not-allowed"}`}
-            />
+            <input type="number" value={productData.unit_price} onChange={(e) => updateProductData("unit_price", e.target.value)} placeholder="0.00" min={0} disabled={!hasDiscount} className={`w-full pl-12 pr-4 py-4 text-2xl font-bold rounded-xl border-2 transition-all ${hasDiscount ? "bg-surface-50 dark:bg-dark-input border-primary-200 dark:border-primary-500/30 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20" : "bg-surface-100 dark:bg-dark-surface border-surface-200 dark:border-dark-border text-surface-400 cursor-not-allowed"}`} />
           </div>
           {hasDiscount && productData.mrp && productData.unit_price && Number(productData.mrp) > Number(productData.unit_price) && (
-            <div className="mt-4 flex items-center gap-2">
+            <div className="mt-4 flex items-center gap-2 animate-fadeIn">
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400 text-sm font-semibold">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
                 {Math.round((1 - Number(productData.unit_price) / Number(productData.mrp)) * 100)}% OFF
               </span>
-              <span className="text-xs text-surface-500">
-                Customer saves ${(Number(productData.mrp) - Number(productData.unit_price)).toFixed(2)}
-              </span>
+              <span className="text-xs text-surface-500">Customer saves ${(Number(productData.mrp) - Number(productData.unit_price)).toFixed(2)}</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* ---- Brand & Stock ---- */}
+      {/* Brand & Stock */}
       {(!shouldHideBrand || !shouldHideStock) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {!shouldHideBrand && (
             <div className="premium-card p-5">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                  </svg>
+                  <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
                 </div>
                 <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Brand Name</label>
               </div>
@@ -483,9 +1002,7 @@ const EditProduct = () => {
             <div className="premium-card p-5">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                  </svg>
+                  <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
                 </div>
                 <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Stock Quantity</label>
               </div>
@@ -495,13 +1012,11 @@ const EditProduct = () => {
         </div>
       )}
 
-      {/* ---- Descriptions ---- */}
+      {/* Descriptions */}
       <div className="premium-card p-6 md:p-8 mb-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-            </svg>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
           </div>
           <div>
             <h3 className="font-semibold text-surface-900 dark:text-white">Product Description</h3>
@@ -509,12 +1024,9 @@ const EditProduct = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Short description */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <label className="text-sm font-medium text-surface-700 dark:text-surface-300">
-                Short Description
-              </label>
+              <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Short Description <span className="text-danger">*</span></label>
               <div className="flex items-center gap-2">
                 <div className="w-20 h-1.5 rounded-full bg-surface-200 dark:bg-dark-border overflow-hidden">
                   <div className={`h-full rounded-full transition-all ${shortDescPlainLen > 200 ? "bg-orange-500" : "bg-primary-500"}`} style={{ width: `${Math.min((shortDescPlainLen / 255) * 100, 100)}%` }} />
@@ -523,54 +1035,35 @@ const EditProduct = () => {
               </div>
             </div>
             <div className="rounded-xl overflow-hidden border-2 border-surface-200 dark:border-dark-border hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors">
-              <ReactQuill
-                theme="snow"
-                value={productData.short_description}
-                formats={formats}
+              <ReactQuill theme="snow" value={productData.short_description} formats={formats}
                 onChange={(content: string, _delta: any, _source: any, editor: any) => {
                   const raw = editor.getText() as string;
                   const plain = raw.endsWith("\n") ? raw.slice(0, -1) : raw;
                   const len = plain.length;
                   setShortDescPlainLen(Math.min(len, 255));
-                  if (len <= 255) {
-                    setProductData((prev) => ({ ...prev, short_description: content }));
-                  }
+                  if (len <= 255) setProductData((prev) => ({ ...prev, short_description: content }));
                 }}
-                className="bg-white dark:bg-dark-input [&_.ql-container]:!min-h-[120px] [&_.ql-editor]:!min-h-[120px]"
-              />
+                className="bg-white dark:bg-dark-input [&_.ql-container]:!min-h-[120px] [&_.ql-editor]:!min-h-[120px]" />
             </div>
           </div>
-          {/* Detailed description */}
           <div>
-            <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-3">
-              Detailed Description
-            </label>
+            <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-3">Detailed Description</label>
             <div className="rounded-xl overflow-hidden border-2 border-surface-200 dark:border-dark-border hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors">
-              <ReactQuill
-                theme="snow"
-                value={productData.description}
-                formats={formats}
+              <ReactQuill theme="snow" value={productData.description} formats={formats}
                 onChange={(val: string) => setProductData((prev) => ({ ...prev, description: val }))}
-                className="bg-white dark:bg-dark-input [&_.ql-container]:!min-h-[120px] [&_.ql-editor]:!min-h-[120px]"
-              />
+                className="bg-white dark:bg-dark-input [&_.ql-container]:!min-h-[120px] [&_.ql-editor]:!min-h-[120px]" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* ---- Dimensions (collapsible) ---- */}
+      {/* Dimensions */}
       {!shouldHideDimensions && (
         <div className="premium-card overflow-hidden mb-6">
-          <button
-            type="button"
-            onClick={() => setShowDimensions(!showDimensions)}
-            className="flex items-center justify-between w-full p-5 hover:bg-surface-50 dark:hover:bg-dark-surface/50 transition-colors"
-          >
+          <button type="button" onClick={() => setShowDimensions(!showDimensions)} className="flex items-center justify-between w-full p-5 hover:bg-surface-50 dark:hover:bg-dark-surface/50 transition-colors">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${showDimensions ? "bg-gradient-to-br from-orange-400 to-amber-500 text-white shadow-lg shadow-orange-500/25" : "bg-surface-100 dark:bg-dark-surface text-surface-500"}`}>
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                </svg>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
               </div>
               <div className="text-left">
                 <h4 className="font-semibold text-surface-900 dark:text-white">Product Dimensions</h4>
@@ -579,31 +1072,17 @@ const EditProduct = () => {
               <span className="ml-2 px-2 py-0.5 text-xs font-medium text-surface-400 bg-surface-100 dark:bg-dark-surface rounded">Optional</span>
             </div>
             <div className={`w-8 h-8 rounded-full flex items-center justify-center bg-surface-100 dark:bg-dark-surface transition-transform duration-300 ${showDimensions ? "rotate-180" : ""}`}>
-              <svg className="w-4 h-4 text-surface-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+              <svg className="w-4 h-4 text-surface-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
             </div>
           </button>
           {showDimensions && (
-            <div className="px-5 pb-5 pt-2 border-t border-surface-100 dark:border-dark-border">
+            <div className="px-5 pb-5 pt-2 border-t border-surface-100 dark:border-dark-border animate-slideUp">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { label: "Length", key: "length", unit: "cm" },
-                  { label: "Width", key: "width", unit: "cm" },
-                  { label: "Height", key: "height", unit: "cm" },
-                  { label: "Weight", key: "weight", unit: "kg" },
-                ].map(({ label, key, unit }) => (
+                {[{ label: "Length", key: "length", unit: "cm" }, { label: "Width", key: "width", unit: "cm" }, { label: "Height", key: "height", unit: "cm" }, { label: "Weight", key: "weight", unit: "kg" }].map(({ label, key, unit }) => (
                   <div key={key}>
                     <label className="text-xs font-medium text-surface-500 mb-2 block">{label}</label>
                     <div className="relative">
-                      <input
-                        type="number"
-                        value={(productData as any)[key]}
-                        onChange={(e) => updateProductData(key, e.target.value)}
-                        placeholder="0"
-                        min={0}
-                        className="input-premium pr-10"
-                      />
+                      <input type="number" value={(productData as any)[key]} onChange={(e) => updateProductData(key, e.target.value)} placeholder="0" min={0} className="input-premium pr-10" />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-surface-400">{unit}</span>
                     </div>
                   </div>
@@ -614,190 +1093,149 @@ const EditProduct = () => {
         </div>
       )}
 
-      {/* ---- Attributes (editable if any exist) ---- */}
-      {attributes.length > 0 && (
+      {/* Attributes */}
+      {(variantAttributes.length > 0 || nonVariantAttributes.length > 0) && (
         <div className="premium-card p-6 md:p-8 mb-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-teal-500/25">
-              <TagIcon />
-            </div>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-teal-500/25"><TagIcon /></div>
             <div>
               <h3 className="font-semibold text-surface-900 dark:text-white">Product Attributes</h3>
               <p className="text-xs text-surface-500">Specific details for this product type</p>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {attributes.map((attr, idx) => (
-              <div key={idx} className="space-y-2">
-                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">
-                  {attr.name}
-                </label>
-                <input
-                  type="text"
-                  value={attr.value}
-                  onChange={(e) => updateAttribute(idx, e.target.value)}
-                  placeholder={`Enter ${attr.name.toLowerCase()}`}
-                  className={inputClasses}
-                />
-              </div>
-            ))}
-          </div>
+          {renderAttributesStep()}
         </div>
       )}
 
-      {/* ---- Images ---- */}
+      {/* Media */}
       {!shouldHideMedia && (
-        <div className="premium-card p-6 md:p-8 mb-6">
+        <div className="premium-card p-6 md:p-8">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-pink-500/25">
-              <ImageIcon />
-            </div>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-white shadow-lg shadow-pink-500/25"><ImageIcon /></div>
             <div>
-              <h3 className="font-semibold text-surface-900 dark:text-white">Product Images</h3>
-              <p className="text-xs text-surface-500">
-                {existingImages.length + newFiles.length}/4 images
-              </p>
+              <h3 className="font-semibold text-surface-900 dark:text-white">Product Images <span className="text-danger">*</span></h3>
+              <p className="text-xs text-surface-500">Keep existing or upload new images</p>
             </div>
           </div>
-
-          {/* Existing images */}
-          {existingImages.length > 0 && (
-            <div className="mb-6">
-              <p className="text-xs font-semibold text-surface-500 uppercase tracking-wider mb-3">
-                Current Images
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {existingImages.map((src, idx) => (
-                  <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden bg-surface-100 dark:bg-dark-surface">
-                    <img src={src} alt={`Product ${idx + 1}`} className="w-full h-full object-cover" />
-                    {idx === 0 && (
-                      <div className="absolute top-2 left-2 px-2 py-1 bg-primary-500 text-white text-xs font-medium rounded-lg">Cover</div>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => removeExistingImage(idx)}
-                      className="absolute top-2 right-2 w-8 h-8 bg-danger text-white rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-danger-dark"
-                    >
-                      <TrashIcon />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Upload new images */}
-          {existingImages.length + newFiles.length < 4 && (
-            <div
-              className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 ${dragActive ? "border-primary-500 bg-primary-50 dark:bg-primary-500/10" : "border-surface-300 dark:border-dark-border hover:border-primary-400 dark:hover:border-primary-500/50"}`}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-            >
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleFileInput}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
-              <div className="flex flex-col items-center">
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${dragActive ? "bg-primary-500 text-white" : "bg-surface-100 dark:bg-dark-surface text-surface-400"}`}>
-                  <UploadIcon />
-                </div>
-                <p className="text-base font-medium text-surface-700 dark:text-surface-200 mb-1">
-                  {existingImages.length > 0 ? "Add more images" : "Drag and drop images here"}
-                </p>
-                <p className="text-sm text-surface-500 mb-2">or click to browse</p>
-                <p className="text-xs text-surface-400">
-                  PNG, JPG, GIF up to 10MB each · {4 - existingImages.length - newFiles.length} slot{(4 - existingImages.length - newFiles.length) !== 1 ? "s" : ""} remaining
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* New file previews */}
-          {newFiles.length > 0 && (
-            <div className="mt-6">
-              <p className="text-xs font-semibold text-surface-500 uppercase tracking-wider mb-3">
-                New Images to Upload ({newFiles.length})
-              </p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {newFiles.map((file, idx) => (
-                  <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden bg-surface-100 dark:bg-dark-surface border-2 border-dashed border-primary-300">
-                    <img src={URL.createObjectURL(file)} alt={file.name} className="w-full h-full object-cover" />
-                    <div className="absolute top-2 left-2 px-2 py-1 bg-accent-blue text-white text-xs font-medium rounded-lg">New</div>
-                    <button
-                      type="button"
-                      onClick={() => removeNewFile(idx)}
-                      className="absolute top-2 right-2 w-8 h-8 bg-danger text-white rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    >
-                      <TrashIcon />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {renderMediaStep()}
         </div>
       )}
+    </div>
+  );
 
-      {/* ---- SEO ---- */}
-      <div className="premium-card p-6 mb-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-gradient-blue flex items-center justify-center text-white">
-            <TagIcon />
-          </div>
-          <div>
-            <h3 className="font-semibold text-surface-900 dark:text-white">SEO Settings <span className="text-xs font-normal text-surface-400">(Optional)</span></h3>
-            <p className="text-xs text-surface-500">Improve your listing in search results</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">SEO Title</label>
-            <input type="text" value={productData.meta_title} onChange={(e) => updateProductData("meta_title", e.target.value)} placeholder="Meta title for search engines" className="input-premium" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Tags</label>
-            <input type="text" value={productData.tags} onChange={(e) => updateProductData("tags", e.target.value)} placeholder="Tags separated by commas" className="input-premium" />
-          </div>
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1: return renderCategoryStep();
+      case 2: return renderDetailsStep();
+      case 3: return renderReviewStep();
+      default: return null;
+    }
+  };
+
+  // ============================================================
+  // MAIN RENDER
+  // ============================================================
+  if (initialLoading) return <Loader2 />;
+  if (loading) return <Loader2 />;
+
+  return (
+    <div className="min-h-screen pb-20">
+      {/* Page title banner */}
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-100 dark:bg-dark-surface text-surface-600 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-dark-hover transition-colors text-sm font-medium"
+        >
+          <ChevronLeftIcon />
+          Back
+        </button>
+        <div>
+          <h1 className="text-xl font-bold text-surface-900 dark:text-white">Edit Product</h1>
+          {productData.name && (
+            <p className="text-sm text-surface-500 dark:text-surface-400 mt-0.5 truncate max-w-xs">{productData.name}</p>
+          )}
         </div>
       </div>
 
-      {/* ---- Fixed bottom save bar ---- */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-dark-bg/80 backdrop-blur-xl border-t border-surface-200 dark:border-dark-border p-4 md:p-6 z-50">
+      {/* Progress Steps */}
+      <div className="mb-8 overflow-x-auto">
+        <div className="flex items-center min-w-max pb-4">
+          {STEPS.map((step, index) => {
+            const StepIcon = step.icon;
+            const isCompleted = completedSteps.includes(step.id);
+            const isCurrent = currentStep === step.id;
+            return (
+              <React.Fragment key={step.id}>
+                <button
+                  type="button"
+                  onClick={() => goToStep(step.id)}
+                  disabled={step.id > currentStep && !completedSteps.includes(step.id - 1)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${isCurrent ? "bg-gradient-pink text-white shadow-glow-pink" : isCompleted ? "bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400" : "bg-surface-100 dark:bg-dark-surface text-surface-400 hover:bg-surface-200 dark:hover:bg-dark-hover"} ${step.id > currentStep && !completedSteps.includes(step.id - 1) ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                >
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isCurrent ? "bg-white/20" : isCompleted ? "bg-primary-500 text-white" : "bg-surface-200 dark:bg-dark-hover"}`}>
+                    {isCompleted ? <CheckIcon /> : <StepIcon />}
+                  </div>
+                  <div className="text-left hidden sm:block">
+                    <p className="font-semibold text-sm">{step.name}</p>
+                    <p className={`text-xs ${isCurrent ? "text-white/70" : "text-surface-500"}`}>{step.description}</p>
+                  </div>
+                </button>
+                {index < STEPS.length - 1 && (
+                  <div className={`w-8 md:w-16 h-0.5 mx-2 transition-colors ${completedSteps.includes(step.id) ? "bg-primary-500" : "bg-surface-200 dark:bg-dark-border"}`} />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Step Content */}
+      <div className="mb-8">{renderStepContent()}</div>
+
+      {/* Navigation Buttons */}
+      <div className="fixed left-0 right-0 bg-white/80 dark:bg-dark-bg/80 backdrop-blur-xl border-t border-surface-200 dark:border-dark-border p-4 md:p-6 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <button
             type="button"
-            onClick={() => router.back()}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl font-medium bg-surface-100 dark:bg-dark-surface text-surface-700 dark:text-surface-200 hover:bg-surface-200 dark:hover:bg-dark-hover transition-all duration-300"
+            onClick={prevStep}
+            disabled={currentStep === 1}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${currentStep === 1 ? "opacity-50 cursor-not-allowed bg-surface-100 dark:bg-dark-surface text-surface-400" : "bg-surface-100 dark:bg-dark-surface text-surface-700 dark:text-surface-200 hover:bg-surface-200 dark:hover:bg-dark-hover"}`}
           >
-            <BackIcon />
-            <span className="hidden sm:inline">Discard Changes</span>
+            <ChevronLeftIcon />
+            <span className="hidden sm:inline">Previous</span>
           </button>
 
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving || !productData.name || !productData.mrp}
-            className={`flex items-center gap-2 px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${saving || !productData.name || !productData.mrp ? "opacity-50 cursor-not-allowed bg-surface-300 text-surface-500" : "bg-gradient-pink text-white shadow-glow-pink hover:opacity-90"}`}
-          >
-            {saving ? (
-              <>
-                <span className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                <span>Saving…</span>
-              </>
-            ) : (
-              <>
-                <SaveIcon />
-                <span>Save Changes</span>
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            {STEPS.map((step) => (
+              <div key={step.id} className={`w-2 h-2 rounded-full transition-colors ${step.id === currentStep ? "bg-primary-500" : completedSteps.includes(step.id) ? "bg-primary-300" : "bg-surface-300 dark:bg-dark-border"}`} />
+            ))}
+          </div>
+
+          {currentStep < 3 ? (
+            <button
+              type="button"
+              onClick={nextStep}
+              disabled={!canProceed()}
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${canProceed() ? "bg-gradient-pink text-white shadow-glow-pink hover:opacity-90" : "opacity-50 cursor-not-allowed bg-surface-300 text-surface-500"}`}
+            >
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRightIcon />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSave}
+              className="flex items-center gap-2 px-8 py-3 rounded-xl font-semibold bg-gradient-pink text-white shadow-glow-pink hover:opacity-90 transition-all duration-300"
+            >
+              <SparklesIcon />
+              <span>Update Product</span>
+            </button>
+          )}
         </div>
       </div>
+
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );
 };

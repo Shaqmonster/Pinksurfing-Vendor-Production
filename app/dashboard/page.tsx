@@ -218,7 +218,7 @@ const Dashboard: React.FC = () => {
           <h2 className="text-lg font-bold text-surface-900 dark:text-white mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { icon: FiPackage, label: "Add Product", href: "/inventory/add_products", color: "primary" },
+              { icon: FiPackage, label: "Add Listing", href: "/inventory/add_products", color: "primary" },
               { icon: FiShoppingBag, label: "View Orders", href: "/orders", color: "purple" },
               { icon: FiUsers, label: "Edit Profile", href: "/profile", color: "blue" },
               { icon: FiDollarSign, label: "Store Settings", href: "/settings", color: "emerald" },

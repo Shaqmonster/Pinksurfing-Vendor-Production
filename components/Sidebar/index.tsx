@@ -82,7 +82,7 @@ const Sidebar = () => {
       badge: null,
     },
     {
-      name: "Add Products",
+      name: "Add Listing",
       href: "/inventory/add_products",
       icon: FaPlus,
       badge:null,
