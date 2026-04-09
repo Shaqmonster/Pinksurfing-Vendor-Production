@@ -157,15 +157,16 @@ const EditProduct = () => {
     if (!token) { router.push("/auth/signin"); return; }
 
     (async () => {
-      try {
+        try {
         const res: any = await getSingleProduct(token, productId);
         if (res.error || !res.data) {
           toast.error("Failed to load product data.");
           setInitialLoading(false);
           return;
         }
-        const p = res.data;
-
+        // Backend wraps the product in { "Products": {...} }
+        const p = res.data?.Products ?? res.data;
+        console.log("prod",p)
         // Pre-fill basic product fields
         setProductData({
           name: p.name || "",
