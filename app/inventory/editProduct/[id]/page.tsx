@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   getSchemaCategories,
   getSchemaSubcategories,
@@ -128,6 +128,9 @@ const EditProduct = () => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [showDimensions, setShowDimensions] = useState(false);
 
+  /** Skip one subcategory reload when hydrating edit form (avoids clearing pre-selected subcategory). */
+  const skipSubcategoryEffectRef = useRef(false);
+
   const ReactQuill = useMemo(
     () => dynamic(() => import("react-quill"), { ssr: false }),
     []
@@ -172,8 +175,9 @@ const EditProduct = () => {
           name: p.name || "",
           mrp: p.mrp ? String(p.mrp) : "",
           unit_price: p.unit_price ? String(p.unit_price) : "",
-          category: p.category?.id || "",
-          subcategory: p.subcategory?.id || "",
+          // Backend update_product expects category/subcategory slugs, not DB UUIDs.
+          category: p.category?.slug || "",
+          subcategory: p.subcategory?.slug || "",
           brand_name: p.brand_name || "",
           tags: p.tags || "",
           meta_title: p.meta_title || "",
@@ -207,28 +211,35 @@ const EditProduct = () => {
         const catResult = await getSchemaCategories();
         if (!catResult.error && catResult.data) setCategories(catResult.data);
 
-        // Pre-select category
+        // Pre-select category (schema APIs use filter.json ids = slugs, not DB UUIDs)
         const cat = p.category;
-        if (cat?.id) {
-          setSelectedCategory(cat.id);
+        const categorySchemaId = cat?.slug || cat?.id;
+        if (categorySchemaId) {
+          skipSubcategoryEffectRef.current = true;
+          setSelectedCategory(categorySchemaId);
           setSelectedCategoryName(cat.name || "");
-          setProductData((prev) => ({ ...prev, category: cat.id }));
+          setProductData((prev) => ({ ...prev, category: cat.slug || prev.category }));
 
           // Load subcategories for this category
           setSubcategoriesLoading(true);
-          const subcatResult = await getSchemaSubcategories(cat.id);
+          const subcatResult = await getSchemaSubcategories(categorySchemaId);
           if (!subcatResult.error && subcatResult.data) setSubcategories(subcatResult.data);
           setSubcategoriesLoading(false);
 
           // Pre-select subcategory
           const subcat = p.subcategory;
-          if (subcat?.id) {
-            setSelectedSubcategory(subcat.id);
+          const subcategorySchemaId = subcat?.slug || subcat?.id;
+          if (subcategorySchemaId) {
+            setSelectedSubcategory(subcategorySchemaId);
             setSelectedSubcategoryName(subcat.name || "");
-            setProductData((prev) => ({ ...prev, subcategory: subcat.id }));
+            setProductData((prev) => ({ ...prev, subcategory: subcat.slug || prev.subcategory }));
 
             // Load schema and prefill attributes with existing values
-            await loadSchemaAndPrefillAttributes(cat.id, subcat.id, p.attributes || []);
+            await loadSchemaAndPrefillAttributes(
+              categorySchemaId,
+              subcategorySchemaId,
+              p.attributes || []
+            );
           }
         }
 
@@ -262,6 +273,16 @@ const EditProduct = () => {
           if (a.name) existingMap.set(a.name.toLowerCase(), a.value ?? "");
         });
 
+        const resolveExistingVal = (field: any): string | undefined => {
+          const label = (field.label || "").toLowerCase();
+          const key = (field.key || "").toLowerCase();
+          const keyAsLabel = key.replace(/_/g, " ");
+          if (label && existingMap.has(label)) return existingMap.get(label);
+          if (keyAsLabel && existingMap.has(keyAsLabel)) return existingMap.get(keyAsLabel);
+          if (key && existingMap.has(key)) return existingMap.get(key);
+          return undefined;
+        };
+
         const mapFieldType = (type: string) => {
           switch (type) {
             case "checkbox": return "bool";
@@ -288,8 +309,7 @@ const EditProduct = () => {
         };
 
         const schemaAttributes = fields.map((field: any) => {
-          const labelKey = (field.label || field.key || "").toLowerCase();
-          const existingVal = existingMap.get(labelKey);
+          const existingVal = resolveExistingVal(field);
           const mappedType = mapFieldType(field.type);
 
           return {
@@ -325,9 +345,13 @@ const EditProduct = () => {
     });
   }, [productId]);
 
-  // Load subcategories when category changes (for add flow or when user changes category in edit)
+  // Load subcategories when category changes (add flow, or edit after user changes category)
   useEffect(() => {
-    if (!selectedCategory || productId) return; // edit pre-loads subcategories in the init effect
+    if (!selectedCategory) return;
+    if (skipSubcategoryEffectRef.current) {
+      skipSubcategoryEffectRef.current = false;
+      return;
+    }
     setSubcategoriesLoading(true);
     setSelectedSubcategory("");
     setSelectedSubcategoryName("");
@@ -341,7 +365,7 @@ const EditProduct = () => {
         setSubcategoriesLoading(false);
       })
       .catch(() => setSubcategoriesLoading(false));
-  }, [selectedCategory, productId]);
+  }, [selectedCategory]);
 
   // ============================================================
   // CATEGORY & SUBCATEGORY HANDLERS
