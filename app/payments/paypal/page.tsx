@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
 import { getCookie } from "@/utils/cookies";
 import { getVendorProfile } from "@/api/products";
@@ -12,13 +12,18 @@ import { FiCheckCircle, FiExternalLink, FiAlertCircle } from "react-icons/fi";
 import Link from "next/link";
 
 export default function PayPalOnboardingPage() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [vendorId, setVendorId] = useState<string | null>(null);
   const [paypalMerchantId, setPaypalMerchantId] = useState<string | null | undefined>(undefined);
   const [storeName, setStoreName] = useState("");
   const handledPayPalReturn = useRef(false);
+
+  const callbackConnected = searchParams.get("paypal_connected") === "true";
+  const callbackMerchantId = searchParams.get("merchant_id")?.trim() || null;
+  const callbackVendorId = searchParams.get("vendor_id")?.trim() || null;
+  const callbackPermissionsGranted = (searchParams.get("permissions_granted") || "").toLowerCase();
 
   const loadProfile = useCallback(async () => {
     const token = getCookie("access_token");
@@ -47,12 +52,10 @@ export default function PayPalOnboardingPage() {
     loadProfile();
   }, [loadProfile]);
 
-  /** Return from PayPal — toast, strip query, refetch profile (short delay for DB write). */
+  /** Return from PayPal — toast and refetch profile (short delay for DB write). */
   useEffect(() => {
-    if (typeof window === "undefined") return;
     if (handledPayPalReturn.current) return;
-    const params = new URLSearchParams(window.location.search);
-    const p = params.get("paypal_connected");
+    const p = searchParams.get("paypal_connected");
     if (p == null) return;
     handledPayPalReturn.current = true;
 
@@ -61,14 +64,12 @@ export default function PayPalOnboardingPage() {
     } else {
       toast.error("PayPal setup was not completed. Please try connecting again.");
     }
-    router.replace("/payments/paypal", { scroll: false });
-
     const token = getCookie("access_token");
     const t = setTimeout(() => {
       if (token) void loadProfile();
     }, 1200);
     return () => clearTimeout(t);
-  }, [router, loadProfile]);
+  }, [loadProfile, searchParams]);
 
   const handleConnect = async () => {
     const token = getCookie("access_token");
@@ -91,7 +92,14 @@ export default function PayPalOnboardingPage() {
     }
   };
 
-  const connected = paypalMerchantId != null && paypalMerchantId !== "";
+  const merchantIdToDisplay =
+    paypalMerchantId != null && paypalMerchantId !== ""
+      ? paypalMerchantId
+      : callbackConnected
+        ? callbackMerchantId
+        : null;
+
+  const connected = merchantIdToDisplay != null && merchantIdToDisplay !== "";
 
   return (
     <div className="min-h-[calc(100vh-120px)] px-4 py-8 max-w-2xl mx-auto">
@@ -133,9 +141,24 @@ export default function PayPalOnboardingPage() {
                     <p className="text-sm text-surface-600 dark:text-surface-400 mt-1">
                       Merchant ID:{" "}
                       <code className="text-xs bg-surface-100 dark:bg-dark-hover px-1.5 py-0.5 rounded">
-                        {paypalMerchantId}
+                        {merchantIdToDisplay}
                       </code>
                     </p>
+                    {(callbackConnected || callbackVendorId || callbackPermissionsGranted) && (
+                      <div className="mt-3 rounded-lg border border-emerald-500/25 bg-emerald-500/5 px-3 py-2 text-xs text-surface-700 dark:text-surface-300 space-y-1">
+                        <p>
+                          Callback status: <span className="font-semibold">Success</span>
+                        </p>
+                        {(callbackVendorId || vendorId) && (
+                          <p>
+                            Vendor ID: <span className="font-mono">{callbackVendorId || vendorId}</span>
+                          </p>
+                        )}
+                        <p>
+                          Permissions granted: <span className="font-semibold">{callbackPermissionsGranted === "true" ? "Yes" : "No"}</span>
+                        </p>
+                      </div>
+                    )}
                     <p className="text-xs text-surface-500 mt-2">
                       You can update your PayPal account settings anytime on{" "}
                       <a
