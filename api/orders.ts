@@ -119,6 +119,27 @@ export async function getShipmentDetails(orderId: string, token: string | null) 
   }
 }
 
+export async function disputeReturn(orderItemId: string, token: string | null) {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/order/dispute-return/${orderItemId}/`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token?.replaceAll('"', '')}`,
+        },
+      }
+    );
+    return { error: false, data: response.data, status: response.status };
+  } catch (error: any) {
+    return {
+      error: true,
+      message: error.response?.data?.error || 'Failed to file dispute.',
+      status: error.response?.status,
+    };
+  }
+}
+
 export async function getShippingDetails(
   orderItemId: string | null,
   token: string | null

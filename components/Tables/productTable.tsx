@@ -143,24 +143,49 @@ const ProductsTable = (props: { Products?: Product[] }) => {
     product.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getProductUrl = (product: any) =>
-    `https://pinksurfing.com/product/productDetail/${product.slug}?productId=${product.id}`;
+  const storefrontBase =
+    process.env.NEXT_PUBLIC_ENV === "production"
+      ? "https://pinksurfing.com"
+      : "https://dev.pinksurfing.com";
 
-  const copyToClipboard = (text: string, e?: React.MouseEvent) => {
+  const getProductUrl = (product: any) =>
+    `${storefrontBase}/product/productDetail/${product.slug}?productId=${product.id}`;
+
+  // Make clipboard async/await so the toast fires in the same tick as the
+  // clipboard write completes — prevents stale toasts appearing on other pages.
+  const copyToClipboard = async (text: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    navigator.clipboard
-      .writeText(text)
-      .then(() => toast.success("Product link copied!"))
-      .catch(() => toast.error("Failed to copy link"));
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Product link copied!");
+    } catch {
+      // Fallback for browsers / contexts where clipboard API is unavailable
+      try {
+        const el = document.createElement("textarea");
+        el.value = text;
+        el.style.position = "fixed";
+        el.style.opacity = "0";
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand("copy");
+        document.body.removeChild(el);
+        toast.success("Product link copied!");
+      } catch {
+        toast.error("Failed to copy link");
+      }
+    }
   };
 
-  const handleProductClick = (product: any) => {
+  const handleProductClick = async (product: any) => {
     const url = getProductUrl(product);
     window.open(url, "_blank", "noopener,noreferrer");
-    navigator.clipboard
-      .writeText(url)
-      .then(() => toast.success("Product link opened & copied!"))
-      .catch(() => {});
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Clipboard write may fail when focus moved to new tab — that's fine
+    }
+    // Show toast immediately after open, regardless of clipboard result
+    toast.success("Product link opened & copied!");
   };
 
   return (
@@ -174,10 +199,10 @@ const ProductsTable = (props: { Products?: Product[] }) => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold text-surface-900 dark:text-white">
-                  All Products
+                  All Listings
                 </h2>
                 <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
-                  {products?.length || 0} products in your inventory
+                  {products?.length || 0} listings in your inventory
                 </p>
               </div>
               
@@ -187,7 +212,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                   <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
                   <input
                     type="text"
-                    placeholder="Search products..."
+                    placeholder="Search listings..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 pr-4 py-2 rounded-xl border border-surface-200 dark:border-dark-border bg-surface-50 dark:bg-dark-input text-surface-900 dark:text-white placeholder:text-surface-400 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all w-full sm:w-48"
@@ -199,7 +224,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-pink text-white font-medium shadow-premium-sm hover:shadow-premium-md transition-all"
                 >
                   <FiPlus className="w-4 h-4" />
-                  <span className="hidden sm:inline">Add Product</span>
+                  <span className="hidden sm:inline">Add Listing</span>
                 </Link>
               </div>
             </div>
@@ -212,7 +237,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                 <thead>
                   <tr className="bg-surface-50 dark:bg-dark-surface">
                     <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
-                      Product
+                      Listing
                     </th>
                     <th className="hidden md:table-cell px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
                       Category
@@ -221,7 +246,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                       Description
                     </th>
                     <th className="hidden xl:table-cell px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
-                      Product Link
+                        Listing Link
                     </th>
                     <th className="hidden sm:table-cell px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
                       Stock

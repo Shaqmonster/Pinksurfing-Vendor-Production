@@ -15,8 +15,8 @@ import {
   FaUser,
   FaChevronRight,
   FaStore,
-  FaGavel,
   FaRobot,
+  FaPaypal,
 } from "react-icons/fa";
 import { HiOutlineSparkles } from "react-icons/hi";
 
@@ -83,7 +83,7 @@ const Sidebar = () => {
       badge: null,
     },
     {
-      name: "Add Products",
+      name: "Add Listing",
       href: "/inventory/add_products",
       icon: FaPlus,
       badge:null,
@@ -101,9 +101,9 @@ const Sidebar = () => {
       badge: null,
     },
     {
-      name: "Buyer Requests",
-      href: "/buyer-requests",
-      icon: FaGavel,
+      name: "PayPal",
+      href: "/payments/paypal",
+      icon: FaPaypal,
       badge: null,
     },
     {

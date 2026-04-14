@@ -322,7 +322,7 @@ const Profile = () => {
             { icon: FaBox, label: "View Products", href: "/inventory/products", count: products },
             { icon: FaShoppingCart, label: "View Orders", href: "/orders", count: orders },
             { icon: FaEdit, label: "Edit Settings", href: "/settings" },
-            { icon: FaStore, label: "Add Product", href: "/inventory/add_products" },
+            { icon: FaStore, label: "Add Listing", href: "/inventory/add_products" },
           ].map((action, index) => (
             <Link
               key={action.label}

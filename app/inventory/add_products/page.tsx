@@ -87,7 +87,7 @@ const STEPS = [
 
 // Categories that don't require media upload (add category names here)
 const CATEGORIES_WITHOUT_MEDIA = [
-  "Business For Sale",
+  "Stay With Us",
   // Add more category names here as needed
 ];
 
@@ -95,6 +95,9 @@ const CATEGORIES_WITHOUT_MEDIA = [
 const CATEGORIES_WITHOUT_DIMENSIONS = [
   "Business For Sale",
   "Commercial Real Estate",
+  "Residential Real Estate",
+  "Stay With Us",
+  "Building Materials",
   // Add more category names here as needed
 ];
 
@@ -103,6 +106,9 @@ const CATEGORIES_WITHOUT_STOCK = [
   "Business For Sale",
   "Cars & Trucks",
   "Commercial Real Estate",
+  "Residential Real Estate",
+  "Stay With Us",
+  "Building Materials",
   // Add more category names here as needed
 ];
 
@@ -111,6 +117,9 @@ const CATEGORIES_WITHOUT_BRAND = [
   "Business For Sale",
    "Cars & Trucks",
    "Commercial Real Estate",
+   "Residential Real Estate",
+   "Stay With Us",
+   "Building Materials",
   // Add more category names here as needed
 ];
 
@@ -161,6 +170,8 @@ const AddProducts = () => {
 
   // UI states
   const [hasDiscount, setHasDiscount] = useState(false);
+  // Plain-text character count for the short description field (tracks paste too)
+  const [shortDescPlainLen, setShortDescPlainLen] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showDimensions, setShowDimensions] = useState(false);
 
@@ -1113,7 +1124,7 @@ const AddProducts = () => {
         {(variantAttributes.length > 0 || nonVariantAttributes.length > 0) && (
           <div className="premium-card p-6 lg:col-span-2">
             <h4 className="font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2">
-              <TagIcon /> Product Attributes
+              <TagIcon /> Specifications
             </h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[...variantAttributes, ...nonVariantAttributes]
@@ -1175,13 +1186,13 @@ const AddProducts = () => {
                 <div className="relative">
                   <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-primary-500 to-pink-500 rounded-full" />
                   <label className="block text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 mb-3">
-                    Product Title <span className="text-danger">*</span>
+                    Listing Title <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
                     value={productData.name}
                     onChange={(e) => updateProductData("name", e.target.value)}
-                    placeholder="Enter a product title..."
+                    placeholder="Enter a Listing title..."
                     className="w-full px-0 py-3 text-xl md:text-2xl font-semibold bg-transparent border-0 border-b-2 border-surface-200 dark:border-dark-border text-surface-900 dark:text-white placeholder:text-surface-300 dark:placeholder:text-surface-600 focus:border-primary-500 focus:ring-0 transition-colors"
                     required
                   />
@@ -1344,8 +1355,8 @@ const AddProducts = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-surface-900 dark:text-white">Product Description</h3>
-                  <p className="text-xs text-surface-500">Help customers understand your product</p>
+                  <h3 className="font-semibold text-surface-900 dark:text-white">Description</h3>
+                  <p className="text-xs text-surface-500">Help customers understand the listing</p>
                 </div>
               </div>
 
@@ -1359,11 +1370,13 @@ const AddProducts = () => {
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-1.5 rounded-full bg-surface-200 dark:bg-dark-border overflow-hidden">
                         <div
-                          className={`h-full rounded-full transition-all ${productData.short_description.length > 200 ? 'bg-orange-500' : 'bg-primary-500'}`}
-                          style={{ width: `${Math.min((productData.short_description.length / 255) * 100, 100)}%` }}
+                          className={`h-full rounded-full transition-all ${shortDescPlainLen > 200 ? 'bg-orange-500' : 'bg-primary-500'}`}
+                          style={{ width: `${Math.min((shortDescPlainLen / 255) * 100, 100)}%` }}
                         />
                       </div>
-                      <span className="text-xs text-surface-400">{productData.short_description.length}/255</span>
+                      <span className={`text-xs ${shortDescPlainLen >= 255 ? 'text-orange-500 font-semibold' : 'text-surface-400'}`}>
+                        {shortDescPlainLen}/255
+                      </span>
                     </div>
                   </div>
                   <div className="rounded-xl overflow-hidden border-2 border-surface-200 dark:border-dark-border hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors">
@@ -1371,10 +1384,21 @@ const AddProducts = () => {
                       theme="snow"
                       value={productData.short_description}
                       formats={formats}
-                      onChange={(e: string) => {
-                        if (e.length <= 255) {
-                          setProductData(prev => ({ ...prev, short_description: e }));
+                      onChange={(content: string, _delta: any, _source: any, editor: any) => {
+                        // Use Quill's editor.getText() for accurate plain-text character count
+                        // (avoids counting HTML tags like <p>, <br> etc.)
+                        const raw = editor.getText() as string;
+                        // Quill appends a trailing newline – strip it for counting
+                        const plain = raw.endsWith('\n') ? raw.slice(0, -1) : raw;
+                        const len = plain.length;
+
+                        setShortDescPlainLen(Math.min(len, 255));
+
+                        if (len <= 255) {
+                          setProductData(prev => ({ ...prev, short_description: content }));
                         }
+                        // If over limit we don't update the controlled value.
+                        // ReactQuill will revert the editor to the last accepted value.
                       }}
                       className="bg-white dark:bg-dark-input [&_.ql-container]:!min-h-[120px] [&_.ql-editor]:!min-h-[120px]"
                     />
@@ -1465,7 +1489,7 @@ const AddProducts = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-surface-900 dark:text-white">Product Attributes</h3>
-                    <p className="text-xs text-surface-500">Specific details for this product type</p>
+                    <p className="text-xs text-surface-500">Specific details for this listing</p>
                   </div>
                 </div>
                 {renderAttributesStep()}
@@ -1480,7 +1504,7 @@ const AddProducts = () => {
                     <ImageIcon />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-surface-900 dark:text-white">Product Images <span className="text-danger">*</span></h3>
+                    <h3 className="font-semibold text-surface-900 dark:text-white">Images <span className="text-danger">*</span></h3>
                   </div>
                 </div>
                 {renderMediaStep()}
