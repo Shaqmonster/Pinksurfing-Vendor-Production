@@ -12,7 +12,7 @@ const Orders = () => {
     >
 
       {/* Orders Table */}
-      <div className="premium-card overflow-hidden">
+      <div className="premium-card overflow-hidden min-w-0 max-w-full">
         <OrderTable />
       </div>
     </motion.div>

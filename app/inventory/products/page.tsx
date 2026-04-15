@@ -30,7 +30,7 @@ const Products = ({ products, loading }: ProductsProps) => {
       {loading ? (
         <Loader />
       ) : (
-        <div className="premium-card overflow-hidden">
+        <div className="premium-card overflow-hidden min-w-0 max-w-full">
           <ProductsTable Products={products} />
         </div>
       )}
