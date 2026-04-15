@@ -19,6 +19,12 @@ import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { handleError } from "@/utils/toast";
 import { getCookie } from "@/utils/cookies";
+import {
+  SHORT_DESCRIPTION_MAX_PLAIN,
+  truncateUnicodePlain,
+  plainToQuillShortDescriptionHtml,
+  plainTextLengthFromHtml,
+} from "@/utils/shortDescription";
 
 // ============ ICONS (identical to add_products) ============
 const CheckIcon = () => (
@@ -191,6 +197,9 @@ const EditProduct = () => {
           image: "",
           id: p.id || productId,
         });
+        setShortDescPlainLen(
+          Math.min(plainTextLengthFromHtml(p.short_description || ""), SHORT_DESCRIPTION_MAX_PLAIN)
+        );
 
         // Detect discount
         if (p.unit_price && p.mrp && parseFloat(p.unit_price) < parseFloat(p.mrp)) {
@@ -1054,9 +1063,9 @@ const EditProduct = () => {
               <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Short Description <span className="text-danger">*</span></label>
               <div className="flex items-center gap-2">
                 <div className="w-20 h-1.5 rounded-full bg-surface-200 dark:bg-dark-border overflow-hidden">
-                  <div className={`h-full rounded-full transition-all ${shortDescPlainLen > 200 ? "bg-orange-500" : "bg-primary-500"}`} style={{ width: `${Math.min((shortDescPlainLen / 255) * 100, 100)}%` }} />
+                  <div className={`h-full rounded-full transition-all ${shortDescPlainLen > 200 ? "bg-orange-500" : "bg-primary-500"}`} style={{ width: `${Math.min((shortDescPlainLen / SHORT_DESCRIPTION_MAX_PLAIN) * 100, 100)}%` }} />
                 </div>
-                <span className={`text-xs ${shortDescPlainLen >= 255 ? "text-orange-500 font-semibold" : "text-surface-400"}`}>{shortDescPlainLen}/255</span>
+                <span className={`text-xs ${shortDescPlainLen >= SHORT_DESCRIPTION_MAX_PLAIN ? "text-orange-500 font-semibold" : "text-surface-400"}`}>{shortDescPlainLen}/{SHORT_DESCRIPTION_MAX_PLAIN}</span>
               </div>
             </div>
             <div className="rounded-xl overflow-hidden border-2 border-surface-200 dark:border-dark-border hover:border-primary-300 dark:hover:border-primary-500/50 transition-colors">
@@ -1065,8 +1074,17 @@ const EditProduct = () => {
                   const raw = editor.getText() as string;
                   const plain = raw.endsWith("\n") ? raw.slice(0, -1) : raw;
                   const len = plain.length;
-                  setShortDescPlainLen(Math.min(len, 255));
-                  if (len <= 255) setProductData((prev) => ({ ...prev, short_description: content }));
+                  if (len <= SHORT_DESCRIPTION_MAX_PLAIN) {
+                    setShortDescPlainLen(len);
+                    setProductData((prev) => ({ ...prev, short_description: content }));
+                    return;
+                  }
+                  const truncated = truncateUnicodePlain(plain, SHORT_DESCRIPTION_MAX_PLAIN);
+                  setShortDescPlainLen(SHORT_DESCRIPTION_MAX_PLAIN);
+                  setProductData((prev) => ({
+                    ...prev,
+                    short_description: plainToQuillShortDescriptionHtml(truncated),
+                  }));
                 }}
                 className="bg-white dark:bg-dark-input [&_.ql-container]:!min-h-[120px] [&_.ql-editor]:!min-h-[120px]" />
             </div>

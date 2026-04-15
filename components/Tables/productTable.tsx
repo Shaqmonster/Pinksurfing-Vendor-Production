@@ -230,31 +230,149 @@ const ProductsTable = (props: { Products?: Product[] }) => {
             </div>
           </div>
 
-          {/* Table */}
+          {/* Mobile / tablet: cards (no horizontal scroll) */}
           {filteredProducts?.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <>
+              <div className="lg:hidden divide-y divide-surface-100 dark:divide-dark-border border-t border-surface-100 dark:border-dark-border">
+                <AnimatePresence>
+                  {filteredProducts.map((product: any, index: number) => (
+                    <motion.div
+                      key={`card-${product.id}`}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ delay: index * 0.03 }}
+                      className="p-4 space-y-3 bg-white dark:bg-dark-card"
+                    >
+                      <div
+                        className="flex gap-3 cursor-pointer group"
+                        onClick={() => handleProductClick(product)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            handleProductClick(product);
+                          }
+                        }}
+                      >
+                        <div className="w-14 h-14 rounded-xl overflow-hidden bg-surface-100 dark:bg-dark-surface flex-shrink-0">
+                          {product.image1 ? (
+                            <img
+                              src={product.image1}
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <FiPackage className="w-6 h-6 text-surface-400" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-surface-900 dark:text-white line-clamp-2 group-hover:text-primary-500">
+                            {product.name}
+                          </p>
+                          <p className="text-xs text-surface-500 dark:text-surface-400 mt-1 font-mono">
+                            ID: {product.id?.slice(0, 8)}…
+                          </p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400 mb-0.5">
+                            Category
+                          </p>
+                          <p className="font-medium text-surface-900 dark:text-white">
+                            {product?.category?.name || "—"}
+                          </p>
+                          {product?.subcategory?.name && (
+                            <p className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">
+                              {product.subcategory.name}
+                            </p>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400 mb-0.5">
+                            Stock
+                          </p>
+                          <span
+                            className={`inline-flex items-center justify-center min-w-[40px] px-2.5 py-1 rounded-full text-sm font-semibold ${
+                              product.quantity > 10
+                                ? "bg-success-light text-success-dark dark:bg-success/20 dark:text-success"
+                                : product.quantity > 0
+                                ? "bg-warning-light text-warning-dark dark:bg-warning/20 dark:text-warning"
+                                : "bg-danger-light text-danger-dark dark:bg-danger/20 dark:text-danger"
+                            }`}
+                          >
+                            {product.quantity}
+                          </span>
+                        </div>
+                      </div>
+                      {product.short_description && (
+                        <p className="text-sm text-surface-600 dark:text-surface-400 line-clamp-2">
+                          {truncateAndConvertToText(product.short_description)}
+                        </p>
+                      )}
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-surface-100 dark:border-dark-border">
+                        <span className="text-lg font-bold text-success dark:text-success">
+                          ${product.unit_price}
+                        </span>
+                        <div className="flex items-center gap-2 ml-auto">
+                          <button
+                            type="button"
+                            onClick={(e) => copyToClipboard(getProductUrl(product), e)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-dark-surface text-surface-600 dark:text-surface-400 text-xs font-medium"
+                          >
+                            <FiCopy className="w-3.5 h-3.5" />
+                            Copy link
+                          </button>
+                          <Link
+                            href={`/inventory/editProduct/${product.id}`}
+                            className="p-2 rounded-lg bg-accent-blue/10 dark:bg-accent-blue/20 text-accent-blue"
+                            title="Edit"
+                          >
+                            <FiEdit2 className="w-4 h-4" />
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => openDeleteModal(product.id)}
+                            className="p-2 rounded-lg bg-danger-light dark:bg-danger/20 text-danger"
+                            title="Delete"
+                          >
+                            <FiTrash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+
+              {/* Desktop: table */}
+              <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full table-fixed min-w-0">
                 <thead>
                   <tr className="bg-surface-50 dark:bg-dark-surface">
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    <th className="px-4 xl:px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[28%]">
                       Listing
                     </th>
-                    <th className="hidden md:table-cell px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    <th className="px-4 xl:px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[14%]">
                       Category
                     </th>
-                    <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    <th className="px-4 xl:px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[18%]">
                       Description
                     </th>
-                    <th className="hidden xl:table-cell px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    <th className="px-4 xl:px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[12%]">
                         Listing Link
                     </th>
-                    <th className="hidden sm:table-cell px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    <th className="px-4 xl:px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[8%]">
                       Stock
                     </th>
-                    <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    <th className="px-4 xl:px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[10%]">
                       Price
                     </th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    <th className="px-4 xl:px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[10%]">
                       Actions
                     </th>
                   </tr>
@@ -270,13 +388,13 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                         transition={{ delay: index * 0.03 }}
                         className="hover:bg-surface-50 dark:hover:bg-dark-hover transition-colors"
                       >
-                        <td className="px-6 py-4">
+                        <td className="px-4 xl:px-6 py-4 align-top">
                           <div
-                            className="flex items-center gap-4 cursor-pointer group"
+                            className="flex items-center gap-3 xl:gap-4 cursor-pointer group"
                             onClick={() => handleProductClick(product)}
                             title="Open product page & copy link"
                           >
-                            <div className="w-14 h-14 rounded-xl overflow-hidden bg-surface-100 dark:bg-dark-surface flex-shrink-0 group-hover:ring-2 group-hover:ring-primary-400 transition-all">
+                            <div className="w-12 h-12 xl:w-14 xl:h-14 rounded-xl overflow-hidden bg-surface-100 dark:bg-dark-surface flex-shrink-0 group-hover:ring-2 group-hover:ring-primary-400 transition-all">
                               {product.image1 ? (
                                 <img
                                   src={product.image1}
@@ -289,8 +407,8 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                                 </div>
                               )}
                             </div>
-                            <div className="min-w-0">
-                              <p className="font-medium text-surface-900 dark:text-white truncate max-w-[200px] group-hover:text-primary-500 transition-colors">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-surface-900 dark:text-white truncate group-hover:text-primary-500 transition-colors">
                                 {product.name}
                               </p>
                               <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
@@ -303,36 +421,37 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                             </div>
                           </div>
                         </td>
-                        <td className="hidden md:table-cell px-6 py-4">
+                        <td className="px-4 xl:px-6 py-4 align-top">
                           <div>
-                            <p className="text-sm font-medium text-surface-900 dark:text-white">
+                            <p className="text-sm font-medium text-surface-900 dark:text-white truncate">
                               {product?.category?.name || "—"}
                             </p>
                             {product?.subcategory?.name && (
-                              <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
+                              <p className="text-xs text-surface-500 dark:text-surface-400 mt-1 line-clamp-2">
                                 {product.subcategory.name}
                               </p>
                             )}
                           </div>
                         </td>
-                        <td className="hidden lg:table-cell px-6 py-4">
-                          <p className="text-sm text-surface-600 dark:text-surface-400 max-w-xs line-clamp-2">
+                        <td className="px-4 xl:px-6 py-4 align-top">
+                          <p className="text-sm text-surface-600 dark:text-surface-400 line-clamp-2 break-words">
                             {truncateAndConvertToText(product.short_description)}
                           </p>
                         </td>
-                        <td className="hidden xl:table-cell px-6 py-4 text-center">
+                        <td className="px-4 xl:px-6 py-4 text-center align-top">
                           <button
+                            type="button"
                             onClick={(e) => copyToClipboard(getProductUrl(product), e)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-dark-surface text-surface-600 dark:text-surface-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-500 transition-colors text-xs font-medium"
+                            className="inline-flex items-center gap-1.5 px-2 xl:px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-dark-surface text-surface-600 dark:text-surface-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-500 transition-colors text-xs font-medium"
                             title="Copy product link"
                           >
-                            <FiCopy className="w-3.5 h-3.5" />
-                            Copy Link
+                            <FiCopy className="w-3.5 h-3.5 shrink-0" />
+                            <span className="hidden xl:inline">Copy Link</span>
                           </button>
                         </td>
-                        <td className="hidden sm:table-cell px-6 py-4 text-center">
+                        <td className="px-4 xl:px-6 py-4 text-center align-top">
                           <span
-                            className={`inline-flex items-center justify-center min-w-[40px] px-2.5 py-1 rounded-full text-sm font-semibold ${
+                            className={`inline-flex items-center justify-center min-w-[36px] px-2 py-1 rounded-full text-sm font-semibold ${
                               product.quantity > 10
                                 ? "bg-success-light text-success-dark dark:bg-success/20 dark:text-success"
                                 : product.quantity > 0
@@ -343,12 +462,12 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                             {product.quantity}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-center">
-                          <span className="text-lg font-bold text-success dark:text-success">
+                        <td className="px-4 xl:px-6 py-4 text-center align-top">
+                          <span className="text-base xl:text-lg font-bold text-success dark:text-success whitespace-nowrap">
                             ${product.unit_price}
                           </span>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 xl:px-6 py-4 align-top">
                           <div className="flex items-center justify-end gap-2">
                             <Link
                               href={`/inventory/editProduct/${product.id}`}
@@ -372,6 +491,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                 </tbody>
               </table>
             </div>
+            </>
           ) : (
             /* Empty State */
             <div className="p-12 text-center">

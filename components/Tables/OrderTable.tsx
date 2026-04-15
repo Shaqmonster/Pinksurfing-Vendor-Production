@@ -306,28 +306,111 @@ const OrderTable = ({ recentOrders }: any) => {
             </div>
           </div>
 
-          {/* Table */}
+          {/* Table / cards */}
           {orders.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <>
+              {/* Mobile & tablet: stacked cards */}
+              <div className="lg:hidden divide-y divide-surface-100 dark:divide-dark-border border-t border-surface-100 dark:border-dark-border">
+                <AnimatePresence>
+                  {orders.map((order, index) => {
+                    const statusConfig = getStatusConfig(order.order_status);
+                    const StatusIcon = statusConfig.icon;
+                    return (
+                      <motion.div
+                        key={`order-card-${order.id}`}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="p-4 space-y-3 bg-white dark:bg-dark-card"
+                      >
+                        <Link href={`/orders/${order.id}`} className="block group">
+                          <p className="font-medium text-surface-900 dark:text-white group-hover:text-primary-500 line-clamp-2">
+                            {order.product.name}
+                          </p>
+                          <p className="text-xs text-surface-500 dark:text-surface-400 mt-1 font-mono">
+                            Order #{order.order_number || order.id.slice(0, 8)}
+                          </p>
+                        </Link>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${statusConfig.bgColor}`}>
+                            <StatusIcon className={`w-4 h-4 ${statusConfig.textColor}`} />
+                            <span className={`text-xs font-semibold ${statusConfig.textColor}`}>
+                              {statusConfig.label}
+                            </span>
+                          </div>
+                          <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-surface-100 dark:bg-dark-surface text-sm font-semibold text-surface-700 dark:text-surface-300">
+                            ×{order.quantity}
+                          </span>
+                          <span className="text-lg font-bold text-surface-900 dark:text-white">
+                            ${order.total_price}
+                          </span>
+                        </div>
+                        <div className="text-sm text-surface-600 dark:text-surface-400">
+                          {formatDate(order.date_of_order)} · {formatTime(order.date_of_order)}
+                        </div>
+                        {order.order_status === "RETURN-DELIVERED" && (
+                          <div className="text-xs text-accent-amber font-semibold bg-accent-amber/10 border border-accent-amber/30 rounded-lg px-2 py-2">
+                            ⏱ 48-hr window to inspect before auto-refund
+                          </div>
+                        )}
+                        <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-surface-100 dark:border-dark-border">
+                          {order.order_status === "PACKED" && labelUrls[order.id] && (
+                            <a
+                              href={labelUrls[order.id]}
+                              target="_blank"
+                              download
+                              rel="noopener noreferrer"
+                              className="p-2 rounded-lg bg-primary-50 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400"
+                              title="Download Label"
+                            >
+                              <FiDownload className="w-4 h-4" />
+                            </a>
+                          )}
+                          {order.order_status === "RETURN-DELIVERED" && (
+                            <button
+                              type="button"
+                              onClick={() => handleDisputeReturn(order)}
+                              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-danger/10 text-danger border border-danger/30"
+                            >
+                              Dispute Return
+                            </button>
+                          )}
+                          <Link
+                            href={`/orders/${order.id}`}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-100 dark:bg-dark-surface text-sm font-medium text-surface-700 dark:text-surface-200"
+                          >
+                            View
+                            <FiExternalLink className="w-4 h-4" />
+                          </Link>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+              </div>
+
+              {/* Desktop */}
+              <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full table-fixed min-w-0">
                 <thead>
                   <tr className="bg-surface-50 dark:bg-dark-surface">
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    <th className="px-4 xl:px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[26%]">
                       Product
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
-                      Quantity
+                    <th className="px-4 xl:px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[8%]">
+                      Qty
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    <th className="px-4 xl:px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[12%]">
                       Total
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    <th className="px-4 xl:px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[18%]">
                       Status
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    <th className="px-4 xl:px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[18%]">
                       Date
                     </th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    <th className="px-4 xl:px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[18%]">
                       Actions
                     </th>
                   </tr>
@@ -346,9 +429,9 @@ const OrderTable = ({ recentOrders }: any) => {
                           transition={{ delay: index * 0.05 }}
                           className="hover:bg-surface-50 dark:hover:bg-dark-hover transition-colors"
                         >
-                          <td className="px-6 py-4">
-                            <Link href={`/orders/${order.id}`} className="group">
-                              <p className="font-medium text-surface-900 dark:text-white group-hover:text-primary-500 transition-colors line-clamp-1">
+                          <td className="px-4 xl:px-6 py-4 align-top">
+                            <Link href={`/orders/${order.id}`} className="group block min-w-0">
+                              <p className="font-medium text-surface-900 dark:text-white group-hover:text-primary-500 transition-colors line-clamp-2 break-words">
                                 {order.product.name}
                               </p>
                               <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
@@ -356,25 +439,25 @@ const OrderTable = ({ recentOrders }: any) => {
                               </p>
                             </Link>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-4 xl:px-6 py-4 align-top">
                             <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-surface-100 dark:bg-dark-surface text-sm font-semibold text-surface-700 dark:text-surface-300">
                               {order.quantity}
                             </span>
                           </td>
-                          <td className="px-6 py-4">
-                            <span className="text-lg font-bold text-surface-900 dark:text-white">
+                          <td className="px-4 xl:px-6 py-4 align-top">
+                            <span className="text-base font-bold text-surface-900 dark:text-white whitespace-nowrap">
                               ${order.total_price}
                             </span>
                           </td>
-                          <td className="px-6 py-4">
-                            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${statusConfig.bgColor}`}>
-                              <StatusIcon className={`w-4 h-4 ${statusConfig.textColor}`} />
-                              <span className={`text-xs font-semibold ${statusConfig.textColor}`}>
+                          <td className="px-4 xl:px-6 py-4 align-top">
+                            <div className={`inline-flex items-center gap-2 px-2 xl:px-3 py-1.5 rounded-full max-w-full ${statusConfig.bgColor}`}>
+                              <StatusIcon className={`w-4 h-4 shrink-0 ${statusConfig.textColor}`} />
+                              <span className={`text-xs font-semibold truncate ${statusConfig.textColor}`}>
                                 {statusConfig.label}
                               </span>
                             </div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-4 xl:px-6 py-4 align-top">
                             <div>
                               <p className="text-sm font-medium text-surface-900 dark:text-white">
                                 {formatDate(order.date_of_order)}
@@ -384,15 +467,15 @@ const OrderTable = ({ recentOrders }: any) => {
                               </p>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-right">
+                          <td className="px-4 xl:px-6 py-4 text-right align-top">
                             <div className="flex flex-col items-end gap-2">
                               {/* 48-hour dispute window warning for RETURN-DELIVERED */}
                               {order.order_status === "RETURN-DELIVERED" && (
-                                <div className="text-xs text-accent-amber font-semibold bg-accent-amber/10 border border-accent-amber/30 rounded-lg px-2 py-1 text-right max-w-[180px]">
+                                <div className="text-[10px] leading-tight text-accent-amber font-semibold bg-accent-amber/10 border border-accent-amber/30 rounded-lg px-2 py-1 text-right max-w-[200px]">
                                   ⏱ 48-hr window to inspect before auto-refund
                                 </div>
                               )}
-                              <div className="flex items-center gap-2">
+                              <div className="flex flex-wrap items-center justify-end gap-2">
                                 {order.order_status === "PACKED" && labelUrls[order.id] && (
                                   <a
                                     href={labelUrls[order.id]}
@@ -407,11 +490,12 @@ const OrderTable = ({ recentOrders }: any) => {
                                 )}
                                 {order.order_status === "RETURN-DELIVERED" && (
                                   <button
+                                    type="button"
                                     onClick={() => handleDisputeReturn(order)}
-                                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20 transition-colors"
+                                    className="px-2 xl:px-3 py-1.5 text-[10px] xl:text-xs font-semibold rounded-lg bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20 transition-colors"
                                     title="Dispute this return — freezes the 48-hour auto-refund clock"
                                   >
-                                    Dispute Return
+                                    Dispute
                                   </button>
                                 )}
                                 <Link
@@ -431,6 +515,7 @@ const OrderTable = ({ recentOrders }: any) => {
                 </tbody>
               </table>
             </div>
+            </>
           ) : (
             /* Empty State */
             <div className="p-12 text-center">
