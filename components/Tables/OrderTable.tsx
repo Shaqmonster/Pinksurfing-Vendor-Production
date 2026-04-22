@@ -526,7 +526,7 @@ const OrderTable = ({ recentOrders }: any) => {
                 No orders yet
               </h3>
               <p className="text-surface-500 dark:text-surface-400 mb-6 max-w-sm mx-auto">
-                When customers place orders for your products, they'll appear here.
+                When customers place orders for your products, they&apos;ll appear here.
               </p>
               <Link
                 href="/inventory/products"
