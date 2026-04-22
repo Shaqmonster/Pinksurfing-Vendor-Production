@@ -1,6 +1,12 @@
 "use client";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { getSchemaCategories, getSchemaSubcategories, getFormSchema, saveProducts } from "@/api/products";
+import {
+  getSchemaCategories,
+  getSchemaSubcategories,
+  getFormSchema,
+  saveProducts,
+  createSquareListingPaymentLink,
+} from "@/api/products";
 import { Product } from "@/types/product";
 import { useRouter } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
@@ -15,6 +21,11 @@ import {
   truncateUnicodePlain,
   plainToQuillShortDescriptionHtml,
 } from "@/utils/shortDescription";
+import {
+  PendingListing,
+  upsertPendingListing,
+  updatePendingListingState,
+} from "@/utils/pendingListings";
 
 // ============ ICONS ============
 const CheckIcon = () => (
@@ -179,6 +190,8 @@ const AddProducts = () => {
   const [shortDescPlainLen, setShortDescPlainLen] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showDimensions, setShowDimensions] = useState(false);
+  const [createdListing, setCreatedListing] = useState<PendingListing | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   const router = useRouter();
 
@@ -481,8 +494,29 @@ const AddProducts = () => {
         );
 
         if (!res.error) {
-          toast.success(res.data.Status || "Product added successfully!");
-          router.push("/inventory/products");
+          const listingStatus = res?.data?.listing_status;
+          const createdProductId = res?.data?.product_id;
+
+          if (listingStatus === "PENDING_PAYMENT" && createdProductId) {
+            const listing: PendingListing = {
+              productId: createdProductId,
+              productName: cleanedProductData.name,
+              listingStatus: "PENDING_PAYMENT",
+              listingFeeAmount: String(res?.data?.listing_fee_amount || "2.00"),
+              listingFeeCurrency: String(res?.data?.listing_fee_currency || "USD"),
+              squareListingFeeEndpoint: res?.data?.square_listing_fee_endpoint,
+              state: "PENDING_PAYMENT",
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+
+            upsertPendingListing(listing);
+            setCreatedListing(listing);
+            toast.success("Product created in pending state. Pay listing fee to publish.");
+          } else {
+            toast.success(res.data.Status || "Product added successfully!");
+            router.push("/inventory/products");
+          }
         } else {
           handleError(res.data?.data?.Status || "Error adding product");
         }
@@ -491,6 +525,55 @@ const AddProducts = () => {
       } finally {
         setLoading(false);
       }
+    }
+  };
+
+  const handlePayListingFee = async () => {
+    if (!createdListing) return;
+
+    const token = getCookie("access_token");
+    if (!token) {
+      toast.error("Authentication error. Please sign in again.");
+      return;
+    }
+
+    setPaymentLoading(true);
+    try {
+      const result = await createSquareListingPaymentLink(token, createdListing.productId);
+
+      if (result.error) {
+        if (result.status === 403) {
+          toast.error("Not allowed for this product.");
+        } else if (result.status === 502) {
+          toast.error("Payments temporarily unavailable.");
+        } else if (result.status === 400) {
+          toast.error("Could not create payment link, try again.");
+        } else {
+          toast.error(result.message || "Could not create payment link, try again.");
+        }
+        return;
+      }
+
+      updatePendingListingState(createdListing.productId, "PAYMENT_REDIRECTED");
+      setCreatedListing((prev) =>
+        prev
+          ? {
+              ...prev,
+              state: "PAYMENT_REDIRECTED",
+              updatedAt: new Date().toISOString(),
+            }
+          : prev
+      );
+
+      const paymentUrl = result.data?.payment_link;
+      if (!paymentUrl) {
+        toast.error("Could not create payment link, try again.");
+        return;
+      }
+
+      window.location.href = paymentUrl;
+    } finally {
+      setPaymentLoading(false);
     }
   };
 
@@ -965,7 +1048,7 @@ const AddProducts = () => {
             No Specific Attributes Required
           </h3>
           <p className="text-surface-500">
-            This category doesn't require any specific attributes. You can proceed to the next step.
+            This category doesn&apos;t require any specific attributes. You can proceed to the next step.
           </p>
         </div>
       )}
@@ -1530,6 +1613,35 @@ const AddProducts = () => {
 
   return (
     <div className="min-h-screen pb-20">
+      {createdListing && (
+        <div className="mb-6 premium-card p-5 border border-warning/30 bg-warning/10 dark:bg-warning/10">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-surface-900 dark:text-white">Listing created</p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-warning/20 text-warning-dark dark:text-warning">
+                  Pending payment
+                </span>
+                <span className="text-sm text-surface-600 dark:text-surface-300">
+                  Pay {Number(createdListing.listingFeeAmount).toString()} {createdListing.listingFeeCurrency} to publish.
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handlePayListingFee}
+              disabled={paymentLoading}
+              className={`inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold transition-all ${paymentLoading
+                ? "bg-surface-300 text-surface-500 cursor-not-allowed"
+                : "bg-gradient-pink text-white shadow-glow-pink hover:opacity-90"
+                }`}
+            >
+              {paymentLoading ? "Preparing checkout..." : `Pay ${Number(createdListing.listingFeeAmount).toString()} ${createdListing.listingFeeCurrency} to publish`}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Progress Steps */}
       <div className="mb-8 overflow-x-auto">
         <div className="flex items-center min-w-max pb-4">
@@ -1631,10 +1743,14 @@ const AddProducts = () => {
             <button
               type="button"
               onClick={handleSave}
-              className="flex items-center gap-2 px-8 py-3 rounded-xl font-semibold bg-gradient-pink text-white shadow-glow-pink hover:opacity-90 transition-all duration-300"
+              disabled={Boolean(createdListing)}
+              className={`flex items-center gap-2 px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${createdListing
+                ? "bg-surface-300 text-surface-500 cursor-not-allowed"
+                : "bg-gradient-pink text-white shadow-glow-pink hover:opacity-90"
+                }`}
             >
               <SparklesIcon />
-              <span>Publish</span>
+              <span>{createdListing ? "Listing Created" : "Create Listing"}</span>
             </button>
           )}
         </div>

@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { 
   FiTrendingUp, 
@@ -12,13 +12,20 @@ import {
   FiMoreHorizontal
 } from "react-icons/fi";
 import { HiOutlineSparkles, HiOutlineCube, HiOutlineShoppingCart, HiOutlineCurrencyDollar } from "react-icons/hi";
-import { getTopSellingProducts } from "@/api/products";
+import { checkProductLiveStatus, getTopSellingProducts } from "@/api/products";
 import OrderTable from "@/components/Tables/OrderTable";
 import { getCookie } from "@/utils/cookies";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { removePendingListing, updatePendingListingState } from "@/utils/pendingListings";
 
 const Dashboard: React.FC = () => {
   const [topProducts, setTopProducts] = useState<any[]>([]);
+  const [listingNotice, setListingNotice] = useState<string>("");
+  const [listingNoticeType, setListingNoticeType] = useState<"info" | "success" | "warning">("info");
+  const listingHandledRef = useRef(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
   
   useMemo(() => {
     if (typeof window !== "undefined") {
@@ -30,6 +37,55 @@ const Dashboard: React.FC = () => {
       })();
     }
   }, []);
+
+  useEffect(() => {
+    const listingPaid = searchParams.get("listing_paid");
+    const productId = searchParams.get("product_id");
+
+    if (listingHandledRef.current || listingPaid !== "pending" || !productId) {
+      return;
+    }
+
+    listingHandledRef.current = true;
+    setListingNotice("Payment submitted, waiting for confirmation.");
+    setListingNoticeType("info");
+    updatePendingListingState(productId, "AWAITING_WEBHOOK");
+
+    let cancelled = false;
+    let attempts = 0;
+    const maxAttempts = 30;
+
+    const pollUntilLive = async () => {
+      if (cancelled) return;
+
+      attempts += 1;
+      const result = await checkProductLiveStatus(productId);
+
+      if (cancelled) return;
+
+      if (result.live) {
+        removePendingListing(productId);
+        setListingNotice("Published.");
+        setListingNoticeType("success");
+        router.replace(`/inventory/products?listing_live=true&product_id=${productId}`);
+        return;
+      }
+
+      if (attempts >= maxAttempts) {
+        setListingNotice("Still pending confirmation, refresh later.");
+        setListingNoticeType("warning");
+        return;
+      }
+
+      window.setTimeout(pollUntilLive, 5000);
+    };
+
+    void pollUntilLive();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router, searchParams]);
 
   // Animation variants
   const containerVariants = {
@@ -94,6 +150,16 @@ const Dashboard: React.FC = () => {
       animate="show"
       className="space-y-6"
     >
+      {listingNotice && (
+        <motion.div variants={itemVariants} className={`premium-card p-4 border ${listingNoticeType === "success"
+          ? "border-success/30 bg-success/10"
+          : listingNoticeType === "warning"
+            ? "border-warning/30 bg-warning/10"
+            : "border-primary-500/20 bg-primary-500/10"
+          }`}>
+          <p className="text-sm font-medium text-surface-900 dark:text-white">{listingNotice}</p>
+        </motion.div>
+      )}
 
       {/* Stats Grid */}
       {/* <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">

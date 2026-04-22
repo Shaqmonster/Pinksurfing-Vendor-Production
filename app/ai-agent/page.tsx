@@ -22,6 +22,7 @@ import type { AgentProduct } from "@/hooks/useAIAgent";
 import { getSchemaCategories, getSchemaSubcategories, saveProducts } from "@/api/products";
 import { downloadImageAsFile, markAgentProductPosted } from "@/api/aiAgent";
 import { getCookie } from "@/utils/cookies";
+import { PendingListing, upsertPendingListing } from "@/utils/pendingListings";
 
 // ─── Pinksurfing-mapped AliExpress categories ─────────────────────────────────
 // Only show categories that exist on both platforms. Real-estate / business-for-sale
@@ -125,11 +126,33 @@ function PostToStoreModal({ product, onClose, onSuccess }: PostModalProps) {
       return;
     }
 
+    const listingStatus = (res as any)?.data?.listing_status;
+    const createdProductId = (res as any)?.data?.product_id;
+
+    if (listingStatus === "PENDING_PAYMENT" && createdProductId) {
+      const pendingListing: PendingListing = {
+        productId: createdProductId,
+        productName: product.name,
+        listingStatus: "PENDING_PAYMENT",
+        listingFeeAmount: String((res as any)?.data?.listing_fee_amount || "2.00"),
+        listingFeeCurrency: String((res as any)?.data?.listing_fee_currency || "USD"),
+        squareListingFeeEndpoint: (res as any)?.data?.square_listing_fee_endpoint,
+        state: "PENDING_PAYMENT",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      upsertPendingListing(pendingListing);
+    }
+
     await markAgentProductPosted(product._id);
-    toast.success(`"${product.name}" posted to your store!`);
+    toast.success(`"${product.name}" created and waiting for listing payment.`);
     onSuccess(product._id);
     setPosting(false);
     onClose();
+
+    if (listingStatus === "PENDING_PAYMENT") {
+      window.location.href = "/inventory/products";
+    }
   };
 
   if (!mounted) return null;

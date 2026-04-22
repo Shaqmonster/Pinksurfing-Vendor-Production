@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  createSquareListingPaymentLink,
   getCategories,
   getProducts,
   getSubcategories,
@@ -18,8 +19,6 @@ import {
   FiTrash2, 
   FiPackage, 
   FiPlus, 
-  FiMoreHorizontal,
-  FiArrowRight,
   FiSearch,
   FiCopy,
   FiExternalLink
@@ -27,6 +26,12 @@ import {
 import ConfirmationModal from "../Modals/ConfirmDelete";
 import { toast } from "react-toastify";
 import { getCookie } from "@/utils/cookies";
+import {
+  PendingListing,
+  getPendingListings,
+  removePendingListing,
+  updatePendingListingState,
+} from "@/utils/pendingListings";
 
 const ProductsTable = (props: { Products?: Product[] }) => {
   const rowRef = useRef<any>(null);
@@ -40,6 +45,12 @@ const ProductsTable = (props: { Products?: Product[] }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [productIdToDelete, setProductIdToDelete] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [pendingListings, setPendingListings] = useState<PendingListing[]>([]);
+  const [payingListingId, setPayingListingId] = useState("");
+
+  const loadPendingListings = useCallback(() => {
+    setPendingListings(getPendingListings());
+  }, []);
 
   const handleDelete = async (productId: string) => {
     if (typeof window !== "undefined") {
@@ -80,8 +91,26 @@ const ProductsTable = (props: { Products?: Product[] }) => {
       getCategories().then((data) => {
         setCategories(data);
       });
+      loadPendingListings();
     }
-  }, []);
+  }, [loadPendingListings]);
+
+  useEffect(() => {
+    if (!products || products.length === 0) return;
+
+    let changed = false;
+    const activeProductIds = new Set(products.map((item: any) => item.id));
+    pendingListings.forEach((pending) => {
+      if (activeProductIds.has(pending.productId)) {
+        removePendingListing(pending.productId);
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      loadPendingListings();
+    }
+  }, [products, pendingListings, loadPendingListings]);
 
   useMemo(() => {
     if (typeof window !== "undefined") {
@@ -142,6 +171,45 @@ const ProductsTable = (props: { Products?: Product[] }) => {
   const filteredProducts = products?.filter((product) =>
     product.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handlePayListingFee = async (listing: PendingListing) => {
+    const token = getCookie("access_token");
+    if (!token) {
+      toast.error("Authentication error. Please sign in again.");
+      return;
+    }
+
+    setPayingListingId(listing.productId);
+    try {
+      const result = await createSquareListingPaymentLink(token, listing.productId);
+
+      if (result.error) {
+        if (result.status === 403) {
+          toast.error("Not allowed for this product.");
+        } else if (result.status === 502) {
+          toast.error("Payments temporarily unavailable.");
+        } else if (result.status === 400) {
+          toast.error("Could not create payment link, try again.");
+        } else {
+          toast.error(result.message || "Could not create payment link, try again.");
+        }
+        return;
+      }
+
+      updatePendingListingState(listing.productId, "PAYMENT_REDIRECTED");
+      loadPendingListings();
+
+      const paymentUrl = result.data?.payment_link;
+      if (!paymentUrl) {
+        toast.error("Could not create payment link, try again.");
+        return;
+      }
+
+      window.location.href = paymentUrl;
+    } finally {
+      setPayingListingId("");
+    }
+  };
 
   const storefrontBase =
     process.env.NEXT_PUBLIC_ENV === "production"
@@ -229,6 +297,63 @@ const ProductsTable = (props: { Products?: Product[] }) => {
               </div>
             </div>
           </div>
+
+          {pendingListings.length > 0 && (
+            <div className="p-6 border-b border-light-border dark:border-dark-border bg-warning/5">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div>
+                  <h3 className="text-base font-semibold text-surface-900 dark:text-white">Pending Listings</h3>
+                  <p className="text-sm text-surface-500 dark:text-surface-400">
+                    These listings are not public until payment is confirmed.
+                  </p>
+                </div>
+                <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-warning/20 text-warning-dark dark:text-warning">
+                  {pendingListings.length}
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {pendingListings.map((listing) => (
+                  <div
+                    key={listing.productId}
+                    className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 rounded-xl bg-white dark:bg-dark-card border border-surface-200 dark:border-dark-border"
+                  >
+                    <div>
+                      <p className="font-medium text-surface-900 dark:text-white">
+                        {listing.productName || `Product ${listing.productId.slice(0, 8)}...`}
+                      </p>
+                      <div className="mt-1 flex items-center gap-2 flex-wrap">
+                        <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold bg-warning/20 text-warning-dark dark:text-warning">
+                          Pending payment
+                        </span>
+                        <span className="text-xs text-surface-500 dark:text-surface-400">
+                          {listing.state === "AWAITING_WEBHOOK"
+                            ? "Payment submitted, waiting for confirmation"
+                            : `Pay ${Number(listing.listingFeeAmount).toString()} ${listing.listingFeeCurrency} to publish`}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handlePayListingFee(listing)}
+                        disabled={listing.state === "AWAITING_WEBHOOK" || payingListingId === listing.productId}
+                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${listing.state === "AWAITING_WEBHOOK" || payingListingId === listing.productId
+                          ? "bg-surface-300 text-surface-500 cursor-not-allowed"
+                          : "bg-gradient-pink text-white hover:opacity-90"
+                          }`}
+                      >
+                        {payingListingId === listing.productId
+                          ? "Preparing checkout..."
+                          : `Pay ${Number(listing.listingFeeAmount).toString()} ${listing.listingFeeCurrency}`}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Mobile / tablet: cards (no horizontal scroll) */}
           {filteredProducts?.length > 0 ? (
