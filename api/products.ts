@@ -371,6 +371,72 @@ export async function getSingleProduct(
   }
 }
 
+export interface ListingPaymentLinkData {
+  payment_link: string;
+  payment_link_id: string;
+  order_id: string;
+  amount: string;
+  currency: string;
+}
+
+export async function createSquareListingPaymentLink(
+  token: string | null,
+  productId: string
+) {
+  if (!token || !productId) {
+    return { error: true, status: 400, message: "Missing token or product ID." };
+  }
+
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/payments/square/product-listing/${productId}/`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token.replaceAll('"', "")}`,
+        },
+      }
+    );
+
+    return {
+      error: false,
+      status: response.status,
+      data: response.data as ListingPaymentLinkData,
+    };
+  } catch (error: any) {
+    const status = error?.response?.status ?? 500;
+    const message =
+      error?.response?.data?.error ||
+      error?.response?.data?.message ||
+      error?.message ||
+      "Failed to create payment link";
+
+    return {
+      error: true,
+      status,
+      message,
+      data: error?.response?.data || null,
+    };
+  }
+}
+
+export async function checkProductLiveStatus(productId: string) {
+  if (!productId) {
+    return { live: false, status: 400, error: true };
+  }
+
+  try {
+    const response = await axios.get(`${BASE_URL}/product/product/${productId}/`);
+    return { live: response.status === 200, status: response.status, error: false };
+  } catch (error: any) {
+    const status = error?.response?.status ?? 500;
+    if (status === 404) {
+      return { live: false, status, error: false };
+    }
+    return { live: false, status, error: true };
+  }
+}
+
 export async function getTopSellingProducts(token: string | null) {
   if (!token) {
     return { error: true, data: null };

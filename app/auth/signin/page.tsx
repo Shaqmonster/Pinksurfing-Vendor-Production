@@ -282,7 +282,7 @@ const SignIn: React.FC = () => {
 
                 {/* Sign Up Link */}
                 <p className="text-center text-surface-500 dark:text-surface-400 pt-2">
-                  Don't have an account?{" "}
+                  Don&apos;t have an account?{" "}
                   <button
                     type="button"
                     onClick={() => setAuthpage("signup")}

@@ -786,7 +786,7 @@ const EditProduct = () => {
         <div className="premium-card p-8 text-center">
           <div className="w-16 h-16 rounded-full bg-surface-100 dark:bg-dark-surface mx-auto mb-4 flex items-center justify-center"><TagIcon /></div>
           <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">No Specific Attributes Required</h3>
-          <p className="text-surface-500">This category doesn't require any specific attributes.</p>
+          <p className="text-surface-500">This category doesn&apos;t require any specific attributes.</p>
         </div>
       )}
     </div>

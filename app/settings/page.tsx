@@ -438,7 +438,7 @@ const Settings = () => {
                   Address Information
                 </h2>
                 <p className="text-sm text-surface-500 dark:text-surface-400">
-                  Your store's physical address
+                  Your store&apos;s physical address
                 </p>
               </div>
             </div>
