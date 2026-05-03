@@ -187,7 +187,7 @@ export default function OrderDetailPage() {
   }
 
   const paymentMethod = order.paid_with_other
-    ? "PayPal / Card"
+    ? "Direct Payment / Card"
     : order.paid_with_escrow
     ? "Escrow"
     : order.paid_with_wallet

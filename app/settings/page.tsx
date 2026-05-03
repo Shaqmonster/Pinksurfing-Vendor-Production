@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import axios from "axios";
 import Image from "next/image";
 import { getVendorProfile, updateVendorProfile } from "@/api/products";
 import { Loader2 } from "@/components/common/Loader";
