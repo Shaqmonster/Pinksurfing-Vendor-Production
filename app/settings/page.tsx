@@ -18,6 +18,7 @@ import {
   FiMap,
   FiChevronDown,
   FiSearch,
+  FiCreditCard,
 } from "react-icons/fi";
 import { FaStore } from "react-icons/fa";
 import Link from "next/link";
@@ -141,11 +142,14 @@ const Settings = () => {
   const [loadingStates, setLoadingStates] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
 
+  const [vendorId, setVendorId] = useState("");
+
   const fetchProfile = async () => {
     setLoading(true);
     try {
       const { data, error } = await getVendorProfile(token);
       if (!error) {
+        setVendorId(data.id || "");
         setStoreName(data.store_name || "");
         setContactPersonName(data.contact_person_name || "");
         setEmail(data.email || "");
@@ -165,6 +169,31 @@ const Settings = () => {
       console.error("Unexpected error:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSquareOnboarding = async () => {
+    if (!token || !vendorId) {
+      toast.error("Vendor information not found.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/payments/square/onboarding-link/${vendorId}/`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token.replaceAll('"', "")}`,
+          },
+        }
+      );
+      window.location.href = response.data.action_url;
+    } catch (error: any) {
+      console.error("Failed to get Square onboarding link", error);
+      toast.error(error.response?.data?.error || "Failed to get Square onboarding link");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -570,6 +599,38 @@ const Settings = () => {
                   onChange={(e) => setZipCode(e.target.value)}
                 />
               </div>
+            </div>
+          </motion.div>
+
+          {/* Payouts & Financials */}
+          <motion.div variants={itemVariants} className="premium-card p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
+                <FiCreditCard className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
+                  Payouts & Financials
+                </h2>
+                <p className="text-sm text-surface-500 dark:text-surface-400">
+                  Connect your payment accounts to receive funds
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-surface-50 dark:bg-dark-input border border-surface-200 dark:border-dark-border rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="space-y-1 text-center md:text-left">
+                <p className="text-sm font-bold text-surface-900 dark:text-white uppercase tracking-widest">Square Integration</p>
+                <p className="text-xs text-surface-500 dark:text-surface-400">Directly receive payments from customers to your Square account.</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleSquareOnboarding}
+                className="w-full md:w-auto px-8 py-3 bg-[#3E3E3E] text-white font-bold rounded-xl hover:bg-black transition-all shadow-lg flex items-center justify-center gap-2 text-sm"
+              >
+                <FiCreditCard className="w-4 h-4" />
+                Connect Square
+              </button>
             </div>
           </motion.div>
 
