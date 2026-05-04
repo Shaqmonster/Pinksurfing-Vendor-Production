@@ -1257,33 +1257,40 @@ const AddProducts = () => {
 
               <div className="relative premium-card p-6 md:p-8 border-0 bg-white/80 dark:bg-dark-card/80 backdrop-blur-sm">
                 {/* Category Breadcrumb */}
-                <div className="flex flex-wrap items-center gap-2 mb-6">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-primary-500/10 to-pink-500/10 border border-primary-200 dark:border-primary-500/20">
-                    <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
-                    <span className="text-xs font-semibold text-primary-600 dark:text-primary-400">{selectedCategoryName}</span>
-                  </span>
-                  <svg className="w-4 h-4 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {/* Category & Subcategory Breadcrumbs - Enhanced */}
+                <div className="flex flex-wrap items-center gap-3 mb-8">
+                  <div className="group flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary-500/10 to-pink-500/10 border border-primary-500/20 shadow-sm hover:shadow-glow-pink/10 transition-all duration-500">
+                    <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse shadow-[0_0_8px_rgba(232,35,122,0.6)]" />
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-primary-400">{selectedCategoryName}</span>
+                  </div>
+                  <svg className="w-4 h-4 text-surface-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                  <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-surface-100 dark:bg-dark-surface border border-surface-200 dark:border-dark-border">
-                    <span className="text-xs font-medium text-surface-600 dark:text-surface-400">{selectedSubcategoryName}</span>
-                  </span>
+                  <div className="px-4 py-2 rounded-full bg-surface-800/50 border border-surface-700/50">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-surface-400">{selectedSubcategoryName}</span>
+                  </div>
                 </div>
 
-                {/* Product Title - Hero Input */}
-                <div className="relative">
-                  <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-primary-500 to-pink-500 rounded-full" />
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 mb-3">
-                    Listing Title <span className="text-danger">*</span>
+                {/* Product Title - Hero Input (Rebuilt for 'Pop') */}
+                <div className="relative group p-6 -mx-6 rounded-2xl transition-all duration-500 focus-within:bg-white/[0.02] focus-within:shadow-[inset_0_0_40px_rgba(232,35,122,0.02)]">
+                  {/* Vertical Accent Bar with Glow */}
+                  <div className="absolute left-0 top-8 bottom-8 w-1 bg-gradient-to-b from-primary-500 to-pink-500 rounded-full shadow-[0_0_15px_rgba(232,35,122,0.4)] transition-all duration-500 group-focus-within:top-4 group-focus-within:bottom-4 group-focus-within:shadow-[0_0_20px_rgba(232,35,122,0.6)]" />
+                  
+                  <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-surface-500 group-focus-within:text-primary-400 transition-colors mb-4 ml-2">
+                    Listing Title <span className="text-primary-500">*</span>
                   </label>
+                  
                   <input
                     type="text"
                     value={productData.name}
                     onChange={(e) => updateProductData("name", e.target.value)}
                     placeholder="Enter a Listing title..."
-                    className="w-full px-0 py-3 text-xl md:text-2xl font-semibold bg-transparent border-0 border-b-2 border-surface-200 dark:border-dark-border text-surface-900 dark:text-white placeholder:text-surface-300 dark:placeholder:text-surface-600 focus:border-primary-500 focus:ring-0 transition-colors"
+                    className="w-full bg-transparent border-none p-2 text-2xl md:text-3xl font-bold text-white placeholder:text-surface-700 focus:ring-0 transition-all selection:bg-primary-500/30"
                     required
                   />
+                  
+                  {/* Animated Bottom Border */}
+                  <div className="absolute bottom-4 left-8 right-8 h-[2px] bg-surface-800 transition-all duration-500 group-focus-within:bg-gradient-to-r group-focus-within:from-primary-500 group-focus-within:to-pink-500 group-focus-within:shadow-[0_2px_10px_rgba(232,35,122,0.3)]" />
                 </div>
               </div>
             </div>
