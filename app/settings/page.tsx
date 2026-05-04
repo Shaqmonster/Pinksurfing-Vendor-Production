@@ -145,7 +145,6 @@ const Settings = () => {
 
   const [vendorId, setVendorId] = useState("");
   const [squareConnected, setSquareConnected] = useState(false);
-  const [warningMessage, setWarningMessage] = useState<string | null>(null);
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -279,7 +278,6 @@ const Settings = () => {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setWarningMessage(null);
 
     const updatedData = {
       store_name: storeName,
@@ -299,12 +297,7 @@ const Settings = () => {
     try {
       const { data, error } = await updateVendorProfile(token, updatedData);
       if (!error) {
-        if (data.warning) {
-          setWarningMessage(data.warning);
-          toast.info("Profile saved, but please review the address warning.");
-        } else {
-          toast.success("Profile updated successfully!");
-        }
+        toast.success("Profile updated successfully!");
         await fetchProfile();
       } else {
         toast.error(
@@ -481,19 +474,6 @@ const Settings = () => {
               </p>
             </div>
           </div>
-
-          {warningMessage && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              className="mb-6 p-4 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10 flex items-start gap-3"
-            >
-              <div className="w-5 h-5 rounded-full bg-amber-500 flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold">!</div>
-              <p className="text-sm text-amber-900 dark:text-amber-200 leading-relaxed">
-                {warningMessage}
-              </p>
-            </motion.div>
-          )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="md:col-span-2">
