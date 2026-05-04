@@ -50,10 +50,9 @@ const DropdownUser = ({ setLogged, profile }: DropdownUserProps) => {
       try {
         const { data, error } = await getVendorProfile(token);
         if (!error) {
-          const storedData = localStorage.getItem("store");
-          if (!storedData) {
-            localStorage.setItem("store", JSON.stringify(data));
-          }
+          // ALWAYS update localStorage to prevent stale data from previous vendor sessions
+          localStorage.setItem("store", JSON.stringify(data));
+          
           setUser({
             contact_person_name: data.contact_person_name || "",
             store_name: data.store_name || "",
@@ -89,6 +88,9 @@ const DropdownUser = ({ setLogged, profile }: DropdownUserProps) => {
       localStorage.removeItem("vendor_id");
       localStorage.removeItem("store");
       localStorage.removeItem("refresh");
+      localStorage.removeItem("vendorAccess"); // Clear the e-commerce side flag too
+      localStorage.removeItem("user.vendorAccess"); // Alternative key name used in Home.jsx
+      localStorage.clear(); // Nuclear option to ensure absolute isolation on logout
 
       const domain = window.location.hostname.includes("localhost")
         ? undefined

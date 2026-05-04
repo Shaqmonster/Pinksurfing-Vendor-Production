@@ -112,24 +112,28 @@ const ProductsTable = (props: { Products?: Product[] }) => {
     }
   }, [products, pendingListings, loadPendingListings]);
 
-  useMemo(() => {
+  useEffect(() => {
     if (typeof window !== "undefined") {
       const token: string | null = getCookie("access_token");
       const store: string | null = localStorage.getItem("store");
 
       if (store) {
-        const storeObject = JSON.parse(store);
-        const store_slug = storeObject.slug;
-        if (token && store_slug) {
-          setLoading(true);
-          getProducts(token, store_slug).then((data) => {
-            setProducts(data.data?.Products || []);
-            setLoading(false);
-          });
+        try {
+          const storeObject = JSON.parse(store);
+          const store_slug = storeObject.slug;
+          if (token && store_slug) {
+            setLoading(true);
+            getProducts(token, store_slug).then((data) => {
+              setProducts(data.data?.Products || []);
+              setLoading(false);
+            });
+          }
+        } catch (e) {
+          console.error("Error parsing store data", e);
         }
       }
     }
-  }, []);
+  }, [loading === false && products.length === 0]); // Dependency on initial load or empty state
 
   useMemo(() => {
     categories.forEach((category: any) => {
