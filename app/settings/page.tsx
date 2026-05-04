@@ -144,6 +144,7 @@ const Settings = () => {
   const [loadingCities, setLoadingCities] = useState(false);
 
   const [vendorId, setVendorId] = useState("");
+  const [squareConnected, setSquareConnected] = useState(false);
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -151,6 +152,7 @@ const Settings = () => {
       const { data, error } = await getVendorProfile(token);
       if (!error) {
         setVendorId(data.id || "");
+        setSquareConnected(Boolean(data.square_access_token));
         setStoreName(data.store_name || "");
         setContactPersonName(data.contact_person_name || "");
         setEmail(data.email || "");
@@ -619,19 +621,31 @@ const Settings = () => {
               </div>
             </div>
 
-            <div className="bg-surface-50 dark:bg-dark-input border border-surface-200 dark:border-dark-border rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="space-y-1 text-center md:text-left">
-                <p className="text-sm font-bold text-surface-900 dark:text-white uppercase tracking-widest">Square Integration</p>
-                <p className="text-xs text-surface-500 dark:text-surface-400">Directly receive payments from customers to your Square account.</p>
+            <div className="bg-surface-50 dark:bg-dark-input border border-surface-200 dark:border-dark-border rounded-2xl p-6 space-y-4">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="space-y-1 text-center md:text-left">
+                  <p className="text-sm font-bold text-surface-900 dark:text-white uppercase tracking-widest">Square Integration</p>
+                  <p className="text-xs text-surface-500 dark:text-surface-400">Directly receive payments from customers to your Square account.</p>
+                </div>
+                <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${squareConnected ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400"}`}>
+                  {squareConnected ? "Square Connected" : "Square Not Connected"}
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={handleSquareOnboarding}
-                className="w-full md:w-auto px-8 py-3 bg-[#3E3E3E] text-white font-bold rounded-xl hover:bg-black transition-all shadow-lg flex items-center justify-center gap-2 text-sm"
-              >
-                <FiCreditCard className="w-4 h-4" />
-                Connect Square
-              </button>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <p className="text-sm text-surface-600 dark:text-surface-400 max-w-2xl">
+                  {squareConnected
+                    ? "Square has been linked before, but merchants who connected prior to the permissions update should reconnect now so payments keep working."
+                    : "Connect Square so customers can pay you directly and funds can be deposited into your Square account."}
+                </p>
+                <button
+                  type="button"
+                  onClick={handleSquareOnboarding}
+                  className="w-full md:w-auto px-8 py-3 bg-[#3E3E3E] text-white font-bold rounded-xl hover:bg-black transition-all shadow-lg flex items-center justify-center gap-2 text-sm"
+                >
+                  <FiCreditCard className="w-4 h-4" />
+                  {squareConnected ? "Reconnect Square" : "Connect Square"}
+                </button>
+              </div>
             </div>
           </motion.div>
 
