@@ -631,6 +631,9 @@ const Settings = () => {
                   {squareConnected ? "Square Connected" : "Square Not Connected"}
                 </div>
               </div>
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                Square may ask you to complete business verification, identity details, and payout setup the first time you connect. If payments are not working yet, open Square again and finish those steps before trying to take customer payments.
+              </div>
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <p className="text-sm text-surface-600 dark:text-surface-400 max-w-2xl">
                   {squareConnected

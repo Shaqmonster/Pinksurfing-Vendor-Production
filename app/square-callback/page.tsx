@@ -64,6 +64,9 @@ export default function SquareCallbackPage() {
               Your Square account has been linked successfully. Customers can now pay for your
               products and funds will be deposited directly into your Square account.
             </p>
+            <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+              If this is your first time connecting Square, make sure you finish any business verification, identity, and payout setup steps inside Square before taking payments.
+            </div>
             <Link
               href="/settings"
               className="inline-flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-3.5 text-base font-semibold text-white hover:opacity-90 transition-opacity mb-3"
