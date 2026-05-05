@@ -23,6 +23,7 @@ import {
 } from "@/utils/shortDescription";
 import {
   PendingListing,
+  getPendingListings,
   upsertPendingListing,
   updatePendingListingState,
 } from "@/utils/pendingListings";
@@ -251,6 +252,18 @@ const AddProducts = () => {
       }
     });
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const pendingListings = getPendingListings().sort(
+      (left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()
+    );
+
+    if (!createdListing && pendingListings.length > 0) {
+      setCreatedListing(pendingListings[0]);
+    }
+  }, [createdListing]);
 
   // Load subcategories when category changes using schema API
   useEffect(() => {
