@@ -99,7 +99,9 @@ const ProductsTable = (props: { Products?: Product[] }) => {
     if (!products || products.length === 0) return;
 
     let changed = false;
-    const activeProductIds = new Set(products.map((item: any) => item.id));
+    const activeProductIds = new Set(
+      products.filter((item: any) => item.is_active).map((item: any) => item.id)
+    );
     pendingListings.forEach((pending) => {
       if (activeProductIds.has(pending.productId)) {
         removePendingListing(pending.productId);
@@ -330,6 +332,10 @@ const ProductsTable = (props: { Products?: Product[] }) => {
   };
 
   const handleProductClick = async (product: any) => {
+    if (!product.is_active) {
+      toast.info("Pay the listing fee to activate this product first.");
+      return;
+    }
     const url = getProductUrl(product);
     window.open(url, "_blank", "noopener,noreferrer");
     try {
@@ -454,8 +460,8 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                       transition={{ delay: index * 0.03 }}
                       className="p-4 space-y-3 bg-white dark:bg-dark-card"
                     >
-                      <div
-                        className="flex gap-3 cursor-pointer group"
+                        <div
+                        className={`flex gap-3 group ${product.is_active ? "cursor-pointer" : "cursor-default"}`}
                         onClick={() => handleProductClick(product)}
                         role="button"
                         tabIndex={0}
@@ -550,14 +556,16 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                                 {payingListingId === product.id ? "Preparing checkout..." : "Pay to activate"}
                               </button>
                             )}
-                          <button
-                            type="button"
-                            onClick={(e) => copyToClipboard(getProductUrl(product), e)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-dark-surface text-surface-600 dark:text-surface-400 text-xs font-medium"
-                          >
-                            <FiCopy className="w-3.5 h-3.5" />
-                            Copy link
-                          </button>
+                          {product.is_active && (
+                            <button
+                              type="button"
+                              onClick={(e) => copyToClipboard(getProductUrl(product), e)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-dark-surface text-surface-600 dark:text-surface-400 text-xs font-medium"
+                            >
+                              <FiCopy className="w-3.5 h-3.5" />
+                              Copy link
+                            </button>
+                          )}
                           <Link
                             href={`/inventory/editProduct/${product.id}`}
                             className="p-2 rounded-lg bg-accent-blue/10 dark:bg-accent-blue/20 text-accent-blue"
@@ -645,10 +653,16 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                               <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
                                 ID: {product.id?.slice(0, 8)}...
                               </p>
-                              <span className="inline-flex items-center gap-1 text-xs text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
-                                <FiExternalLink className="w-3 h-3" />
-                                Open & copy link
-                              </span>
+                              {product.is_active ? (
+                                <span className="inline-flex items-center gap-1 text-xs text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
+                                  <FiExternalLink className="w-3 h-3" />
+                                  Open & copy link
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-xs text-warning-dark dark:text-warning mt-0.5">
+                                  Pay listing fee to activate
+                                </span>
+                              )}
                             </div>
                           </div>
                         </td>
@@ -670,15 +684,17 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                           </p>
                         </td>
                         <td className="px-4 xl:px-6 py-4 text-center align-top">
-                          <button
-                            type="button"
-                            onClick={(e) => copyToClipboard(getProductUrl(product), e)}
-                            className="inline-flex items-center gap-1.5 px-2 xl:px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-dark-surface text-surface-600 dark:text-surface-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-500 transition-colors text-xs font-medium"
-                            title="Copy product link"
-                          >
-                            <FiCopy className="w-3.5 h-3.5 shrink-0" />
-                            <span className="hidden xl:inline">Copy Link</span>
-                          </button>
+                          {product.is_active && (
+                            <button
+                              type="button"
+                              onClick={(e) => copyToClipboard(getProductUrl(product), e)}
+                              className="inline-flex items-center gap-1.5 px-2 xl:px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-dark-surface text-surface-600 dark:text-surface-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-500 transition-colors text-xs font-medium"
+                              title="Copy product link"
+                            >
+                              <FiCopy className="w-3.5 h-3.5 shrink-0" />
+                              <span className="hidden xl:inline">Copy Link</span>
+                            </button>
+                          )}
                         </td>
                         <td className="px-4 xl:px-6 py-4 text-center align-top">
                           <span
