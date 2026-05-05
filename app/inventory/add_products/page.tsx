@@ -502,7 +502,7 @@ const AddProducts = () => {
               productId: createdProductId,
               productName: cleanedProductData.name,
               listingStatus: "PENDING_PAYMENT",
-              listingFeeAmount: String(res?.data?.listing_fee_amount || "2.00"),
+              listingFeeAmount: String(res?.data?.listing_fee_amount || "1.00"),
               listingFeeCurrency: String(res?.data?.listing_fee_currency || "USD"),
               squareListingFeeEndpoint: res?.data?.square_listing_fee_endpoint,
               state: "PENDING_PAYMENT",
@@ -542,14 +542,15 @@ const AddProducts = () => {
       const result = await createSquareListingPaymentLink(token, createdListing.productId);
 
       if (result.error) {
+          const details = result.data?.details || result.message || "Could not create payment link, try again.";
         if (result.status === 403) {
-          toast.error("Not allowed for this product.");
+          toast.error(`Not allowed for this product. ${details}`);
         } else if (result.status === 502) {
-          toast.error("Payments temporarily unavailable.");
+          toast.error(`Payments temporarily unavailable. ${details}`);
         } else if (result.status === 400) {
-          toast.error("Could not create payment link, try again.");
+          toast.error(details);
         } else {
-          toast.error(result.message || "Could not create payment link, try again.");
+          toast.error(details);
         }
         return;
       }

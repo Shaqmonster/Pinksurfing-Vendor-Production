@@ -134,7 +134,7 @@ function PostToStoreModal({ product, onClose, onSuccess }: PostModalProps) {
         productId: createdProductId,
         productName: product.name,
         listingStatus: "PENDING_PAYMENT",
-        listingFeeAmount: String((res as any)?.data?.listing_fee_amount || "2.00"),
+        listingFeeAmount: String((res as any)?.data?.listing_fee_amount || "1.00"),
         listingFeeCurrency: String((res as any)?.data?.listing_fee_currency || "USD"),
         squareListingFeeEndpoint: (res as any)?.data?.square_listing_fee_endpoint,
         state: "PENDING_PAYMENT",
