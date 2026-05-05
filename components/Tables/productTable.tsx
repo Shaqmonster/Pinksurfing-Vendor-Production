@@ -188,9 +188,11 @@ const ProductsTable = (props: { Products?: Product[] }) => {
       const result = await createSquareListingPaymentLink(token, listing.productId);
 
       if (result.error) {
-        const errorMsg = result.data?.details || result.message || "Could not create payment link";
+        const errorMsg = result.data?.hint || result.data?.details || result.message || "Could not create payment link";
         if (result.status === 403) {
           toast.error(`Not allowed: ${errorMsg}`);
+        } else if (result.status === 401) {
+          toast.error(`Square platform credentials need attention: ${errorMsg}`);
         } else if (result.status === 502) {
           toast.error(`Configuration error: ${errorMsg}`);
         } else {

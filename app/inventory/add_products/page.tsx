@@ -542,9 +542,11 @@ const AddProducts = () => {
       const result = await createSquareListingPaymentLink(token, createdListing.productId);
 
       if (result.error) {
-          const details = result.data?.details || result.message || "Could not create payment link, try again.";
+          const details = result.data?.hint || result.data?.details || result.message || "Could not create payment link, try again.";
         if (result.status === 403) {
           toast.error(`Not allowed for this product. ${details}`);
+          } else if (result.status === 401) {
+          toast.error(`Square platform credentials need attention. ${details}`);
         } else if (result.status === 502) {
           toast.error(`Payments temporarily unavailable. ${details}`);
         } else if (result.status === 400) {
