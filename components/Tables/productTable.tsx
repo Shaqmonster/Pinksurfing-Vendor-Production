@@ -135,6 +135,44 @@ const ProductsTable = (props: { Products?: Product[] }) => {
     }
   }, [loading === false && products.length === 0]); // Dependency on initial load or empty state
 
+  // Poll for product state changes while there are pending listings so the UI
+  // can detect activation and remove Pay buttons automatically.
+  useEffect(() => {
+    if (pendingListings.length === 0) return;
+    let cancelled = false;
+    const token: string | null = getCookie("access_token");
+    const storeRaw = typeof window !== "undefined" ? localStorage.getItem("store") : null;
+    if (!token || !storeRaw) return;
+    let intervalId: any = null;
+    try {
+      const storeObject = JSON.parse(storeRaw);
+      const store_slug = storeObject.slug;
+      if (!store_slug) return;
+
+      const poll = async () => {
+        try {
+          const data: any = await getProducts(token, store_slug);
+          if (cancelled) return;
+          setProducts(data.data?.Products || []);
+          // If any pending listing product id now present and active, the other effect will remove pending listing
+        } catch (err) {
+          console.error("Error polling products:", err);
+        }
+      };
+
+      intervalId = setInterval(poll, 5000);
+      // run one immediately
+      poll();
+    } catch (err) {
+      console.error("Error starting product poll", err);
+    }
+
+    return () => {
+      cancelled = true;
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [pendingListings.length]);
+
   useMemo(() => {
     categories.forEach((category: any) => {
       getSubcategories(category?.slug).then((data) => {
@@ -202,6 +240,48 @@ const ProductsTable = (props: { Products?: Product[] }) => {
       }
 
       updatePendingListingState(listing.productId, "PAYMENT_REDIRECTED");
+      loadPendingListings();
+
+      const paymentUrl = result.data?.payment_link;
+      if (!paymentUrl) {
+        toast.error("Could not create payment link, try again.");
+        return;
+      }
+
+      window.location.href = paymentUrl;
+    } finally {
+      setPayingListingId("");
+    }
+  };
+
+  const handlePayForProduct = async (product: any) => {
+    const token = getCookie("access_token");
+    if (!token) {
+      toast.error("Authentication error. Please sign in again.");
+      return;
+    }
+
+    setPayingListingId(product.id);
+    try {
+      const result = await createSquareListingPaymentLink(token, product.id);
+
+      if (result.error) {
+        const errorMsg = result.data?.hint || result.data?.details || result.message || "Could not create payment link";
+        if (result.status === 403) {
+          toast.error(`Not allowed: ${errorMsg}`);
+        } else if (result.status === 401) {
+          toast.error(`Square platform credentials need attention: ${errorMsg}`);
+        } else if (result.status === 502) {
+          toast.error(`Configuration error: ${errorMsg}`);
+        } else {
+          toast.error(`Payment Error: ${errorMsg}`);
+        }
+        return;
+      }
+
+      // If a payment link was created, mark local pending state and redirect
+      // so the pending listing UI can show until webhook confirms activation.
+      updatePendingListingState(product.id, "PAYMENT_REDIRECTED");
       loadPendingListings();
 
       const paymentUrl = result.data?.payment_link;
@@ -449,6 +529,27 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                           ${product.unit_price}
                         </span>
                         <div className="flex items-center gap-2 ml-auto">
+                            {/* Show Pay CTA for inactive products */}
+                            {!product.is_active && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePayForProduct(product);
+                                }}
+                                disabled={
+                                  pendingListings.some((p) => p.productId === product.id) || payingListingId === product.id
+                                }
+                                className={`mr-2 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                                  pendingListings.some((p) => p.productId === product.id) || payingListingId === product.id
+                                    ? "bg-surface-300 text-surface-500 cursor-not-allowed"
+                                    : "bg-gradient-pink text-white hover:opacity-90"
+                                }`}
+                                title="Pay to activate"
+                              >
+                                {payingListingId === product.id ? "Preparing checkout..." : "Pay to activate"}
+                              </button>
+                            )}
                           <button
                             type="button"
                             onClick={(e) => copyToClipboard(getProductUrl(product), e)}
@@ -599,6 +700,27 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                         </td>
                         <td className="px-4 xl:px-6 py-4 align-top">
                           <div className="flex items-center justify-end gap-2">
+                            {/* Pay CTA for inactive products in table view */}
+                            {!product.is_active && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePayForProduct(product);
+                                }}
+                                disabled={
+                                  pendingListings.some((p) => p.productId === product.id) || payingListingId === product.id
+                                }
+                                className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                                  pendingListings.some((p) => p.productId === product.id) || payingListingId === product.id
+                                    ? "bg-surface-300 text-surface-500 cursor-not-allowed"
+                                    : "bg-gradient-pink text-white hover:opacity-90"
+                                }`}
+                                title="Pay to activate"
+                              >
+                                {payingListingId === product.id ? "Preparing checkout..." : "Pay to activate"}
+                              </button>
+                            )}
                             <Link
                               href={`/inventory/editProduct/${product.id}`}
                               className="p-2 rounded-lg bg-accent-blue/10 dark:bg-accent-blue/20 text-accent-blue hover:bg-accent-blue/20 dark:hover:bg-accent-blue/30 transition-colors"

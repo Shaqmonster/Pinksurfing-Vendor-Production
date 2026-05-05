@@ -6,6 +6,7 @@ import {
   getFormSchema,
   saveProducts,
   getSingleProduct,
+  createSquareListingPaymentLink,
   updateProducts,
 } from "@/api/products";
 import { Product } from "@/types/product";
@@ -19,6 +20,7 @@ import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { handleError } from "@/utils/toast";
 import { getCookie } from "@/utils/cookies";
+import { updatePendingListingState } from "@/utils/pendingListings";
 import {
   SHORT_DESCRIPTION_MAX_PLAIN,
   truncateUnicodePlain,
@@ -132,6 +134,7 @@ const EditProduct = () => {
   const [shortDescPlainLen, setShortDescPlainLen] = useState(0);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [productActive, setProductActive] = useState<boolean | null>(null);
   const [showDimensions, setShowDimensions] = useState(false);
 
   /** Skip one subcategory reload when hydrating edit form (avoids clearing pre-selected subcategory). */
@@ -197,6 +200,7 @@ const EditProduct = () => {
           image: "",
           id: p.id || productId,
         });
+        setProductActive(Boolean(p.is_active));
         setShortDescPlainLen(
           Math.min(plainTextLengthFromHtml(p.short_description || ""), SHORT_DESCRIPTION_MAX_PLAIN)
         );
@@ -552,6 +556,46 @@ const EditProduct = () => {
       }
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePayForCurrentProduct = async () => {
+    const token = getCookie("access_token");
+    if (!token) {
+      toast.error("Authentication error. Please sign in again.");
+      return;
+    }
+    if (!productData.id) {
+      toast.error("Product id missing");
+      return;
+    }
+
+    try {
+      // show lightweight loading
+      setLoading(true);
+      const result: any = await createSquareListingPaymentLink(token, productData.id);
+      if (result.error) {
+        const errorMsg = result.data?.hint || result.data?.details || result.message || "Could not create payment link";
+        if (result.status === 403) {
+          toast.error(`Not allowed: ${errorMsg}`);
+        } else if (result.status === 401) {
+          toast.error(`Square platform credentials need attention: ${errorMsg}`);
+        } else {
+          toast.error(`Payment Error: ${errorMsg}`);
+        }
+        return;
+      }
+
+      // Mark pending locally and redirect
+      updatePendingListingState(productData.id, "PAYMENT_REDIRECTED");
+      const paymentUrl = result.data?.payment_link;
+      if (!paymentUrl) {
+        toast.error("Could not create payment link, try again.");
+        return;
+      }
+      window.location.href = paymentUrl;
     } finally {
       setLoading(false);
     }
@@ -1266,14 +1310,25 @@ const EditProduct = () => {
               <ChevronRightIcon />
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={handleSave}
-              className="flex items-center gap-2 px-8 py-3 rounded-xl font-semibold bg-gradient-pink text-white shadow-glow-pink hover:opacity-90 transition-all duration-300"
-            >
-              <SparklesIcon />
-              <span>Update Product</span>
-            </button>
+            <div className="flex items-center gap-2">
+              {!productActive && (
+                <button
+                  type="button"
+                  onClick={handlePayForCurrentProduct}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all ${productActive === false ? "bg-gradient-pink text-white" : "opacity-50 bg-surface-300 text-surface-500 cursor-not-allowed"}`}
+                >
+                  <span>Pay to activate</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleSave}
+                className="flex items-center gap-2 px-8 py-3 rounded-xl font-semibold bg-gradient-pink text-white shadow-glow-pink hover:opacity-90 transition-all duration-300"
+              >
+                <SparklesIcon />
+                <span>Update Product</span>
+              </button>
+            </div>
           )}
         </div>
       </div>
