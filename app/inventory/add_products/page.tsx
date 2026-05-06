@@ -1461,40 +1461,38 @@ const AddProducts = () => {
                   </div>
                 </div>
 
-                {/* Product Title - MASSIVE HERO INPUT */}
-                <div className="relative group p-8 -mx-6 rounded-3xl transition-all duration-700 focus-within:bg-white/[0.03] focus-within:shadow-[0_20px_50px_rgba(0,0,0,0.2),inset_0_0_60px_rgba(232,35,122,0.03)]">
-                  {/* Dynamic Glow Halo - expanded on focus */}
-                  <div className="absolute -inset-1 bg-gradient-to-r from-primary-500/0 via-pink-500/0 to-purple-500/0 rounded-[2rem] blur-2xl transition-all duration-1000 group-focus-within:from-primary-500/10 group-focus-within:via-pink-500/10 group-focus-within:to-purple-500/10 opacity-0 group-focus-within:opacity-100" />
-                  
-                  {/* Vertical High-Contrast Accent Bar */}
-                  <div className="absolute left-0 top-12 bottom-12 w-1.5 bg-gradient-to-b from-primary-500 via-pink-500 to-purple-600 rounded-full shadow-[0_0_20px_rgba(232,35,122,0.5)] transition-all duration-700 group-focus-within:top-4 group-focus-within:bottom-4 group-focus-within:shadow-[0_0_30px_rgba(232,35,122,0.8)]" />
-                  
-                  <div className="relative flex flex-col gap-2">
-                    <div className="flex items-center justify-between px-2">
-                      <label className="flex items-center gap-3 text-lg font-black uppercase tracking-[0.2em] text-white/90 group-focus-within:text-primary-400 transition-all duration-500">
-                        <span className="w-8 h-8 rounded-lg bg-surface-800 flex items-center justify-center text-sm group-focus-within:bg-primary-500 group-focus-within:text-white transition-all shadow-xl">T</span>
-                        Listing Title <span className="text-primary-500 ml-1">*</span>
+                {/* Product Title - HERO INPUT */}
+                <div className="relative group px-0 py-6 transition-all duration-500">
+                  <div className="relative flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-2.5 text-sm font-black uppercase tracking-[0.2em] text-primary-500 transition-all duration-500">
+                        <div className="w-7 h-7 rounded-lg bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
+                          <span className="text-[11px] font-black">T</span>
+                        </div>
+                        Listing Title <span className="text-white/20 ml-1 text-xs">*</span>
                       </label>
-                      <span className={`text-[10px] font-bold tracking-widest transition-all duration-500 ${productData.name.length > 0 ? "opacity-100" : "opacity-0"} ${productData.name.length > 80 ? "text-amber-500" : "text-surface-600"}`}>
+                      <span className={`text-[10px] font-bold tracking-widest transition-all duration-500 ${productData.name.length > 0 ? "text-primary-400" : "text-surface-600 opacity-0"}`}>
                         {productData.name.length} / 100
                       </span>
                     </div>
                     
-                    <input
-                      type="text"
-                      value={productData.name}
-                      onChange={(e) => updateProductData("name", e.target.value)}
-                      placeholder="What are you listing today?"
-                      className="w-full bg-transparent border-none px-2 py-4 text-3xl md:text-5xl font-black text-white placeholder:text-surface-800 placeholder:italic focus:ring-0 transition-all selection:bg-primary-500/40 tracking-tight"
-                      required
-                    />
-                    
-                    {/* Interactive Bottom Border - Ignites on Focus */}
-                    <div className="relative h-1 w-full bg-surface-800/30 rounded-full overflow-hidden mt-2">
-                      <div className="absolute inset-0 bg-gradient-to-r from-primary-500 via-pink-500 to-purple-600 translate-x-[-100%] group-focus-within:translate-x-0 transition-transform duration-1000 ease-out" />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={productData.name}
+                        onChange={(e) => updateProductData("name", e.target.value)}
+                        placeholder="What are you listing today?"
+                        className="w-full bg-transparent border-none p-0 text-4xl md:text-5xl font-black text-white placeholder:text-surface-700 placeholder:not-italic focus:ring-0 transition-all selection:bg-primary-500/40 tracking-tight"
+                        required
+                      />
+                      
+                      {/* Interactive Bottom Accent */}
+                      <div className="absolute -bottom-2 left-0 right-0 h-px bg-surface-800/50 overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary-500 via-pink-500 to-purple-500 translate-x-[-100%] group-focus-within:translate-x-0 transition-transform duration-700 ease-out" />
+                      </div>
                     </div>
                     
-                    <p className="px-2 mt-3 text-[11px] text-surface-600 font-medium italic opacity-0 group-focus-within:opacity-100 transition-opacity duration-700">
+                    <p className="text-[11px] text-surface-500 font-medium tracking-wide opacity-0 group-focus-within:opacity-100 transition-opacity duration-700">
                       Pro-tip: Catchy titles with clear keywords sell 40% faster.
                     </p>
                   </div>
