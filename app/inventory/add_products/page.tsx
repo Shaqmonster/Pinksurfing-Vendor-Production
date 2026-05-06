@@ -1471,9 +1471,9 @@ const AddProducts = () => {
                   
                   <div className="relative flex flex-col gap-2">
                     <div className="flex items-center justify-between px-2">
-                      <label className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.3em] text-surface-500 group-focus-within:text-primary-400 transition-all duration-500">
-                        <span className="w-5 h-5 rounded-md bg-surface-800 flex items-center justify-center text-[10px] group-focus-within:bg-primary-500 group-focus-within:text-white transition-all">T</span>
-                        Listing Title <span className="text-primary-500">*</span>
+                      <label className="flex items-center gap-3 text-lg font-black uppercase tracking-[0.2em] text-white/90 group-focus-within:text-primary-400 transition-all duration-500">
+                        <span className="w-8 h-8 rounded-lg bg-surface-800 flex items-center justify-center text-sm group-focus-within:bg-primary-500 group-focus-within:text-white transition-all shadow-xl">T</span>
+                        Listing Title <span className="text-primary-500 ml-1">*</span>
                       </label>
                       <span className={`text-[10px] font-bold tracking-widest transition-all duration-500 ${productData.name.length > 0 ? "opacity-100" : "opacity-0"} ${productData.name.length > 80 ? "text-amber-500" : "text-surface-600"}`}>
                         {productData.name.length} / 100
