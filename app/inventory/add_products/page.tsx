@@ -95,6 +95,95 @@ const GridIcon = () => (
   </svg>
 );
 
+// ============ SEARCHABLE SELECT ============
+function SearchableSelect({
+  label,
+  value,
+  options,
+  loading,
+  placeholder,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: { label: string; value: string }[];
+  loading?: boolean;
+  placeholder?: string;
+  disabled?: boolean;
+  onChange: (value: string, label: string) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  const filtered = options.filter(o =>
+    o.label.toLowerCase().includes(search.toLowerCase())
+  );
+  const selected = options.find(o => o.value === value);
+
+  React.useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative w-full">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => { setOpen(o => !o); setSearch(""); }}
+        className="w-full px-4 py-3 rounded-xl bg-surface-50 dark:bg-dark-input border border-surface-200 dark:border-dark-border text-left flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300"
+      >
+        <span className={selected ? "text-surface-900 dark:text-surface-50" : "text-surface-400 dark:text-surface-500"}>
+          {loading ? "Loading…" : (selected?.label ?? placeholder ?? `Select ${label}`)}
+        </span>
+        <svg className={`w-4 h-4 text-surface-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute z-[100] mt-1 w-full bg-white dark:bg-dark-card rounded-xl border border-light-border dark:border-dark-border shadow-2xl max-h-60 flex flex-col overflow-hidden animate-fadeIn">
+          <div className="p-2 border-b border-light-border dark:border-dark-border flex-shrink-0">
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                autoFocus
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder={`Search ${label}…`}
+                className="w-full pl-8 pr-3 py-2 text-sm rounded-lg bg-surface-50 dark:bg-dark-input border border-surface-200 dark:border-dark-border focus:outline-none focus:border-primary-500 text-surface-900 dark:text-white"
+              />
+            </div>
+          </div>
+          <ul className="overflow-y-auto flex-1">
+            {filtered.length === 0 ? (
+              <li className="px-4 py-3 text-sm text-surface-400 text-center">No results found</li>
+            ) : filtered.map(opt => (
+              <li key={opt.value}>
+                <button
+                  type="button"
+                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-surface-50 dark:hover:bg-dark-hover transition-colors ${opt.value === value ? "text-primary-500 font-bold bg-primary-50 dark:bg-primary-500/10" : "text-surface-900 dark:text-white"}`}
+                  onClick={() => { onChange(opt.value, opt.label); setOpen(false); }}
+                >
+                  {opt.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ============ STEP CONFIGURATION ============
 const STEPS = [
   { id: 1, name: "Category", description: "Select product type", icon: GridIcon },
@@ -159,6 +248,63 @@ const AddProducts = () => {
   const [allowedAttributes, setAllowedAttributes] = useState<any[]>([]);
   const [variantAttributes, setVariantAttributes] = useState<any[]>([]);
   const [nonVariantAttributes, setNonVariantAttributes] = useState<any[]>([]);
+
+  // Address data states
+  const [allCountries, setAllCountries] = useState<{ name: string; code: string }[]>([]);
+  const [allStates, setAllStates] = useState<{ name: string; code: string }[]>([]);
+  const [selectedCountryName, setSelectedCountryName] = useState("");
+  const [loadingStates, setLoadingStates] = useState(false);
+
+  // Load all countries once
+  useEffect(() => {
+    fetch("https://restcountries.com/v3.1/all")
+      .then(r => r.json())
+      .then((data: any[]) => {
+        if (Array.isArray(data)) {
+          const sorted = data
+            .map(c => ({ 
+              name: (c.name?.common || c.name) as string, 
+              code: c.cca2 as string 
+            }))
+            .filter(c => c.name && c.code)
+            .sort((a, b) => a.name.localeCompare(b.name));
+          setAllCountries(sorted);
+        }
+      })
+      .catch((err) => console.error("Error fetching countries:", err));
+  }, []);
+
+  // Load states when selectedCountryName changes
+  useEffect(() => {
+    if (!selectedCountryName) { setAllStates([]); return; }
+    setLoadingStates(true);
+    fetch("https://countriesnow.space/api/v0.1/countries/states", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ country: selectedCountryName }),
+    })
+      .then(r => r.json())
+      .then((data: any) => {
+        if (!data.error && data.data?.states) {
+          const states = data.data.states.map((s: any) => ({
+            name: s.name as string,
+            code: (s.state_code || s.name) as string,
+          }));
+          setAllStates(states);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingStates(false));
+  }, [selectedCountryName]);
+
+  // Sync selectedCountryName if Country attribute exists (for pre-loading drafts)
+  useEffect(() => {
+    const allAttrs = [...variantAttributes, ...nonVariantAttributes];
+    const countryAttr = allAttrs.find(a => a.name?.toLowerCase() === "country");
+    if (countryAttr?.value && countryAttr.value !== selectedCountryName) {
+      setSelectedCountryName(countryAttr.value);
+    }
+  }, [variantAttributes, nonVariantAttributes, selectedCountryName]);
 
   // Product data
   const [productData, setProductData] = useState({
@@ -613,6 +759,37 @@ const AddProducts = () => {
 
     const inputClasses = "w-full px-4 py-3 rounded-xl bg-surface-50 dark:bg-dark-input border border-surface-200 dark:border-dark-border text-surface-900 dark:text-surface-50 placeholder:text-surface-400 dark:placeholder:text-surface-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300";
 
+    // Special handling for Country and State searchable dropdowns
+    const attrName = attr.name?.toLowerCase();
+    if (attrName === "country") {
+      return (
+        <SearchableSelect
+          label="Country"
+          value={attr.value}
+          options={allCountries.map(c => ({ label: c.name, value: c.name }))}
+          placeholder="Select country"
+          onChange={(val, name) => {
+            updateAttr(val);
+            setSelectedCountryName(name);
+          }}
+        />
+      );
+    }
+
+    if (attrName === "state") {
+      return (
+        <SearchableSelect
+          label="State"
+          value={attr.value}
+          options={allStates.map(s => ({ label: s.name, value: s.name }))}
+          placeholder="Select state"
+          loading={loadingStates}
+          disabled={!selectedCountryName && !attr.value}
+          onChange={(val) => updateAttr(val)}
+        />
+      );
+    }
+
     // Handle multi_select toggle
     const toggleMultiSelectOption = (option: string) => {
       const currentValues = Array.isArray(attr.value) ? attr.value : [];
@@ -680,16 +857,13 @@ const AddProducts = () => {
 
       case "select":
         return (
-          <select
+          <SearchableSelect
+            label={attr.name}
             value={attr.value}
-            onChange={(e) => updateAttr(e.target.value)}
-            className={inputClasses}
-          >
-            <option value="">Select {attr.name}</option>
-            {attr.options?.map((opt: string, i: number) => (
-              <option key={i} value={opt}>{opt}</option>
-            ))}
-          </select>
+            options={attr.options?.map((opt: string) => ({ label: opt, value: opt })) || []}
+            placeholder={`Select ${attr.name}`}
+            onChange={(val) => updateAttr(val)}
+          />
         );
 
       case "multi_select":
