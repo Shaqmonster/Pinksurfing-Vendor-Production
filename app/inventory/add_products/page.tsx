@@ -472,22 +472,31 @@ const AddProducts = () => {
           }
         };
 
+        // Location field keys that should always use dynamic country-state-city dropdowns
+        const LOCATION_KEYS = ["country", "state", "city", "zip_code", "zip", "postal_code"];
+
         // Convert schema fields to attribute format
         // All fields from schema are treated as non-variant attributes
-        const schemaAttributes = fields.map((field: any) => ({
-          name: field.label || field.key,
-          key: field.key,
-          value: getInitialValue(field.type),
-          data_type: mapFieldType(field.type),
-          options: field.options || [],
-          required: field.required || false,
-          placeholder: field.placeholder || "",
-          suffix: field.suffix || "",
-          min: field.min,
-          max: field.max,
-          step: field.step,
-          additional_price: 0
-        }));
+        const schemaAttributes = fields.map((field: any) => {
+          const fieldKey = (field.key || "").toLowerCase();
+          const isLocationField = LOCATION_KEYS.includes(fieldKey);
+
+          return {
+            name: field.label || field.key,
+            key: field.key,
+            value: getInitialValue(isLocationField ? "text" : field.type),
+            // Override data_type for location fields so they always render correctly
+            data_type: isLocationField ? "location" : mapFieldType(field.type),
+            options: field.options || [],
+            required: field.required || false,
+            placeholder: field.placeholder || "",
+            suffix: field.suffix || "",
+            min: field.min,
+            max: field.max,
+            step: field.step,
+            additional_price: 0
+          };
+        });
 
         setNonVariantAttributes(schemaAttributes);
         setAllowedAttributes(schemaAttributes);
@@ -919,13 +928,15 @@ const AddProducts = () => {
       const key = (attr.key || "").toLowerCase();
       const type = attr.data_type || "text";
 
-      // Use flexible matching on both name and key to catch variants like state_province, zip_code, etc.
-      const isCountry = name === "country" || key === "country" || key.includes("country");
-      const isState = name === "state" || key === "state" || name.includes("state") || key.includes("state");
-      const isCity = name === "city" || key === "city" || name.includes("city") || key.includes("city");
-      const isZip = name.includes("zip") || key.includes("zip") || name.includes("postal") || key.includes("postal");
+      // Primary check: data_type was explicitly set to "location" at mapping time
+      // Fallback: name/key-based detection for edge cases
+      const isLocation = type === "location" ||
+        name === "country" || key === "country" ||
+        name === "state" || key === "state" ||
+        name === "city" || key === "city" ||
+        key === "zip_code" || name.includes("zip") || key.includes("zip");
 
-      if (isCountry || isState || isCity || isZip) {
+      if (isLocation) {
         groups.location.push({ attr, index });
       } else if (type === "bool" || type === "boolean" || type === "checkbox") {
         groups.boolean.push({ attr, index });
@@ -936,14 +947,13 @@ const AddProducts = () => {
       }
     });
 
-    // Sort location group: Country first, then State, then City, then ZIP
-    const locationOrder = ["country", "state", "city", "zip", "postal"];
+    // Sort location group: Country → State → City → ZIP
     const getLocationPriority = (attr: any) => {
       const n = (attr.name || "").toLowerCase();
       const k = (attr.key || "").toLowerCase();
-      if (n === "country" || k.includes("country")) return 0;
-      if (n === "state" || k.includes("state") || n.includes("state")) return 1;
-      if (n === "city" || k.includes("city") || n.includes("city")) return 2;
+      if (n === "country" || k === "country") return 0;
+      if (n === "state" || k === "state") return 1;
+      if (n === "city" || k === "city") return 2;
       return 3; // zip/postal
     };
     groups.location.sort((a, b) => getLocationPriority(a.attr) - getLocationPriority(b.attr));
