@@ -257,44 +257,32 @@ const AddProducts = () => {
 
   // Load all countries once
   useEffect(() => {
-    fetch("https://restcountries.com/v3.1/all")
-      .then(r => r.json())
-      .then((data: any[]) => {
-        if (Array.isArray(data)) {
-          const sorted = data
-            .map(c => ({ 
-              name: (c.name?.common || c.name) as string, 
-              code: c.cca2 as string 
-            }))
-            .filter(c => c.name && c.code)
-            .sort((a, b) => a.name.localeCompare(b.name));
-          setAllCountries(sorted);
-        }
-      })
-      .catch((err) => console.error("Error fetching countries:", err));
+    const { Country } = require('country-state-city');
+    const countries = Country.getAllCountries().map((c: any) => ({
+      name: c.name,
+      code: c.isoCode,
+    }));
+    setAllCountries(countries);
   }, []);
 
   // Load states when selectedCountryName changes
   useEffect(() => {
     if (!selectedCountryName) { setAllStates([]); return; }
-    setLoadingStates(true);
-    fetch("https://countriesnow.space/api/v0.1/countries/states", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ country: selectedCountryName }),
-    })
-      .then(r => r.json())
-      .then((data: any) => {
-        if (!data.error && data.data?.states) {
-          const states = data.data.states.map((s: any) => ({
-            name: s.name as string,
-            code: (s.state_code || s.name) as string,
-          }));
-          setAllStates(states);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoadingStates(false));
+    
+    const { Country, State } = require('country-state-city');
+    // Find the country code by name
+    const countries = Country.getAllCountries();
+    const country = countries.find((c: any) => c.name === selectedCountryName);
+    
+    if (country) {
+      const states = State.getStatesOfCountry(country.isoCode).map((s: any) => ({
+        name: s.name,
+        code: s.isoCode,
+      }));
+      setAllStates(states);
+    } else {
+      setAllStates([]);
+    }
   }, [selectedCountryName]);
 
   // Sync selectedCountryName if Country attribute exists (for pre-loading drafts)
@@ -913,6 +901,7 @@ const AddProducts = () => {
   // Helper function to group attributes by data type
   const groupAttributesByType = (attributes: any[]) => {
     const groups: { [key: string]: { attr: any; index: number }[] } = {
+      location: [],
       text: [],
       number: [],
       boolean: [],
@@ -922,14 +911,27 @@ const AddProducts = () => {
     };
 
     attributes.forEach((attr, index) => {
+      const name = attr.name?.toLowerCase();
       const type = attr.data_type || "text";
-      if (type === "bool" || type === "boolean" || type === "checkbox") {
+
+      // Special location group for reordering
+      if (name === "country" || name === "state" || name === "city" || name === "zip" || name === "zip code" || name === "zip / radius") {
+        groups.location.push({ attr, index });
+      } else if (type === "bool" || type === "boolean" || type === "checkbox") {
         groups.boolean.push({ attr, index });
       } else if (groups[type]) {
         groups[type].push({ attr, index });
       } else {
         groups.text.push({ attr, index });
       }
+    });
+
+    // Sort location group in specific order: Country, State, City, ZIP
+    const locationOrder = ["country", "state", "city", "zip", "zip code", "zip / radius"];
+    groups.location.sort((a, b) => {
+      const aName = a.attr.name?.toLowerCase();
+      const bName = b.attr.name?.toLowerCase();
+      return locationOrder.indexOf(aName) - locationOrder.indexOf(bName);
     });
 
     return groups;
@@ -1071,7 +1073,7 @@ const AddProducts = () => {
     if (attributes.length === 0) return null;
 
     const groups = groupAttributesByType(attributes);
-    const typeOrder = ["text", "number", "select", "multi_select", "textarea", "boolean"];
+    const typeOrder = ["location", "text", "number", "select", "multi_select", "textarea", "boolean"];
 
     return (
       <div className="premium-card p-6">
@@ -1089,8 +1091,8 @@ const AddProducts = () => {
                   <div className="flex-1 h-px bg-surface-200 dark:bg-dark-border" />
                 </div>} */}
 
-                {/* Text and Number fields in 2-column grid */}
-                {(type === "text" || type === "number") && (
+                {/* Location, Text and Number fields in 2-column grid */}
+                {(type === "location" || type === "text" || type === "number") && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {typeAttrs.map(({ attr, index }) => (
                       <div key={index} className="space-y-2">

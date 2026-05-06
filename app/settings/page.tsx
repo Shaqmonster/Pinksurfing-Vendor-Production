@@ -23,6 +23,7 @@ import {
 } from "react-icons/fi";
 import { FaStore } from "react-icons/fa";
 import Link from "next/link";
+import { Country, State, City } from "country-state-city";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface CountryOption { name: string; code: string; }
@@ -206,15 +207,11 @@ const Settings = () => {
 
   // Load all countries once
   useEffect(() => {
-    fetch("https://restcountries.com/v3.1/all?fields=name,cca2")
-      .then(r => r.json())
-      .then((data: any[]) => {
-        const sorted: CountryOption[] = data
-          .map(c => ({ name: c.name.common as string, code: c.cca2 as string }))
-          .sort((a, b) => a.name.localeCompare(b.name));
-        setAllCountries(sorted);
-      })
-      .catch(() => {});
+    const countries = Country.getAllCountries().map((c: any) => ({
+      name: c.name,
+      code: c.isoCode,
+    }));
+    setAllCountries(countries);
   }, []);
 
   // Load states when country changes
@@ -223,42 +220,36 @@ const Settings = () => {
     setLoadingStates(true);
     setAllStates([]);
     setAllCities([]);
-    fetch("https://countriesnow.space/api/v0.1/countries/states", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ country: selectedCountryName }),
-    })
-      .then(r => r.json())
-      .then((data: any) => {
-        if (!data.error && data.data?.states) {
-          const states: StateOption[] = data.data.states.map((s: any) => ({
-            name: s.name as string,
-            code: (s.state_code || s.name) as string,
-          }));
-          setAllStates(states);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoadingStates(false));
-  }, [selectedCountryName]);
-
+    
+    // Find the country code by name
+    const country = Country.getAllCountries().find((c: any) => c.name === selectedCountryName);
+    
+    if (country) {
+      const states = State.getStatesOfCountry(country.isoCode).map((s: any) => ({
+        name: s.name,
+        code: s.isoCode,
+      }));
+      setAllStates(states);
+    }
+    setLoadingStates(false);
   // Load cities when state changes
   useEffect(() => {
     if (!selectedCountryName || !selectedStateName) { setAllCities([]); return; }
     setLoadingCities(true);
-    fetch("https://countriesnow.space/api/v0.1/countries/state/cities", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ country: selectedCountryName, state: selectedStateName }),
-    })
-      .then(r => r.json())
-      .then((data: any) => {
-        if (!data.error && Array.isArray(data.data)) {
-          setAllCities(data.data as string[]);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoadingCities(false));
+    
+    // Find the country and state codes
+    const country = Country.getAllCountries().find((c: any) => c.name === selectedCountryName);
+    const state = country ? State.getStatesOfCountry(country.isoCode).find((s: any) => s.name === selectedStateName) : null;
+    
+    if (country && state) {
+      const cities = City.getCitiesOfState(country.isoCode, state.isoCode).map((c: any) => ({
+        name: c.name,
+      }));
+      setAllCities(cities);
+    } else {
+      setAllCities([]);
+    }
+    setLoadingCities(false);
   }, [selectedCountryName, selectedStateName]);
 
   // When profile loads, sync the country/state display names
