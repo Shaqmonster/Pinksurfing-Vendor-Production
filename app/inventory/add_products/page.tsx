@@ -1097,37 +1097,26 @@ const AddProducts = () => {
     if (attributes.length === 0) return null;
 
     const groups = groupAttributesByType(attributes);
-    const typeOrder = ["text", "number", "select", "multi_select", "textarea", "boolean"];
+    const typeOrder = ["location", "text", "number", "select", "multi_select", "textarea", "boolean"];
 
     return (
       <div className="premium-card p-6">
         <div className="space-y-8">
-          {/* Location Group - Always at the top */}
-          {groups.location && groups.location.length > 0 && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {groups.location.map(({ attr, index }) => (
-                  <div key={index} className="space-y-2">
-                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">
-                      {attr.name}
-                      {attr.required && <span className="text-red-500 ml-1">*</span>}
-                    </label>
-                    {renderAttributeInput(attr, isVariant, index)}
-                  </div>
-                ))}
-              </div>
-              <div className="h-px bg-surface-200 dark:bg-dark-border mt-6" />
-            </div>
-          )}
-
           {typeOrder.map((type) => {
             const typeAttrs = groups[type];
             if (!typeAttrs || typeAttrs.length === 0) return null;
 
             return (
               <div key={type} className="space-y-4">
-                {/* Text and Number fields in 2-column grid */}
-                {(type === "text" || type === "number") && (
+                {/* {<div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400">
+                    {getTypeLabel(type)}
+                  </span>
+                  <div className="flex-1 h-px bg-surface-200 dark:bg-dark-border" />
+                </div>} */}
+
+                {/* Location, Text and Number fields in 2-column grid */}
+                {(type === "location" || type === "text" || type === "number") && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {typeAttrs.map(({ attr, index }) => (
                       <div key={index} className="space-y-2">
@@ -1446,18 +1435,6 @@ const AddProducts = () => {
                 .filter(attr => {
                   if (Array.isArray(attr.value)) return attr.value.length > 0;
                   return attr.value !== "" && attr.value !== false;
-                })
-                .sort((a, b) => {
-                  const getP = (attr: any) => {
-                    const n = (attr.name || "").toLowerCase();
-                    const k = (attr.key || "").toLowerCase();
-                    if (n.includes("country") || k.includes("country")) return 0;
-                    if (n.includes("state") || k.includes("state")) return 1;
-                    if (n.includes("city") || k.includes("city")) return 2;
-                    if (n.includes("zip") || k.includes("zip") || n.includes("postal") || k.includes("postal")) return 3;
-                    return 100;
-                  };
-                  return getP(a) - getP(b);
                 })
                 .map((attr, index) => (
                   <div
