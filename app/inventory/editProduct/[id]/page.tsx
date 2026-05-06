@@ -16,6 +16,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Loader2 } from "@/components/common/Loader";
 import dynamic from "next/dynamic";
+import { Country, State, City } from 'country-state-city';
 // @ts-ignore
 import "react-quill/dist/quill.snow.css";
 import { handleError } from "@/utils/toast";
@@ -136,9 +137,94 @@ const EditProduct = () => {
   const [initialLoading, setInitialLoading] = useState(true);
   const [productActive, setProductActive] = useState<boolean | null>(null);
   const [showDimensions, setShowDimensions] = useState(false);
+  const [selectedCountryName, setSelectedCountryName] = useState("");
 
   /** Skip one subcategory reload when hydrating edit form (avoids clearing pre-selected subcategory). */
   const skipSubcategoryEffectRef = useRef(false);
+
+  // Location data
+  const allCountries = useMemo(() => Country.getAllCountries().map(c => ({ name: c.name, isoCode: c.isoCode })), []);
+  const selectedCountry = useMemo(() => 
+    allCountries.find(c => c.name === selectedCountryName || c.isoCode === selectedCountryName),
+    [selectedCountryName, allCountries]
+  );
+  const allStates = useMemo(() => 
+    selectedCountry ? State.getStatesOfCountry(selectedCountry.isoCode) : [],
+    [selectedCountry]
+  );
+
+function SearchableSelect({ label, value, options, placeholder, onChange, disabled }: any) {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filtered = options.filter((opt: any) =>
+    opt.label.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen(!open)}
+        className={`w-full px-4 py-3 rounded-xl bg-surface-50 dark:bg-dark-input border border-surface-200 dark:border-dark-border text-left transition-all duration-300 flex items-center justify-between ${disabled ? "opacity-50 cursor-not-allowed" : "hover:border-primary-500 focus:ring-2 focus:ring-primary-500/20"}`}
+      >
+        <span className={value ? "text-surface-900 dark:text-surface-50" : "text-surface-400"}>
+          {value || placeholder}
+        </span>
+        <svg className={`w-4 h-4 text-surface-400 transition-transform duration-300 ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute z-[100] mt-1 w-full bg-white dark:bg-dark-card rounded-xl border border-light-border dark:border-dark-border shadow-2xl max-h-60 flex flex-col overflow-hidden animate-fadeIn">
+          <div className="p-2 border-b border-light-border dark:border-dark-border flex-shrink-0">
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                autoFocus
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder={`Search ${label}…`}
+                className="w-full pl-8 pr-3 py-2 text-sm rounded-lg bg-surface-50 dark:bg-dark-input border border-surface-200 dark:border-dark-border focus:outline-none focus:border-primary-500 text-surface-900 dark:text-white"
+              />
+            </div>
+          </div>
+          <ul className="overflow-y-auto flex-1">
+            {filtered.length === 0 ? (
+              <li className="px-4 py-3 text-sm text-surface-400 text-center">No results found</li>
+            ) : filtered.map((opt: any) => (
+              <li key={opt.value}>
+                <button
+                  type="button"
+                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-surface-50 dark:hover:bg-dark-hover transition-colors ${opt.value === value ? "text-primary-500 font-bold bg-primary-50 dark:bg-primary-500/10" : "text-surface-900 dark:text-white"}`}
+                  onClick={() => { onChange(opt.value, opt.label); setOpen(false); }}
+                >
+                  {opt.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
   const ReactQuill = useMemo(
     () => dynamic(() => import("react-quill"), { ssr: false }),
@@ -321,15 +407,30 @@ const EditProduct = () => {
           return "";
         };
 
+        const isLoc = (f: any) => {
+          const k = (f.key || "").toLowerCase();
+          const l = (f.label || "").toLowerCase();
+          return k.includes("country") || l.includes("country") ||
+            k.includes("state") || l.includes("state") ||
+            k.includes("city") || l.includes("city") ||
+            k.includes("zip") || l.includes("zip") ||
+            k.includes("postal") || l.includes("postal");
+        };
+
         const schemaAttributes = fields.map((field: any) => {
           const existingVal = resolveExistingVal(field);
           const mappedType = mapFieldType(field.type);
+          const isLocationField = isLoc(field);
+
+          if (isLocationField && existingVal && (field.key === "country" || field.label?.toLowerCase() === "country")) {
+            setSelectedCountryName(existingVal);
+          }
 
           return {
             name: field.label || field.key,
             key: field.key,
-            value: getPrefilledValue(mappedType, existingVal),
-            data_type: mappedType,
+            value: getPrefilledValue(isLocationField ? "text" : mappedType, existingVal),
+            data_type: isLocationField ? "location" : mappedType,
             options: field.options || [],
             required: field.required || false,
             placeholder: field.placeholder || "",
@@ -339,6 +440,26 @@ const EditProduct = () => {
             step: field.step,
             additional_price: 0,
           };
+        });
+
+        // Force sort order: Country → State → City → ZIP
+        schemaAttributes.sort((a: any, b: any) => {
+          const isLocA = a.data_type === "location";
+          const isLocB = b.data_type === "location";
+          if (isLocA && !isLocB) return -1;
+          if (!isLocA && isLocB) return 1;
+          if (isLocA && isLocB) {
+            const getP = (attr: any) => {
+              const n = (attr.name || "").toLowerCase();
+              const k = (attr.key || "").toLowerCase();
+              if (n.includes("country") || k.includes("country")) return 0;
+              if (n.includes("state") || k.includes("state")) return 1;
+              if (n.includes("city") || k.includes("city")) return 2;
+              return 3;
+            };
+            return getP(a) - getP(b);
+          }
+          return 0;
         });
 
         setNonVariantAttributes(schemaAttributes);
@@ -415,20 +536,53 @@ const EditProduct = () => {
             default: return "text";
           }
         };
-        const schemaAttributes = fields.map((field: any) => ({
-          name: field.label || field.key,
-          key: field.key,
-          value: getInitialValue(field.type),
-          data_type: mapFieldType(field.type),
-          options: field.options || [],
-          required: field.required || false,
-          placeholder: field.placeholder || "",
-          suffix: field.suffix || "",
-          min: field.min,
-          max: field.max,
-          step: field.step,
-          additional_price: 0,
-        }));
+        const isLoc = (f: any) => {
+          const k = (f.key || "").toLowerCase();
+          const l = (f.label || "").toLowerCase();
+          return k.includes("country") || l.includes("country") ||
+            k.includes("state") || l.includes("state") ||
+            k.includes("city") || l.includes("city") ||
+            k.includes("zip") || l.includes("zip") ||
+            k.includes("postal") || l.includes("postal");
+        };
+
+        const schemaAttributes = fields.map((field: any) => {
+          const isLocationField = isLoc(field);
+          return {
+            name: field.label || field.key,
+            key: field.key,
+            value: getInitialValue(isLocationField ? "text" : field.type),
+            data_type: isLocationField ? "location" : mapFieldType(field.type),
+            options: field.options || [],
+            required: field.required || false,
+            placeholder: field.placeholder || "",
+            suffix: field.suffix || "",
+            min: field.min,
+            max: field.max,
+            step: field.step,
+            additional_price: 0,
+          };
+        });
+
+        // Force sort order: Country → State → City → ZIP
+        schemaAttributes.sort((a: any, b: any) => {
+          const isLocA = a.data_type === "location";
+          const isLocB = b.data_type === "location";
+          if (isLocA && !isLocB) return -1;
+          if (!isLocA && isLocB) return 1;
+          if (isLocA && isLocB) {
+            const getP = (attr: any) => {
+              const n = (attr.name || "").toLowerCase();
+              const k = (attr.key || "").toLowerCase();
+              if (n.includes("country") || k.includes("country")) return 0;
+              if (n.includes("state") || k.includes("state")) return 1;
+              if (n.includes("city") || k.includes("city")) return 2;
+              return 3;
+            };
+            return getP(a) - getP(b);
+          }
+          return 0;
+        });
         setNonVariantAttributes(schemaAttributes);
         setAllowedAttributes(schemaAttributes);
         setVariantAttributes([]);
@@ -620,6 +774,40 @@ const EditProduct = () => {
       updateAttr(cur.includes(option) ? cur.filter((v: string) => v !== option) : [...cur, option]);
     };
 
+    // Special handling for Country and State searchable dropdowns
+    const attrName = (attr.name || "").toLowerCase();
+    const attrKey = (attr.key || "").toLowerCase();
+    const isCountryField = attrName === "country" || attrKey === "country" || attrKey.includes("country");
+    const isStateField = attrName === "state" || attrKey === "state" || attrName.includes("state") || attrKey.includes("state");
+
+    if (isCountryField) {
+      return (
+        <SearchableSelect
+          label="Country"
+          value={attr.value}
+          options={allCountries.map(c => ({ label: c.name, value: c.name }))}
+          placeholder="Select country"
+          onChange={(val, name) => {
+            updateAttr(val);
+            setSelectedCountryName(name);
+          }}
+        />
+      );
+    }
+
+    if (isStateField) {
+      return (
+        <SearchableSelect
+          label="State / Province"
+          value={attr.value}
+          options={allStates.map(s => ({ label: s.name, value: s.name }))}
+          placeholder={selectedCountryName ? "Select state" : "Select a country first"}
+          disabled={!selectedCountryName}
+          onChange={(val) => updateAttr(val)}
+        />
+      );
+    }
+
     switch (attr.data_type) {
       case "number":
         return (
@@ -668,13 +856,42 @@ const EditProduct = () => {
   };
 
   const groupAttributesByType = (attributes: any[]) => {
-    const groups: { [key: string]: { attr: any; index: number }[] } = { text: [], number: [], boolean: [], select: [], multi_select: [], textarea: [] };
+    const groups: { [key: string]: { attr: any; index: number }[] } = { 
+      location: [], text: [], number: [], boolean: [], select: [], multi_select: [], textarea: [] 
+    };
     attributes.forEach((attr, index) => {
+      const name = (attr.name || "").toLowerCase();
+      const key = (attr.key || "").toLowerCase();
       const type = attr.data_type || "text";
-      if (type === "bool" || type === "boolean" || type === "checkbox") groups.boolean.push({ attr, index });
-      else if (groups[type]) groups[type].push({ attr, index });
-      else groups.text.push({ attr, index });
+
+      const isLocation = type === "location" ||
+        name === "country" || key === "country" ||
+        name === "state" || key === "state" ||
+        name === "city" || key === "city" ||
+        key === "zip_code" || name.includes("zip") || key.includes("zip");
+
+      if (isLocation) {
+        groups.location.push({ attr, index });
+      } else if (type === "bool" || type === "boolean" || type === "checkbox") {
+        groups.boolean.push({ attr, index });
+      } else if (groups[type]) {
+        groups[type].push({ attr, index });
+      } else {
+        groups.text.push({ attr, index });
+      }
     });
+
+    // Sort location group: Country → State → City → ZIP
+    const getLocationPriority = (attr: any) => {
+      const n = (attr.name || "").toLowerCase();
+      const k = (attr.key || "").toLowerCase();
+      if (n.includes("country") || k.includes("country")) return 0;
+      if (n.includes("state") || k.includes("state")) return 1;
+      if (n.includes("city") || k.includes("city")) return 2;
+      return 3;
+    };
+    groups.location.sort((a, b) => getLocationPriority(a.attr) - getLocationPriority(b.attr));
+
     return groups;
   };
 
@@ -682,9 +899,28 @@ const EditProduct = () => {
     if (attributes.length === 0) return null;
     const groups = groupAttributesByType(attributes);
     const typeOrder = ["text", "number", "select", "multi_select", "textarea", "boolean"];
+
     return (
       <div className="premium-card p-6">
         <div className="space-y-8">
+          {/* Location Group - Always at the top */}
+          {groups.location && groups.location.length > 0 && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {groups.location.map(({ attr, index }) => (
+                  <div key={index} className="space-y-2">
+                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">
+                      {attr.name}
+                      {attr.required && <span className="text-red-500 ml-1">*</span>}
+                    </label>
+                    {renderAttributeInput(attr, isVariant, index)}
+                  </div>
+                ))}
+              </div>
+              <div className="h-px bg-surface-200 dark:bg-dark-border mt-6" />
+            </div>
+          )}
+
           {typeOrder.map((type) => {
             const typeAttrs = groups[type];
             if (!typeAttrs || typeAttrs.length === 0) return null;
@@ -971,7 +1207,22 @@ const EditProduct = () => {
             <h4 className="font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2"><TagIcon /> Product Attributes</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[...variantAttributes, ...nonVariantAttributes]
-                .filter((attr) => { if (Array.isArray(attr.value)) return attr.value.length > 0; return attr.value !== "" && attr.value !== false; })
+                .filter((attr) => {
+                  if (Array.isArray(attr.value)) return attr.value.length > 0;
+                  return attr.value !== "" && attr.value !== false;
+                })
+                .sort((a, b) => {
+                  const getP = (attr: any) => {
+                    const n = (attr.name || "").toLowerCase();
+                    const k = (attr.key || "").toLowerCase();
+                    if (n.includes("country") || k.includes("country")) return 0;
+                    if (n.includes("state") || k.includes("state")) return 1;
+                    if (n.includes("city") || k.includes("city")) return 2;
+                    if (n.includes("zip") || k.includes("zip") || n.includes("postal") || k.includes("postal")) return 3;
+                    return 100;
+                  };
+                  return getP(a) - getP(b);
+                })
                 .map((attr, index) => (
                   <div key={index} className="p-3 rounded-xl bg-surface-50 dark:bg-dark-surface">
                     <p className="text-xs text-surface-500 mb-1">{attr.name}</p>
