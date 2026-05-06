@@ -748,8 +748,12 @@ const AddProducts = () => {
     const inputClasses = "w-full px-4 py-3 rounded-xl bg-surface-50 dark:bg-dark-input border border-surface-200 dark:border-dark-border text-surface-900 dark:text-surface-50 placeholder:text-surface-400 dark:placeholder:text-surface-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300";
 
     // Special handling for Country and State searchable dropdowns
-    const attrName = attr.name?.toLowerCase();
-    if (attrName === "country") {
+    const attrName = (attr.name || "").toLowerCase();
+    const attrKey = (attr.key || "").toLowerCase();
+    const isCountryField = attrName === "country" || attrKey === "country" || attrKey.includes("country");
+    const isStateField = attrName === "state" || attrKey === "state" || attrName.includes("state") || attrKey.includes("state");
+
+    if (isCountryField) {
       return (
         <SearchableSelect
           label="Country"
@@ -764,13 +768,13 @@ const AddProducts = () => {
       );
     }
 
-    if (attrName === "state") {
+    if (isStateField) {
       return (
         <SearchableSelect
-          label="State"
+          label="State / Province"
           value={attr.value}
           options={allStates.map(s => ({ label: s.name, value: s.name }))}
-          placeholder="Select state"
+          placeholder={selectedCountryName ? "Select state" : "Select a country first"}
           loading={loadingStates}
           disabled={!selectedCountryName && !attr.value}
           onChange={(val) => updateAttr(val)}
@@ -911,11 +915,17 @@ const AddProducts = () => {
     };
 
     attributes.forEach((attr, index) => {
-      const name = attr.name?.toLowerCase();
+      const name = (attr.name || "").toLowerCase();
+      const key = (attr.key || "").toLowerCase();
       const type = attr.data_type || "text";
 
-      // Special location group for reordering
-      if (name === "country" || name === "state" || name === "city" || name === "zip" || name === "zip code" || name === "zip / radius") {
+      // Use flexible matching on both name and key to catch variants like state_province, zip_code, etc.
+      const isCountry = name === "country" || key === "country" || key.includes("country");
+      const isState = name === "state" || key === "state" || name.includes("state") || key.includes("state");
+      const isCity = name === "city" || key === "city" || name.includes("city") || key.includes("city");
+      const isZip = name.includes("zip") || key.includes("zip") || name.includes("postal") || key.includes("postal");
+
+      if (isCountry || isState || isCity || isZip) {
         groups.location.push({ attr, index });
       } else if (type === "bool" || type === "boolean" || type === "checkbox") {
         groups.boolean.push({ attr, index });
@@ -926,13 +936,17 @@ const AddProducts = () => {
       }
     });
 
-    // Sort location group in specific order: Country, State, City, ZIP
-    const locationOrder = ["country", "state", "city", "zip", "zip code", "zip / radius"];
-    groups.location.sort((a, b) => {
-      const aName = a.attr.name?.toLowerCase();
-      const bName = b.attr.name?.toLowerCase();
-      return locationOrder.indexOf(aName) - locationOrder.indexOf(bName);
-    });
+    // Sort location group: Country first, then State, then City, then ZIP
+    const locationOrder = ["country", "state", "city", "zip", "postal"];
+    const getLocationPriority = (attr: any) => {
+      const n = (attr.name || "").toLowerCase();
+      const k = (attr.key || "").toLowerCase();
+      if (n === "country" || k.includes("country")) return 0;
+      if (n === "state" || k.includes("state") || n.includes("state")) return 1;
+      if (n === "city" || k.includes("city") || n.includes("city")) return 2;
+      return 3; // zip/postal
+    };
+    groups.location.sort((a, b) => getLocationPriority(a.attr) - getLocationPriority(b.attr));
 
     return groups;
   };
