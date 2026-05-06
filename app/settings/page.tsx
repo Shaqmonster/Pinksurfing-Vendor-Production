@@ -232,6 +232,8 @@ const Settings = () => {
       setAllStates(states);
     }
     setLoadingStates(false);
+  }, [selectedCountryName]);
+
   // Load cities when state changes
   useEffect(() => {
     if (!selectedCountryName || !selectedStateName) { setAllCities([]); return; }
