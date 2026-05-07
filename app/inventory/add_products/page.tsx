@@ -312,6 +312,7 @@ const AddProducts = () => {
     short_description: "",
     description: "",
     image: "",
+    deal_active_until: "",
     id: ""
   });
 
@@ -1669,6 +1670,29 @@ const AddProducts = () => {
                     />
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Deal Active Until (Real Estate Specific) */}
+            {(selectedCategoryName.toLowerCase().includes("real estate")) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="premium-card p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-500/20 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Deal Active Until</label>
+                  </div>
+                  <input
+                    type="date"
+                    value={productData.deal_active_until ? productData.deal_active_until.split('T')[0] : ''}
+                    onChange={(e) => updateProductData("deal_active_until", e.target.value)}
+                    className="input-premium"
+                  />
+                  <p className="text-xs text-surface-500 mt-2">After this date, the deal will be automatically closed.</p>
+                </div>
               </div>
             )}
 
