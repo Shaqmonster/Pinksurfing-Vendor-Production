@@ -51,9 +51,10 @@ function SearchableSelect({
   const [search, setSearch] = useState("");
   const ref = useRef<HTMLDivElement>(null);
 
-  const filtered = options.filter(o =>
-    o.label.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = options.filter(o => {
+    const label = typeof o?.label === "string" ? o.label : String(o?.label ?? "");
+    return label.toLowerCase().includes(search.toLowerCase());
+  });
   const selected = options.find(o => o.value === value);
 
   useEffect(() => {
@@ -244,9 +245,9 @@ const Settings = () => {
     const state = country ? State.getStatesOfCountry(country.isoCode).find((s: any) => s.name === selectedStateName) : null;
     
     if (country && state) {
-      const cities = City.getCitiesOfState(country.isoCode, state.isoCode).map((c: any) => ({
-        name: c.name,
-      }));
+      const cities = City.getCitiesOfState(country.isoCode, state.isoCode)
+        .map((c: any) => c?.name)
+        .filter((name: unknown): name is string => typeof name === "string" && name.length > 0);
       setAllCities(cities);
     } else {
       setAllCities([]);
