@@ -20,6 +20,7 @@ import {
   FiChevronDown,
   FiSearch,
   FiCreditCard,
+  FiHash,
 } from "react-icons/fi";
 import { FaStore } from "react-icons/fa";
 import Link from "next/link";
@@ -132,6 +133,9 @@ const Settings = () => {
   const [zipCode, setZipCode] = useState("");
   const [website, setWebsite] = useState("");
   const [bio, setBio] = useState("");
+  const [taxNumber, setTaxNumber] = useState("");
+  const [initialTaxNumber, setInitialTaxNumber] = useState("");
+  const [listingFeeExemptUntil, setListingFeeExemptUntil] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -167,6 +171,9 @@ const Settings = () => {
         setZipCode(data.zip_code || "");
         setWebsite(data.website || "");
         setBio(data.bio || "");
+        setTaxNumber(data.tax_number || "");
+        setInitialTaxNumber(data.tax_number || "");
+        setListingFeeExemptUntil(data.listing_fee_exempt_until || null);
       } else {
         console.error("Error fetching profile:", error);
       }
@@ -286,6 +293,7 @@ const Settings = () => {
       zip_code: zipCode,
       website: website,
       bio: bio,
+      tax_number: taxNumber,
     };
 
     try {
@@ -449,6 +457,43 @@ const Settings = () => {
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
                 />
+              </div>
+              <div className="md:col-span-2">
+                <label className={labelClasses}>
+                  <span className="flex items-center gap-2">
+                    <FiHash className="w-4 h-4" />
+                    Tax / Business ID Number
+                    <span className="text-[11px] font-normal text-surface-400">Optional</span>
+                  </span>
+                </label>
+                <input
+                  className={inputClasses}
+                  type="text"
+                  placeholder="e.g. EIN, GSTIN, VAT, ABN"
+                  value={taxNumber}
+                  onChange={(e) => setTaxNumber(e.target.value)}
+                  autoComplete="off"
+                />
+                <p className="text-xs text-surface-500 dark:text-surface-400 mt-2">
+                  Used for invoicing and compliance.
+                  {!initialTaxNumber && !listingFeeExemptUntil && (
+                    <>
+                      {" "}Adding a tax number waives your $1 listing fee for the next 180 days.
+                    </>
+                  )}
+                  {listingFeeExemptUntil && (
+                    <>
+                      {" "}Listing fee waived until{" "}
+                      <span className="font-semibold text-surface-700 dark:text-surface-200">
+                        {new Date(listingFeeExemptUntil).toLocaleDateString(undefined, {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>.
+                    </>
+                  )}
+                </p>
               </div>
             </div>
           </motion.div>
