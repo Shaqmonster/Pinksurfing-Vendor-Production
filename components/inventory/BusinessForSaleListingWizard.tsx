@@ -485,28 +485,34 @@ export const BusinessForSaleListingWizard = forwardRef<
   const { price, rev, eb, fmt } = reviewMetrics();
 
   return (
-    <div className="bfs-wizard-root">
-
-      <nav>
-        <div className="logo">
-          Pink<span>Surfing</span>
+    <div className="bfs-wizard-root bfs-wizard--embedded">
+      {/* Single title row — flows with vendor layout (no duplicate app nav / breadcrumbs) */}
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight text-black dark:text-white">
+            Business listing
+          </h2>
+          <p className="mt-1 text-sm text-body dark:text-bodydark">
+            {selectedCategoryName}
+            <span className="mx-1.5 text-bodydark2">·</span>
+            {selectedSubcategoryName}
+          </p>
         </div>
-        <div className="nav-right">
-          <span className="draft-saved">{draftHint}</span>
-          <button type="button" className="btn-save-draft" onClick={saveDraftHint}>
-            Save Draft
+        <div className="flex shrink-0 items-center gap-3 sm:pt-0.5">
+          {draftHint ? (
+            <span className="text-xs text-body dark:text-bodydark">{draftHint}</span>
+          ) : null}
+          <button
+            type="button"
+            onClick={saveDraftHint}
+            className="rounded-lg border border-stroke bg-gray px-3 py-1.5 text-sm font-medium text-black hover:bg-opacity-80 dark:border-strokedark dark:bg-meta-4 dark:text-bodydark1 dark:hover:border-bodydark2"
+          >
+            Save draft
           </button>
         </div>
-      </nav>
-
-      <div className="page-header">
-        <div className="breadcrumb">
-          Home <span>›</span> {selectedCategoryName} <span>›</span> List a business
-        </div>
-        <h1>List your business for sale</h1>
-        <p>Complete all sections to maximize visibility with qualified buyers ({selectedSubcategoryName}).</p>
       </div>
 
+      <div className="bfs-embed-progress mb-6 overflow-x-auto rounded-xl border border-stroke bg-white shadow-sm dark:border-strokedark dark:bg-dark-card dark:shadow-none">
       <div className="progress-bar-wrap">
         {[
           "Overview",
@@ -525,6 +531,7 @@ export const BusinessForSaleListingWizard = forwardRef<
             {label}
           </div>
         ))}
+      </div>
       </div>
 
       <div className="form-layout">
