@@ -15,7 +15,7 @@ import {
 } from "@/utils/shortDescription";
 import "./business-for-sale-wizard.css";
 
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 7;
 
 const INDUSTRY_OPTIONS = [
   "",
@@ -123,11 +123,10 @@ const BFS_TIPS = [
   "A specific title with key metrics gets more clicks. Include revenue, margin, or industry.",
   "Businesses with a city and state get more inquiries from local and regional buyers.",
   "Listings with financial fields completed receive more serious buyer inquiries.",
-  "Be honest about owner involvement — buyers will verify.",
+  "Fill in any remaining subcategory fields — they help buyers filter and compare listings.",
   "Only apply Smart Tags that genuinely fit your business.",
   "Photos dramatically increase engagement. Add at least one clear image.",
-  "Use the review step to confirm everything before publishing.",
-  "You are almost ready — continue to the platform review screen.",
+  "Use the review step to confirm everything before continuing to the platform review screen.",
 ];
 
 export const BusinessForSaleListingWizard = forwardRef<
@@ -332,7 +331,7 @@ export const BusinessForSaleListingWizard = forwardRef<
     if (step === 2) {
       return Boolean(productData.mrp);
     }
-    if (step === 4) {
+    if (step === 3) {
       for (const { attr } of schemaAttributeRows) {
         if (!attr.required) continue;
         if (Array.isArray(attr.value)) {
@@ -341,7 +340,7 @@ export const BusinessForSaleListingWizard = forwardRef<
       }
       return true;
     }
-    if (step === 6) {
+    if (step === 5) {
       return files.length > 0;
     }
     return true;
@@ -368,7 +367,7 @@ export const BusinessForSaleListingWizard = forwardRef<
   };
 
   const canGoToVendorReview = useCallback(() => {
-    for (let s = 0; s <= 6; s++) {
+    for (let s = 0; s < TOTAL_STEPS - 1; s++) {
       if (!validateStep(s)) return false;
     }
     return true;
@@ -518,7 +517,6 @@ export const BusinessForSaleListingWizard = forwardRef<
           "Overview",
           "Location",
           "Financials",
-          "Details",
           "Attributes",
           "Smart tags",
           "Media",
@@ -625,50 +623,8 @@ export const BusinessForSaleListingWizard = forwardRef<
           <div className={"form-panel" + (bfsStep === 1 ? " active" : "")}>
             <div className="card">
               <div className="card-title">Business location</div>
-              <div className="card-sub">Used for local buyer search.</div>
+              <div className="card-sub">Used for local buyer search. Choose country first to load states.</div>
               <div className="field-row">
-                <div className="field">
-                  <label>
-                    City <span className="req">*</span>
-                  </label>
-                  <input className="fi" value={bfsCity} onChange={(e) => setBfsCity(e.target.value)} placeholder="e.g. Dallas" />
-                </div>
-                <div className="field">
-                  <label>
-                    State / province <span className="req">*</span>
-                  </label>
-                  {stateAttr ? (
-                    <SearchableSelect
-                      label="State / Province"
-                      value={stateValue}
-                      options={allStates.map((s) => ({ label: s.name, value: s.name }))}
-                      placeholder={selectedCountryName ? "Select state" : "Select a country first"}
-                      disabled={!selectedCountryName && !stateValue}
-                      onChange={(val: string) => {
-                        setNonVariantAttributes((prev) => {
-                          const idx = prev.indexOf(stateAttr);
-                          if (idx < 0) return prev;
-                          const cp = [...prev];
-                          cp[idx] = { ...cp[idx], value: val };
-                          return cp;
-                        });
-                      }}
-                    />
-                  ) : (
-                    <input
-                      className="fi"
-                      value={stateFree}
-                      onChange={(e) => setStateFree(e.target.value)}
-                      placeholder="State / province / region"
-                    />
-                  )}
-                </div>
-              </div>
-              <div className="field-row">
-                <div className="field">
-                  <label>ZIP / postal code</label>
-                  <input className="fi" value={bfsZip} onChange={(e) => setBfsZip(e.target.value)} maxLength={12} />
-                </div>
                 <div className="field">
                   <label>
                     Country <span className="req">*</span>
@@ -702,6 +658,49 @@ export const BusinessForSaleListingWizard = forwardRef<
                       }}
                     />
                   )}
+                </div>
+                <div className="field">
+                  <label>
+                    State / province <span className="req">*</span>
+                  </label>
+                  {stateAttr ? (
+                    <SearchableSelect
+                      label="State / Province"
+                      value={stateValue}
+                      options={allStates.map((s) => ({ label: s.name, value: s.name }))}
+                      placeholder={selectedCountryName ? "Select state" : "Select a country first"}
+                      disabled={!selectedCountryName && !stateValue}
+                      onChange={(val: string) => {
+                        setNonVariantAttributes((prev) => {
+                          const idx = prev.indexOf(stateAttr);
+                          if (idx < 0) return prev;
+                          const cp = [...prev];
+                          cp[idx] = { ...cp[idx], value: val };
+                          return cp;
+                        });
+                      }}
+                    />
+                  ) : (
+                    <input
+                      className="fi"
+                      value={stateFree}
+                      onChange={(e) => setStateFree(e.target.value)}
+                      placeholder={selectedCountryName ? "State / province / region" : "Select a country first"}
+                      disabled={!selectedCountryName}
+                    />
+                  )}
+                </div>
+              </div>
+              <div className="field-row">
+                <div className="field">
+                  <label>
+                    City <span className="req">*</span>
+                  </label>
+                  <input className="fi" value={bfsCity} onChange={(e) => setBfsCity(e.target.value)} placeholder="e.g. Dallas" />
+                </div>
+                <div className="field">
+                  <label>ZIP / postal code</label>
+                  <input className="fi" value={bfsZip} onChange={(e) => setBfsZip(e.target.value)} maxLength={12} />
                 </div>
               </div>
             </div>
@@ -832,22 +831,11 @@ export const BusinessForSaleListingWizard = forwardRef<
             </div>
           </div>
 
-          {/* Step 3 placeholder details — financial narrative merged in step 2; keep panel for flow */}
-          <div className={"form-panel" + (bfsStep === 3 ? " active" : "")}>
-            <div className="card">
-              <div className="card-title">Highlights</div>
-              <div className="card-sub">Anything else buyers should know up front is in your long description above.</div>
-              <p style={{ fontSize: 13, color: "var(--text-3)", lineHeight: 1.6 }}>
-                You can refine the long description in the previous step. Continue to map any remaining subcategory fields.
-              </p>
-            </div>
-          </div>
+          {/* Step 3 schema */}
+          <div className={"form-panel" + (bfsStep === 3 ? " active" : "")}>{renderSchemaBlock()}</div>
 
-          {/* Step 4 schema */}
-          <div className={"form-panel" + (bfsStep === 4 ? " active" : "")}>{renderSchemaBlock()}</div>
-
-          {/* Step 5 smart tags */}
-          <div className={"form-panel" + (bfsStep === 5 ? " active" : "")}>
+          {/* Step 4 smart tags */}
+          <div className={"form-panel" + (bfsStep === 4 ? " active" : "")}>
             <div className="card">
               <div className="card-title">Smart tags</div>
               <div className="card-sub">Select tags that honestly describe the listing.</div>
@@ -872,8 +860,8 @@ export const BusinessForSaleListingWizard = forwardRef<
             </div>
           </div>
 
-          {/* Step 6 media */}
-          <div className={"form-panel" + (bfsStep === 6 ? " active" : "")}>
+          {/* Step 5 media */}
+          <div className={"form-panel" + (bfsStep === 5 ? " active" : "")}>
             <div className="card">
               <div className="card-title">
                 Photos <span className="req">*</span>
@@ -946,8 +934,8 @@ export const BusinessForSaleListingWizard = forwardRef<
             </div>
           </div>
 
-          {/* Step 7 review */}
-          <div className={"form-panel" + (bfsStep === 7 ? " active" : "")}>
+          {/* Step 6 review */}
+          <div className={"form-panel" + (bfsStep === 6 ? " active" : "")}>
             <div className="review-preview">
               <div className="review-photo">
                 {files[0] ? <img src={photoPreviewUrls[0]} alt="" /> : "📷"}
@@ -987,11 +975,11 @@ export const BusinessForSaleListingWizard = forwardRef<
           <div className="sidebar-card">
             <h4>Progress</h4>
             <div className="completion-text">
-              <h5>{completedSteps.size >= 6 ? "Looking great" : "Keep going"}</h5>
+              <h5>{completedSteps.size >= 5 ? "Looking great" : "Keep going"}</h5>
               <p>{BFS_TIPS[bfsStep]}</p>
             </div>
             <div className="completion-steps">
-              {["Overview", "Location", "Price", "Details", "Fields", "Tags", "Photos", "Review"].map((label, i) => (
+              {["Overview", "Location", "Financials", "Fields", "Tags", "Photos", "Review"].map((label, i) => (
                 <div
                   key={label}
                   className={"comp-step" + (completedSteps.has(i) ? " done" : "") + (i === bfsStep ? " active" : "")}

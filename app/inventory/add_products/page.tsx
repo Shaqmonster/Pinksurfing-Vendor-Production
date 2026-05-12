@@ -189,6 +189,51 @@ function SearchableSelect({
   );
 }
 
+/** Subcategory schema fields already collected in BusinessForSaleListingWizard — hide from Attributes step. */
+function bfsSchemaAttrSupersededByWizard(attr: any): boolean {
+  const k = String(attr.key ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/[\s-]+/g, "_");
+  const n = String(attr.name ?? "").toLowerCase().trim();
+
+  const km = (frag: string) => k === frag || k.includes(`_${frag}`) || k.includes(`${frag}_`) || k.includes(frag);
+  const nm = (frag: string) => n === frag || n.includes(frag);
+
+  if (km("country") || n === "country") return true;
+  if (km("state") || km("province") || nm("state / province") || nm("state/province")) return true;
+  if (km("city") || n === "city") return true;
+  if (km("zip") || km("postal") || km("postcode") || nm("zip code") || nm("postal code")) return true;
+  if (km("industry") || nm("industry")) return true;
+
+  if (km("short_description") || nm("short description") || nm("brief description") || (n === "summary" && !nm("order"))) return true;
+  if (k === "name" || k === "title" || nm("listing title") || nm("business name") || nm("business title")) return true;
+
+  if (nm("meta description")) return false;
+  if (k === "description" || k === "long_description" || k === "product_description") return true;
+  if (/^(full description|long description|product description|listing description)$/.test(n)) return true;
+
+  if (["mrp", "unit_price", "asking_price", "list_price", "regular_price"].includes(k)) return true;
+  if (nm("asking price") || nm("list price") || nm("regular price")) return true;
+  if ((nm("sale price") || k === "sale_price") && !nm("business")) return true;
+
+  if (km("annual_revenue") || km("gross_revenue") || (km("revenue") && !km("recurring"))) return true;
+  if (nm("annual revenue") || nm("gross revenue") || (nm("revenue") && !nm("recurring"))) return true;
+  if (km("ebitda") || nm("ebitda")) return true;
+  if (km("sde") || nm("seller") && nm("discretionary")) return true;
+  if ((km("growth") && km("trend")) || nm("growth trend")) return true;
+
+  if (nm("sale type") || nm("type of sale") || nm("transaction type")) return true;
+  if (km("creator") || km("built_by") || nm("who built")) return true;
+  if (km("remote_friendly") || km("web_only") || km("multi_loc") || km("multi_location")) return true;
+  if (nm("remote-friendly") || (nm("web") && nm("mobile") && nm("only")) || nm("multi-location")) return true;
+
+  if (["meta_title", "tags", "product_tags", "keywords", "seo_title"].includes(k)) return true;
+  if (nm("seo title") || nm("meta title") || (nm("tags") && !nm("hashtag"))) return true;
+
+  return false;
+}
+
 // ============ STEP CONFIGURATION ============
 const STEPS = [
   { id: 1, name: "Category", description: "Select product type", icon: GridIcon },
@@ -390,28 +435,9 @@ const AddProducts = () => {
   );
   const businessForSaleSchemaRows = useMemo(() => {
     if (!isBusinessForSale) return [];
-    const skipKey = (k: string) => {
-      const x = k.toLowerCase();
-      return (
-        x === "country" ||
-        x === "state" ||
-        x === "city" ||
-        x === "zip" ||
-        x === "zip_code" ||
-        x.includes("postal") ||
-        x === "industry"
-      );
-    };
     return nonVariantAttributes
       .map((attr: any, index: number) => ({ attr, index }))
-      .filter(({ attr }) => {
-        const k = (attr.key || "").toLowerCase();
-        const n = (attr.name || "").toLowerCase();
-        if (skipKey(k)) return false;
-        if (n === "country" || n === "state" || n === "city") return false;
-        if (n.includes("industry")) return false;
-        return true;
-      });
+      .filter(({ attr }) => !bfsSchemaAttrSupersededByWizard(attr));
   }, [isBusinessForSale, nonVariantAttributes]);
 
   // Load categories on mount using schema API
@@ -2013,9 +2039,13 @@ const AddProducts = () => {
                     {isCompleted ? <CheckIcon /> : <StepIcon />}
                   </div>
                   <div className="text-left hidden sm:block">
-                    <p className="font-semibold text-sm">{step.name}</p>
+                    <p className="font-semibold text-sm">
+                      {isBusinessForSale && step.id === 2 ? "Listing" : step.name}
+                    </p>
                     <p className={`text-xs ${isCurrent ? "text-white/70" : "text-surface-500"}`}>
-                      {step.description}
+                      {isBusinessForSale && step.id === 2
+                        ? "Business profile, pricing & photos"
+                        : step.description}
                     </p>
                   </div>
                 </button>
