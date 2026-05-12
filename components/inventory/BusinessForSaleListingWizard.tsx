@@ -223,10 +223,37 @@ export const BusinessForSaleListingWizard = forwardRef<
     if (typeof z === "string" && z && !bfsZip) setBfsZip(z);
   }, [zipAttr, bfsZip]);
 
+  /** Schema industry wins; otherwise default Industry to the selected subcategory (wizard remounts on subcategory change via parent `key`). */
   useEffect(() => {
     const ind = findAttr(nonVariantAttributes, "industry");
-    if (ind?.value && typeof ind.value === "string" && !industry) setIndustry(ind.value);
-  }, [nonVariantAttributes, industry]);
+    const iv = ind?.value != null ? String(ind.value).trim() : "";
+    if (iv) {
+      setIndustry(iv);
+      return;
+    }
+    const sub = (selectedSubcategoryName || "").trim();
+    if (!sub) {
+      setIndustry("");
+      return;
+    }
+    const match = INDUSTRY_OPTIONS.find((o) => o && o.toLowerCase() === sub.toLowerCase()) || "";
+    setIndustry(match || sub);
+  }, [nonVariantAttributes, selectedSubcategoryName]);
+
+  const industrySelectOptions = useMemo(() => {
+    const base = INDUSTRY_OPTIONS.filter((o): o is string => Boolean(o));
+    const seen = new Set(base.map((x) => x.toLowerCase()));
+    const extra: string[] = [];
+    const sub = (selectedSubcategoryName || "").trim();
+    if (sub && !seen.has(sub.toLowerCase())) {
+      extra.push(sub);
+      seen.add(sub.toLowerCase());
+    }
+    if (industry && !seen.has(industry.toLowerCase())) {
+      extra.push(industry);
+    }
+    return ["", ...base, ...extra];
+  }, [selectedSubcategoryName, industry]);
 
   const updateOverviewShort = useCallback(
     (plain: string) => {
@@ -570,7 +597,7 @@ export const BusinessForSaleListingWizard = forwardRef<
                     Industry <span className="req">*</span>
                   </label>
                   <select className="fs" value={industry} onChange={(e) => setIndustry(e.target.value)}>
-                    {INDUSTRY_OPTIONS.map((o) => (
+                    {industrySelectOptions.map((o) => (
                       <option key={o || "empty"} value={o}>
                         {o || "Select industry…"}
                       </option>
