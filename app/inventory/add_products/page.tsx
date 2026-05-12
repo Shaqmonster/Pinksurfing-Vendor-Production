@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   getSchemaCategories,
   getSchemaSubcategories,
@@ -27,6 +27,11 @@ import {
   upsertPendingListing,
   updatePendingListingState,
 } from "@/utils/pendingListings";
+import { isBusinessForSaleCategory } from "@/components/inventory/businessForSaleCategory";
+import {
+  BusinessForSaleListingWizard,
+  type BusinessForSaleListingWizardHandle,
+} from "@/components/inventory/BusinessForSaleListingWizard";
 
 // ============ ICONS ============
 const CheckIcon = () => (
@@ -378,6 +383,37 @@ const AddProducts = () => {
     );
   }, [selectedCategoryName]);
 
+  const bfsWizardRef = useRef<BusinessForSaleListingWizardHandle>(null);
+  const isBusinessForSale = useMemo(
+    () => isBusinessForSaleCategory(selectedCategoryName),
+    [selectedCategoryName]
+  );
+  const businessForSaleSchemaRows = useMemo(() => {
+    if (!isBusinessForSale) return [];
+    const skipKey = (k: string) => {
+      const x = k.toLowerCase();
+      return (
+        x === "country" ||
+        x === "state" ||
+        x === "city" ||
+        x === "zip" ||
+        x === "zip_code" ||
+        x.includes("postal") ||
+        x === "industry"
+      );
+    };
+    return nonVariantAttributes
+      .map((attr: any, index: number) => ({ attr, index }))
+      .filter(({ attr }) => {
+        const k = (attr.key || "").toLowerCase();
+        const n = (attr.name || "").toLowerCase();
+        if (skipKey(k)) return false;
+        if (n === "country" || n === "state" || n === "city") return false;
+        if (n.includes("industry")) return false;
+        return true;
+      });
+  }, [isBusinessForSale, nonVariantAttributes]);
+
   // Load categories on mount using schema API
   useEffect(() => {
     getSchemaCategories().then((result) => {
@@ -561,6 +597,7 @@ const AddProducts = () => {
       case 1:
         return selectedCategory && selectedSubcategory;
       case 2:
+        if (isBusinessForSale) return false;
         // Details step: requires name, mrp, and at least 1 image (unless category hides media)
         return productData.name && productData.mrp && (shouldHideMedia || files.length > 0);
       case 3:
@@ -606,6 +643,11 @@ const AddProducts = () => {
 
       // Clean product data - remove empty optional fields
       const cleanedProductData = { ...productData, unit_price: finalUnitPrice };
+      const descBase = cleanedProductData.description || "";
+      if (isBusinessForSale && bfsWizardRef.current) {
+        const ap = bfsWizardRef.current.getDescriptionAppendixHtml();
+        (cleanedProductData as any).description = ap ? `${descBase}${ap}` : descBase;
+      }
 
       // Remove quantity if empty (it's optional)
       if (cleanedProductData.quantity === "" || cleanedProductData.quantity === null || cleanedProductData.quantity === undefined) {
@@ -1464,6 +1506,42 @@ const AddProducts = () => {
     switch (currentStep) {
       case 1: return renderCategoryStep();
       case 2:
+        if (isBusinessForSale && selectedSubcategory) {
+          return (
+            <BusinessForSaleListingWizard
+              key={selectedSubcategory}
+              ref={bfsWizardRef}
+              selectedCategoryName={selectedCategoryName}
+              selectedSubcategoryName={selectedSubcategoryName}
+              productData={productData}
+              setProductData={setProductData}
+              hasDiscount={hasDiscount}
+              setHasDiscount={setHasDiscount}
+              nonVariantAttributes={nonVariantAttributes}
+              setNonVariantAttributes={setNonVariantAttributes}
+              files={files}
+              setFiles={setFiles}
+              allCountries={allCountries}
+              allStates={allStates}
+              selectedCountryName={selectedCountryName}
+              setSelectedCountryName={setSelectedCountryName}
+              loadingStates={loadingStates}
+              setShortDescPlainLen={setShortDescPlainLen}
+              SearchableSelect={SearchableSelect}
+              renderAttributeInput={renderAttributeInput}
+              schemaAttributeRows={businessForSaleSchemaRows}
+              onBackToCategoryStep={() => setCurrentStep(1)}
+              onContinueToVendorReview={() => {
+                if (!bfsWizardRef.current?.canGoToVendorReview()) {
+                  toast.error("Please complete all required sections in the business listing wizard.");
+                  return;
+                }
+                setCompletedSteps((prev) => (prev.includes(2) ? prev : [...prev, 2]));
+                setCurrentStep(3);
+              }}
+            />
+          );
+        }
         // Combined step: Details + Attributes + Media - PREMIUM REDESIGNED LAYOUT
         return (
           <div className="animate-fadeIn">
@@ -1904,7 +1982,8 @@ const AddProducts = () => {
         </div>
       )}
 
-      {/* Progress Steps */}
+      {/* Progress Steps — hide while Business for Sale wizard is open (it has its own progress UI) */}
+      {!(currentStep === 2 && isBusinessForSale) && (
       <div className="mb-8 overflow-x-auto">
         <div className="flex items-center min-w-max pb-4">
           {STEPS.map((step, index) => {
@@ -1952,13 +2031,15 @@ const AddProducts = () => {
           })}
         </div>
       </div>
+      )}
 
       {/* Step Content */}
       <div className="mb-8">
         {renderStepContent()}
       </div>
 
-      {/* Navigation Buttons */}
+      {/* Navigation Buttons — hidden on Business for Sale step 2 (wizard has its own bar) */}
+      {!(currentStep === 2 && isBusinessForSale) && (
       <div className="fixed  left-0 right-0 bg-white/80 dark:bg-dark-bg/80 backdrop-blur-xl border-t border-surface-200 dark:border-dark-border p-4 md:p-6 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <button
@@ -2017,6 +2098,7 @@ const AddProducts = () => {
           )}
         </div>
       </div>
+      )}
 
       <ToastContainer position="top-right" autoClose={3000} />
     </div>
