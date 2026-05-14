@@ -875,6 +875,38 @@ export const BusinessForSaleListingWizard = forwardRef<
                 placeholder="Full narrative for buyers (financial history, operations, transition, etc.)"
               />
             </div>
+
+            {/* Financial Privacy (NDA) */}
+            <div className="card">
+              <div className="card-title">🔒 Financial Privacy (NDA)</div>
+              <div className="card-sub">Choose which financial data buyers must sign an NDA to see. Leave both off to show everything publicly. Small businesses can safely ignore this.</div>
+              <div
+                className={"bool-row" + (productData.nda_lock_ebitda ? " on" : "")}
+                onClick={() => setProductData((p: any) => ({ ...p, nda_lock_ebitda: !p.nda_lock_ebitda }))}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setProductData((p: any) => ({ ...p, nda_lock_ebitda: !p.nda_lock_ebitda })); }}
+              >
+                <div className="bool-row-left">
+                  <div className="bool-row-label">Lock SDE / EBITDA behind NDA</div>
+                  <div className="bool-row-sub">The SDE / EBITDA figure will be hidden from buyers until they sign the NDA.</div>
+                </div>
+                <div className="toggle-switch" />
+              </div>
+              <div
+                className={"bool-row" + (productData.nda_lock_full_financials ? " on" : "")}
+                onClick={() => setProductData((p: any) => ({ ...p, nda_lock_full_financials: !p.nda_lock_full_financials }))}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setProductData((p: any) => ({ ...p, nda_lock_full_financials: !p.nda_lock_full_financials })); }}
+              >
+                <div className="bool-row-left">
+                  <div className="bool-row-label">Lock full financials behind NDA</div>
+                  <div className="bool-row-sub">Revenue breakdown, P&amp;L tables, and tax returns are hidden until a buyer signs the NDA.</div>
+                </div>
+                <div className="toggle-switch" />
+              </div>
+            </div>
           </div>
 
           {/* Step 3 schema */}
