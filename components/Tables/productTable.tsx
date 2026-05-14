@@ -498,175 +498,154 @@ const ProductsTable = (props: { Products?: Product[] }) => {
 
               {/* Desktop: table */}
               <div className="hidden lg:block overflow-x-auto">
-              <table className="w-full table-fixed min-w-0">
-                <thead>
-                  <tr className="bg-surface-50 dark:bg-dark-surface">
-                    <th className="px-4 xl:px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[28%]">
-                      Listing
-                    </th>
-                    <th className="px-4 xl:px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[14%]">
-                      Category
-                    </th>
-                    <th className="px-4 xl:px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[18%]">
-                      Description
-                    </th>
-                    <th className="px-4 xl:px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[12%]">
-                        Listing Link
-                    </th>
-                    <th className="px-4 xl:px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[8%]">
-                      Stock
-                    </th>
-                    <th className="px-4 xl:px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[10%]">
-                      Price
-                    </th>
-                    <th className="px-4 xl:px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-surface-500 dark:text-surface-400 w-[10%]">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-surface-100 dark:divide-dark-border">
-                  <AnimatePresence>
-                    {filteredProducts.map((product: any, index: number) => (
-                      <motion.tr
-                        key={product.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ delay: index * 0.03 }}
-                        className="hover:bg-surface-50 dark:hover:bg-dark-hover transition-colors"
-                      >
-                        <td className="px-4 xl:px-6 py-4 align-top">
-                          <div
-                            className="flex items-center gap-3 xl:gap-4 cursor-pointer group"
-                            onClick={() => handleProductClick(product)}
-                            title="Open product page & copy link"
-                          >
-                            <div className="w-12 h-12 xl:w-14 xl:h-14 rounded-xl overflow-hidden bg-surface-100 dark:bg-dark-surface flex-shrink-0 group-hover:ring-2 group-hover:ring-primary-400 transition-all">
-                              {product.image1 ? (
-                                <img
-                                  src={product.image1}
-                                  alt={product.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <FiPackage className="w-6 h-6 text-surface-400" />
-                                </div>
-                              )}
+                <table className="w-full table-fixed min-w-0">
+                  <thead>
+                    <tr className="bg-surface-50 dark:bg-dark-surface border-t border-surface-100 dark:border-dark-border">
+                      <th className="px-5 xl:px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500 w-[35%]">
+                        Listing
+                      </th>
+                      <th className="px-5 xl:px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500 w-[18%]">
+                        Category
+                      </th>
+                      <th className="px-5 xl:px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500 w-[20%]">
+                        Status
+                      </th>
+                      <th className="px-5 xl:px-6 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500 w-[13%]">
+                        Price
+                      </th>
+                      <th className="px-5 xl:px-6 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500 w-[14%]">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-surface-100 dark:divide-dark-border">
+                    <AnimatePresence>
+                      {filteredProducts.map((product: any, index: number) => (
+                        <motion.tr
+                          key={product.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ delay: index * 0.03 }}
+                          className={`group transition-colors ${
+                            product.is_active
+                              ? "hover:bg-surface-50 dark:hover:bg-dark-hover"
+                              : "bg-surface-50/60 dark:bg-dark-surface/20 hover:bg-surface-100/60 dark:hover:bg-dark-surface/40"
+                          }`}
+                        >
+                          {/* Listing */}
+                          <td className="px-5 xl:px-6 py-4">
+                            <div
+                              className={`flex items-center gap-3 xl:gap-4 ${product.is_active ? "cursor-pointer" : "cursor-default"}`}
+                              onClick={() => handleProductClick(product)}
+                              title={product.is_active ? "Open product page & copy link" : undefined}
+                            >
+                              <div className={`w-11 h-11 xl:w-12 xl:h-12 rounded-xl overflow-hidden flex-shrink-0 bg-surface-100 dark:bg-dark-surface transition-all ${product.is_active ? "group-hover:ring-2 group-hover:ring-primary-400" : "opacity-60"}`}>
+                                {product.image1 ? (
+                                  <img src={product.image1} alt={product.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <FiPackage className="w-5 h-5 text-surface-400" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className={`font-semibold text-sm truncate transition-colors ${product.is_active ? "text-surface-900 dark:text-white group-hover:text-primary-500" : "text-surface-600 dark:text-surface-400"}`}>
+                                  {product.name}
+                                </p>
+                                <p className="text-xs text-surface-400 dark:text-surface-500 mt-0.5 truncate">
+                                  {product?.category?.name || "—"}
+                                  {product?.subcategory?.name ? ` · ${product.subcategory.name}` : ""}
+                                </p>
+                                {product.is_active && (
+                                  <span className="inline-flex items-center gap-1 text-xs text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
+                                    <FiExternalLink className="w-3 h-3" />
+                                    Open & copy link
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="font-medium text-surface-900 dark:text-white truncate group-hover:text-primary-500 transition-colors">
-                                {product.name}
-                              </p>
-                              <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
-                                ID: {product.id?.slice(0, 8)}...
-                              </p>
-                              {product.is_active ? (
-                                <span className="inline-flex items-center gap-1 text-xs text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
-                                  <FiExternalLink className="w-3 h-3" />
-                                  Open & copy link
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 text-xs text-warning-dark dark:text-warning mt-0.5">
-                                  Pay listing fee to activate
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 xl:px-6 py-4 align-top">
-                          <div>
-                            <p className="text-sm font-medium text-surface-900 dark:text-white truncate">
-                              {product?.category?.name || "—"}
+                          </td>
+
+                          {/* Category */}
+                          <td className="px-5 xl:px-6 py-4">
+                            <p className="text-sm text-surface-600 dark:text-surface-400 line-clamp-2">
+                              {truncateAndConvertToText(product.short_description) || "—"}
                             </p>
-                            {product?.subcategory?.name && (
-                              <p className="text-xs text-surface-500 dark:text-surface-400 mt-1 line-clamp-2">
-                                {product.subcategory.name}
-                              </p>
+                          </td>
+
+                          {/* Status */}
+                          <td className="px-5 xl:px-6 py-4">
+                            {product.is_active ? (
+                              <div className="flex items-center gap-2.5">
+                                <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
+                                  Live
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => copyToClipboard(getProductUrl(product), e)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-surface-100 dark:bg-dark-surface text-surface-500 dark:text-surface-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-500 transition-colors text-xs font-medium"
+                                  title="Copy listing link"
+                                >
+                                  <FiCopy className="w-3 h-3" />
+                                  Copy link
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2.5">
+                                <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold bg-surface-200 text-surface-500 dark:bg-dark-border dark:text-surface-400">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-surface-400 dark:bg-surface-500 inline-block" />
+                                  Draft
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); handlePayForProduct(product); }}
+                                  disabled={pendingListings.some((p) => p.productId === product.id) || payingListingId === product.id}
+                                  className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                    pendingListings.some((p) => p.productId === product.id) || payingListingId === product.id
+                                      ? "bg-surface-200 text-surface-400 cursor-not-allowed dark:bg-dark-border dark:text-surface-500"
+                                      : "bg-gradient-pink text-white hover:opacity-90 shadow-sm"
+                                  }`}
+                                >
+                                  {payingListingId === product.id ? "Preparing…" : "Publish listing →"}
+                                </button>
+                              </div>
                             )}
-                          </div>
-                        </td>
-                        <td className="px-4 xl:px-6 py-4 align-top">
-                          <p className="text-sm text-surface-600 dark:text-surface-400 line-clamp-2 break-words">
-                            {truncateAndConvertToText(product.short_description)}
-                          </p>
-                        </td>
-                        <td className="px-4 xl:px-6 py-4 text-center align-top">
-                          {product.is_active && (
-                            <button
-                              type="button"
-                              onClick={(e) => copyToClipboard(getProductUrl(product), e)}
-                              className="inline-flex items-center gap-1.5 px-2 xl:px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-dark-surface text-surface-600 dark:text-surface-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-500 transition-colors text-xs font-medium"
-                              title="Copy product link"
-                            >
-                              <FiCopy className="w-3.5 h-3.5 shrink-0" />
-                              <span className="hidden xl:inline">Copy Link</span>
-                            </button>
-                          )}
-                        </td>
-                        <td className="px-4 xl:px-6 py-4 text-center align-top">
-                          <span
-                            className={`inline-flex items-center justify-center min-w-[36px] px-2 py-1 rounded-full text-sm font-semibold ${
-                              product.quantity > 10
-                                ? "bg-success-light text-success-dark dark:bg-success/20 dark:text-success"
-                                : product.quantity > 0
-                                ? "bg-warning-light text-warning-dark dark:bg-warning/20 dark:text-warning"
-                                : "bg-danger-light text-danger-dark dark:bg-danger/20 dark:text-danger"
-                            }`}
-                          >
-                            {product.quantity}
-                          </span>
-                        </td>
-                        <td className="px-4 xl:px-6 py-4 text-center align-top">
-                          <span className="text-base xl:text-lg font-bold text-success dark:text-success whitespace-nowrap">
-                            ${product.unit_price}
-                          </span>
-                        </td>
-                        <td className="px-4 xl:px-6 py-4 align-top">
-                          <div className="flex items-center justify-end gap-2">
-                            {/* Pay CTA for inactive products in table view */}
-                            {!product.is_active && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handlePayForProduct(product);
-                                }}
-                                disabled={
-                                  pendingListings.some((p) => p.productId === product.id) || payingListingId === product.id
-                                }
-                                className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
-                                  pendingListings.some((p) => p.productId === product.id) || payingListingId === product.id
-                                    ? "bg-surface-300 text-surface-500 cursor-not-allowed"
-                                    : "bg-gradient-pink text-white hover:opacity-90"
-                                }`}
-                                title="Pay to activate"
+                          </td>
+
+                          {/* Price */}
+                          <td className="px-5 xl:px-6 py-4 text-right">
+                            <span className="text-sm xl:text-base font-bold text-success dark:text-success whitespace-nowrap">
+                              ${product.unit_price}
+                            </span>
+                          </td>
+
+                          {/* Actions */}
+                          <td className="px-5 xl:px-6 py-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <Link
+                                href={`/inventory/editProduct/${product.id}`}
+                                className="p-2 rounded-lg bg-accent-blue/10 dark:bg-accent-blue/20 text-accent-blue hover:bg-accent-blue/20 dark:hover:bg-accent-blue/30 transition-colors"
+                                title="Edit listing"
                               >
-                                {payingListingId === product.id ? "Preparing checkout..." : "Pay to activate"}
+                                <FiEdit2 className="w-4 h-4" />
+                              </Link>
+                              <button
+                                onClick={() => openDeleteModal(product.id)}
+                                className="p-2 rounded-lg bg-danger-light dark:bg-danger/20 text-danger hover:bg-danger/20 dark:hover:bg-danger/30 transition-colors"
+                                title="Delete listing"
+                              >
+                                <FiTrash2 className="w-4 h-4" />
                               </button>
-                            )}
-                            <Link
-                              href={`/inventory/editProduct/${product.id}`}
-                              className="p-2 rounded-lg bg-accent-blue/10 dark:bg-accent-blue/20 text-accent-blue hover:bg-accent-blue/20 dark:hover:bg-accent-blue/30 transition-colors"
-                              title="Edit Product"
-                            >
-                              <FiEdit2 className="w-4 h-4" />
-                            </Link>
-                            <button
-                              onClick={() => openDeleteModal(product.id)}
-                              className="p-2 rounded-lg bg-danger-light dark:bg-danger/20 text-danger hover:bg-danger/20 dark:hover:bg-danger/30 transition-colors"
-                              title="Delete Product"
-                            >
-                              <FiTrash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </motion.tr>
-                    ))}
-                  </AnimatePresence>
-                </tbody>
-              </table>
-            </div>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </AnimatePresence>
+                  </tbody>
+                </table>
+              </div>
             </>
           ) : (
             /* Empty State */
