@@ -42,13 +42,18 @@ const SMART_TAG_DEFS: { id: string; icon: string; label: string; sub: string }[]
   { id: "ip", icon: "©️", label: "IP / Assets Included", sub: "Trademarks, patents, code" },
 ];
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
+/** Must stay in sync with `growth_trend` options in docker-pinksurfing-prod/filter.json (business-for-sale). */
+const GROWTH_TREND_OPTIONS = [
+  "",
+  "Declining",
+  "Flat",
+  "Moderate growth",
+  "High growth",
+  "Up",
+  "Neutral",
+  "Down",
+  "Any trend",
+] as const;
 
 function setAttrByMatchers(
   attrs: any[],
@@ -69,6 +74,16 @@ function setAttrByMatchers(
   });
 }
 
+/** Match `field.key` only (avoids e.g. `annual_revenue` when updating `revenue`). */
+function setAttrValueForSchemaKey(
+  attrs: any[],
+  schemaKey: string,
+  value: string | boolean | string[]
+): any[] {
+  const k = schemaKey.toLowerCase();
+  return attrs.map((a) => ((a.key || "").toLowerCase() === k ? { ...a, value } : a));
+}
+
 function findAttr(attrs: any[], ...candidates: string[]): any | undefined {
   const c = candidates.map((x) => x.toLowerCase());
   return attrs.find((a) => {
@@ -82,7 +97,7 @@ export type BusinessForSaleListingWizardHandle = {
   /** True when internal wizard is on the review panel and required fields pass. */
   canGoToVendorReview: () => boolean;
   getStep: () => number;
-  /** Appended to `description` on submit (HTML fragment). */
+  /** Reserved for optional HTML merged into `description` on submit; BFS details live on `attributes`. */
   getDescriptionAppendixHtml: () => string;
 };
 
@@ -307,23 +322,24 @@ export const BusinessForSaleListingWizard = forwardRef<
     }
   }, [countryAttr, countryFree, setSelectedCountryName]);
 
-  const getDescriptionAppendixHtml = useCallback((): string => {
-    const parts: string[] = [];
-    if (finRevenue) parts.push(`Annual revenue (USD): ${finRevenue}`);
-    if (finEbitda) parts.push(`EBITDA (USD): ${finEbitda}`);
-    if (finSde) parts.push(`SDE (USD): ${finSde}`);
-    if (finGrowth) parts.push(`Growth trend: ${finGrowth}`);
-    if (saleType) parts.push(`Sale type: ${saleType}`);
-    parts.push(`Creator type: ${creatorType}`);
-    if (remoteFriendly) parts.push("Remote-friendly: Yes");
-    if (webOnly) parts.push("Web/mobile only: Yes");
-    if (multiLoc) parts.push("Multi-location: Yes");
-    const tags = SMART_TAG_DEFS.filter((t) => smartOn[t.id]).map((t) => t.label);
-    if (tags.length) parts.push(`Smart tags: ${tags.join(", ")}`);
-    const ctry = countryAttr ? countryValue : countryFree;
-    if (ctry) parts.push(`Country: ${ctry}`);
-    if (!parts.length) return "";
-    return `<p><strong>Business listing details</strong></p><p>${parts.map(escapeHtml).join("<br/>")}</p>`;
+  /** Persist BFS-only fields as `Product.attributes` (schema in filter.json); avoid duplicating in HTML. */
+  useEffect(() => {
+    setNonVariantAttributes((prev) => {
+      if (!prev.length) return prev;
+      let next = prev;
+      next = setAttrValueForSchemaKey(next, "revenue", finRevenue || "");
+      next = setAttrValueForSchemaKey(next, "ebitda", finEbitda || "");
+      next = setAttrValueForSchemaKey(next, "sde", finSde || "");
+      next = setAttrValueForSchemaKey(next, "growth_trend", finGrowth || "");
+      next = setAttrValueForSchemaKey(next, "sale_type", saleType || "");
+      next = setAttrValueForSchemaKey(next, "creator_type", creatorType || "");
+      next = setAttrValueForSchemaKey(next, "remote_friendly", remoteFriendly);
+      next = setAttrValueForSchemaKey(next, "web_mobile_only", webOnly);
+      next = setAttrValueForSchemaKey(next, "multi_location", multiLoc);
+      const tagLabels = SMART_TAG_DEFS.filter((t) => smartOn[t.id]).map((t) => t.label);
+      next = setAttrValueForSchemaKey(next, "smart_tags", tagLabels);
+      return next;
+    });
   }, [
     finRevenue,
     finEbitda,
@@ -335,10 +351,12 @@ export const BusinessForSaleListingWizard = forwardRef<
     webOnly,
     multiLoc,
     smartOn,
-    countryAttr,
-    countryValue,
-    countryFree,
+    setNonVariantAttributes,
   ]);
+
+  const getDescriptionAppendixHtml = useCallback((): string => {
+    return "";
+  }, []);
 
   const validateStep = (step: number): boolean => {
     if (step === 0) {
@@ -608,8 +626,8 @@ export const BusinessForSaleListingWizard = forwardRef<
                   <label>Sale type</label>
                   <select className="fs" value={saleType} onChange={(e) => setSaleType(e.target.value)}>
                     <option value="">Select…</option>
-                    <option>Asset sale</option>
-                    <option>Stock sale</option>
+                    <option>Asset Sale</option>
+                    <option>Stock Sale</option>
                     <option>Merger</option>
                     <option>Other</option>
                   </select>
@@ -838,10 +856,11 @@ export const BusinessForSaleListingWizard = forwardRef<
                   <label>Growth trend</label>
                   <select className="fs" value={finGrowth} onChange={(e) => setFinGrowth(e.target.value)}>
                     <option value="">Select…</option>
-                    <option>Declining</option>
-                    <option>Flat</option>
-                    <option>Moderate growth</option>
-                    <option>High growth</option>
+                    {GROWTH_TREND_OPTIONS.filter(Boolean).map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
