@@ -174,9 +174,16 @@ export const BusinessForSaleListingWizard = forwardRef<
 
   const [bfsStep, setBfsStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(() => new Set());
-  const [creatorType, setCreatorType] = useState<"human_built" | "ai_built" | "hybrid">("human_built");
+  const [creatorType, setCreatorType] = useState<"human_built" | "ai_built" | "hybrid">(() => {
+    const a = findAttr(nonVariantAttributes, "creator_type");
+    const v = a?.value != null ? String(a.value).trim() : "";
+    return (v === "ai_built" || v === "hybrid") ? v : "human_built";
+  });
   const [industry, setIndustry] = useState("");
-  const [saleType, setSaleType] = useState("");
+  const [saleType, setSaleType] = useState(() => {
+    const a = findAttr(nonVariantAttributes, "sale_type");
+    return a?.value != null ? String(a.value).trim() : "";
+  });
   const [overviewPlain, setOverviewPlain] = useState(() => {
     const html = productData.short_description || "";
     if (!html) return "";
@@ -187,16 +194,54 @@ export const BusinessForSaleListingWizard = forwardRef<
     }
     return html.replace(/<[^>]+>/g, " ").trim();
   });
-  const [bfsCity, setBfsCity] = useState("");
-  const [bfsZip, setBfsZip] = useState("");
-  const [finRevenue, setFinRevenue] = useState("");
-  const [finEbitda, setFinEbitda] = useState("");
-  const [finSde, setFinSde] = useState("");
-  const [finGrowth, setFinGrowth] = useState("");
-  const [remoteFriendly, setRemoteFriendly] = useState(false);
-  const [webOnly, setWebOnly] = useState(false);
-  const [multiLoc, setMultiLoc] = useState(false);
-  const [smartOn, setSmartOn] = useState<Record<string, boolean>>({});
+  const [bfsCity, setBfsCity] = useState(() => {
+    const a = findAttr(nonVariantAttributes, "city");
+    return (typeof a?.value === "string" ? a.value : "") || "";
+  });
+  const [bfsZip, setBfsZip] = useState(() => {
+    const a = findAttr(nonVariantAttributes, "zip", "zip_code", "postal");
+    return (typeof a?.value === "string" ? a.value : "") || "";
+  });
+  const [finRevenue, setFinRevenue] = useState(() => {
+    const a = findAttr(nonVariantAttributes, "revenue", "annual_revenue");
+    return a?.value != null ? String(a.value).trim() : "";
+  });
+  const [finEbitda, setFinEbitda] = useState(() => {
+    const a = findAttr(nonVariantAttributes, "ebitda");
+    return a?.value != null ? String(a.value).trim() : "";
+  });
+  const [finSde, setFinSde] = useState(() => {
+    const a = findAttr(nonVariantAttributes, "sde");
+    return a?.value != null ? String(a.value).trim() : "";
+  });
+  const [finGrowth, setFinGrowth] = useState(() => {
+    const a = findAttr(nonVariantAttributes, "growth_trend", "growth");
+    return a?.value != null ? String(a.value).trim() : "";
+  });
+  const [remoteFriendly, setRemoteFriendly] = useState(() => {
+    const a = findAttr(nonVariantAttributes, "remote_friendly");
+    return a?.value === true || a?.value === "true";
+  });
+  const [webOnly, setWebOnly] = useState(() => {
+    const a = findAttr(nonVariantAttributes, "web_mobile_only", "web_only");
+    return a?.value === true || a?.value === "true";
+  });
+  const [multiLoc, setMultiLoc] = useState(() => {
+    const a = findAttr(nonVariantAttributes, "multi_location");
+    return a?.value === true || a?.value === "true";
+  });
+  const [smartOn, setSmartOn] = useState<Record<string, boolean>>(() => {
+    const a = findAttr(nonVariantAttributes, "smart_tags");
+    if (!a?.value) return {};
+    const saved: string[] = Array.isArray(a.value)
+      ? a.value
+      : String(a.value).split(",").map((s: string) => s.trim()).filter(Boolean);
+    const result: Record<string, boolean> = {};
+    SMART_TAG_DEFS.forEach((t) => {
+      if (saved.some((s) => s.toLowerCase() === t.label.toLowerCase())) result[t.id] = true;
+    });
+    return result;
+  });
   const [dragActive, setDragActive] = useState(false);
   const [draftHint, setDraftHint] = useState("");
   const [mainDescription, setMainDescription] = useState(() => {
@@ -228,84 +273,6 @@ export const BusinessForSaleListingWizard = forwardRef<
   const countryValue = (countryAttr?.value as string) || "";
   const stateValue = (stateAttr?.value as string) || "";
 
-  useEffect(() => {
-    const c = cityAttr?.value;
-    if (typeof c === "string" && c && !bfsCity) setBfsCity(c);
-  }, [cityAttr, bfsCity]);
-
-  useEffect(() => {
-    const z = zipAttr?.value;
-    if (typeof z === "string" && z && !bfsZip) setBfsZip(z);
-  }, [zipAttr, bfsZip]);
-
-  // Seed financial fields from saved attributes when editing an existing listing
-  useEffect(() => {
-    const attr = findAttr(nonVariantAttributes, "revenue", "annual_revenue");
-    const v = attr?.value != null ? String(attr.value).trim() : "";
-    if (v && !finRevenue) setFinRevenue(v);
-  }, [nonVariantAttributes]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    const attr = findAttr(nonVariantAttributes, "ebitda");
-    const v = attr?.value != null ? String(attr.value).trim() : "";
-    if (v && !finEbitda) setFinEbitda(v);
-  }, [nonVariantAttributes]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    const attr = findAttr(nonVariantAttributes, "sde");
-    const v = attr?.value != null ? String(attr.value).trim() : "";
-    if (v && !finSde) setFinSde(v);
-  }, [nonVariantAttributes]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    const attr = findAttr(nonVariantAttributes, "growth_trend", "growth");
-    const v = attr?.value != null ? String(attr.value).trim() : "";
-    if (v && !finGrowth) setFinGrowth(v);
-  }, [nonVariantAttributes]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Seed boolean location flags from saved attributes
-  useEffect(() => {
-    const rf = findAttr(nonVariantAttributes, "remote_friendly");
-    if (rf?.value === true || rf?.value === "true") setRemoteFriendly(true);
-    const wo = findAttr(nonVariantAttributes, "web_mobile_only", "web_only");
-    if (wo?.value === true || wo?.value === "true") setWebOnly(true);
-    const ml = findAttr(nonVariantAttributes, "multi_location");
-    if (ml?.value === true || ml?.value === "true") setMultiLoc(true);
-  }, [nonVariantAttributes]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Seed smart tags from saved attributes
-  useEffect(() => {
-    const attr = findAttr(nonVariantAttributes, "smart_tags");
-    if (!attr?.value) return;
-    const saved: string[] = Array.isArray(attr.value)
-      ? attr.value
-      : String(attr.value).split(",").map((s: string) => s.trim()).filter(Boolean);
-    if (saved.length === 0) return;
-    setSmartOn((prev) => {
-      const next = { ...prev };
-      SMART_TAG_DEFS.forEach((t) => {
-        if (saved.some((s) => s.toLowerCase() === t.label.toLowerCase())) {
-          next[t.id] = true;
-        }
-      });
-      return next;
-    });
-  }, [nonVariantAttributes]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Seed sale type and creator type from saved attributes
-  useEffect(() => {
-    const st = findAttr(nonVariantAttributes, "sale_type");
-    const v = st?.value != null ? String(st.value).trim() : "";
-    if (v && !saleType) setSaleType(v);
-  }, [nonVariantAttributes]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    const ct = findAttr(nonVariantAttributes, "creator_type");
-    const v = ct?.value != null ? String(ct.value).trim() : "";
-    if (v && (v === "human_built" || v === "ai_built" || v === "hybrid")) {
-      setCreatorType(v as "human_built" | "ai_built" | "hybrid");
-    }
-  }, [nonVariantAttributes]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /** Schema industry wins; otherwise default Industry to the selected subcategory (wizard remounts on subcategory change via parent `key`). */
   useEffect(() => {
