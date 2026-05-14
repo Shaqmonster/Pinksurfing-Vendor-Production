@@ -389,64 +389,8 @@ const ProductsTable = (props: { Products?: Product[] }) => {
             </div>
           </div>
 
-          {pendingListings.length > 0 && (
-            <div className="p-6 border-b border-light-border dark:border-dark-border bg-warning/5">
-              <div className="flex items-center justify-between gap-3 mb-4">
-                <div>
-                  <h3 className="text-base font-semibold text-surface-900 dark:text-white">Pending Listings</h3>
-                  <p className="text-sm text-surface-500 dark:text-surface-400">
-                    These listings are not public until payment is confirmed.
-                  </p>
-                </div>
-                <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-warning/20 text-warning-dark dark:text-warning">
-                  {pendingListings.length}
-                </span>
-              </div>
 
-              <div className="space-y-3">
-                {pendingListings.map((listing) => (
-                  <div
-                    key={listing.productId}
-                    className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 rounded-xl bg-white dark:bg-dark-card border border-surface-200 dark:border-dark-border"
-                  >
-                    <div>
-                      <p className="font-medium text-surface-900 dark:text-white">
-                        {listing.productName || `Product ${listing.productId.slice(0, 8)}...`}
-                      </p>
-                      <div className="mt-1 flex items-center gap-2 flex-wrap">
-                        <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold bg-warning/20 text-warning-dark dark:text-warning">
-                          Pending payment
-                        </span>
-                        <span className="text-xs text-surface-500 dark:text-surface-400">
-                          {listing.state === "AWAITING_WEBHOOK"
-                            ? "Payment submitted, waiting for confirmation"
-                            : `Pay ${Number(listing.listingFeeAmount).toString()} ${listing.listingFeeCurrency} to publish`}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handlePayListingFee(listing)}
-                        disabled={listing.state === "AWAITING_WEBHOOK" || payingListingId === listing.productId}
-                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${listing.state === "AWAITING_WEBHOOK" || payingListingId === listing.productId
-                          ? "bg-surface-300 text-surface-500 cursor-not-allowed"
-                          : "bg-gradient-pink text-white hover:opacity-90"
-                          }`}
-                      >
-                        {payingListingId === listing.productId
-                          ? "Preparing checkout..."
-                          : `Pay ${Number(listing.listingFeeAmount).toString()} ${listing.listingFeeCurrency}`}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Mobile / tablet: cards (no horizontal scroll) */}
+          {/* Mobile / tablet: cards */}
           {filteredProducts?.length > 0 ? (
             <>
               <div className="lg:hidden divide-y divide-surface-100 dark:divide-dark-border border-t border-surface-100 dark:border-dark-border">
@@ -458,27 +402,13 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ delay: index * 0.03 }}
-                      className="p-4 space-y-3 bg-white dark:bg-dark-card"
+                      className={`p-4 space-y-3 ${!product.is_active ? "bg-surface-50/50 dark:bg-dark-surface/30" : "bg-white dark:bg-dark-card"}`}
                     >
-                        <div
-                        className={`flex gap-3 group ${product.is_active ? "cursor-pointer" : "cursor-default"}`}
-                        onClick={() => handleProductClick(product)}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            handleProductClick(product);
-                          }
-                        }}
-                      >
-                        <div className="w-14 h-14 rounded-xl overflow-hidden bg-surface-100 dark:bg-dark-surface flex-shrink-0">
+                      {/* Top row: image + name + status badge */}
+                      <div className="flex gap-3 items-start">
+                        <div className={`w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 ${product.is_active ? "bg-surface-100 dark:bg-dark-surface" : "bg-surface-100 dark:bg-dark-surface opacity-70"}`}>
                           {product.image1 ? (
-                            <img
-                              src={product.image1}
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                            />
+                            <img src={product.image1} alt={product.name} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               <FiPackage className="w-6 h-6 text-surface-400" />
@@ -486,89 +416,67 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-medium text-surface-900 dark:text-white line-clamp-2 group-hover:text-primary-500">
-                            {product.name}
-                          </p>
-                          <p className="text-xs text-surface-500 dark:text-surface-400 mt-1 font-mono">
-                            ID: {product.id?.slice(0, 8)}…
-                          </p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <p className="text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400 mb-0.5">
-                            Category
-                          </p>
-                          <p className="font-medium text-surface-900 dark:text-white">
-                            {product?.category?.name || "—"}
-                          </p>
-                          {product?.subcategory?.name && (
-                            <p className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">
-                              {product.subcategory.name}
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-semibold text-surface-900 dark:text-white line-clamp-2 leading-snug">
+                              {product.name}
                             </p>
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-xs uppercase tracking-wide text-surface-500 dark:text-surface-400 mb-0.5">
-                            Stock
+                            {product.is_active ? (
+                              <span className="flex-shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                                Live
+                              </span>
+                            ) : (
+                              <span className="flex-shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold bg-surface-200 text-surface-500 dark:bg-dark-border dark:text-surface-400">
+                                <span className="w-1.5 h-1.5 rounded-full bg-surface-400 dark:bg-surface-500 inline-block" />
+                                Draft
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-surface-400 dark:text-surface-500 mt-1">
+                            {product?.category?.name || "—"}
+                            {product?.subcategory?.name ? ` · ${product.subcategory.name}` : ""}
                           </p>
-                          <span
-                            className={`inline-flex items-center justify-center min-w-[40px] px-2.5 py-1 rounded-full text-sm font-semibold ${
-                              product.quantity > 10
-                                ? "bg-success-light text-success-dark dark:bg-success/20 dark:text-success"
-                                : product.quantity > 0
-                                ? "bg-warning-light text-warning-dark dark:bg-warning/20 dark:text-warning"
-                                : "bg-danger-light text-danger-dark dark:bg-danger/20 dark:text-danger"
-                            }`}
-                          >
-                            {product.quantity}
-                          </span>
                         </div>
                       </div>
+
                       {product.short_description && (
-                        <p className="text-sm text-surface-600 dark:text-surface-400 line-clamp-2">
+                        <p className="text-sm text-surface-500 dark:text-surface-400 line-clamp-2">
                           {truncateAndConvertToText(product.short_description)}
                         </p>
                       )}
-                      <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-surface-100 dark:border-dark-border">
-                        <span className="text-lg font-bold text-success dark:text-success">
+
+                      {/* Bottom row: price + actions */}
+                      <div className="flex items-center justify-between pt-2 border-t border-surface-100 dark:border-dark-border">
+                        <span className="text-base font-bold text-success dark:text-success">
                           ${product.unit_price}
                         </span>
-                        <div className="flex items-center gap-2 ml-auto">
-                            {/* Show Pay CTA for inactive products */}
-                            {!product.is_active && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handlePayForProduct(product);
-                                }}
-                                disabled={
-                                  pendingListings.some((p) => p.productId === product.id) || payingListingId === product.id
-                                }
-                                className={`mr-2 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all ${
-                                  pendingListings.some((p) => p.productId === product.id) || payingListingId === product.id
-                                    ? "bg-surface-300 text-surface-500 cursor-not-allowed"
-                                    : "bg-gradient-pink text-white hover:opacity-90"
-                                }`}
-                                title="Pay to activate"
-                              >
-                                {payingListingId === product.id ? "Preparing checkout..." : "Pay to activate"}
-                              </button>
-                            )}
-                          {product.is_active && (
+                        <div className="flex items-center gap-2">
+                          {product.is_active ? (
                             <button
                               type="button"
                               onClick={(e) => copyToClipboard(getProductUrl(product), e)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-dark-surface text-surface-600 dark:text-surface-400 text-xs font-medium"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-dark-surface text-surface-600 dark:text-surface-400 text-xs font-medium hover:bg-surface-200 dark:hover:bg-dark-hover transition-colors"
                             >
                               <FiCopy className="w-3.5 h-3.5" />
                               Copy link
                             </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handlePayForProduct(product); }}
+                              disabled={pendingListings.some((p) => p.productId === product.id) || payingListingId === product.id}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                pendingListings.some((p) => p.productId === product.id) || payingListingId === product.id
+                                  ? "bg-surface-200 text-surface-400 cursor-not-allowed dark:bg-dark-border dark:text-surface-500"
+                                  : "bg-gradient-pink text-white hover:opacity-90 shadow-sm"
+                              }`}
+                            >
+                              {payingListingId === product.id ? "Preparing..." : "Publish listing"}
+                            </button>
                           )}
                           <Link
                             href={`/inventory/editProduct/${product.id}`}
-                            className="p-2 rounded-lg bg-accent-blue/10 dark:bg-accent-blue/20 text-accent-blue"
+                            className="p-2 rounded-lg bg-accent-blue/10 dark:bg-accent-blue/20 text-accent-blue hover:bg-accent-blue/20 transition-colors"
                             title="Edit"
                           >
                             <FiEdit2 className="w-4 h-4" />
@@ -576,7 +484,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                           <button
                             type="button"
                             onClick={() => openDeleteModal(product.id)}
-                            className="p-2 rounded-lg bg-danger-light dark:bg-danger/20 text-danger"
+                            className="p-2 rounded-lg bg-danger-light dark:bg-danger/20 text-danger hover:bg-danger/20 transition-colors"
                             title="Delete"
                           >
                             <FiTrash2 className="w-4 h-4" />
