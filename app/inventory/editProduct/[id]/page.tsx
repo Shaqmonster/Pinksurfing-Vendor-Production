@@ -28,6 +28,10 @@ import {
   plainTextLengthFromHtml,
 } from "@/utils/shortDescription";
 import { isBusinessForSaleCategory } from "@/components/inventory/businessForSaleCategory";
+import {
+  BusinessForSaleListingWizard,
+  type BusinessForSaleListingWizardHandle,
+} from "@/components/inventory/BusinessForSaleListingWizard";
 
 // ============ ICONS (identical to add_products) ============
 const CheckIcon = () => (
@@ -93,6 +97,83 @@ const CATEGORIES_WITHOUT_DIMENSIONS = ["Business For Sale","Commercial Real Esta
 const CATEGORIES_WITHOUT_STOCK = ["Business For Sale","Cars & Trucks","Commercial Real Estate","Residential Real Estate","Stay With Us","Building Materials"];
 const CATEGORIES_WITHOUT_BRAND = ["Business For Sale","Cars & Trucks","Commercial Real Estate","Residential Real Estate","Stay With Us","Building Materials"];
 
+// ============ SEARCHABLE SELECT ============
+function SearchableSelect({
+  label, value, options, loading, placeholder, disabled, onChange,
+}: {
+  label: string; value: string; options: { label: string; value: string }[];
+  loading?: boolean; placeholder?: string; disabled?: boolean;
+  onChange: (value: string, label: string) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+  const ref = React.useRef<HTMLDivElement>(null);
+  const filtered = options.filter(o => o.label.toLowerCase().includes(search.toLowerCase()));
+  const selected = options.find(o => o.value === value);
+  React.useEffect(() => {
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+  return (
+    <div ref={ref} className="relative w-full">
+      <button type="button" disabled={disabled} onClick={() => { setOpen(o => !o); setSearch(""); }}
+        className="w-full px-4 py-3 rounded-xl bg-surface-50 dark:bg-dark-input border border-surface-200 dark:border-dark-border text-left flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300">
+        <span className={selected ? "text-surface-900 dark:text-surface-50" : "text-surface-400 dark:text-surface-500"}>
+          {loading ? "Loading…" : (selected?.label ?? placeholder ?? `Select ${label}`)}
+        </span>
+        <svg className={`w-4 h-4 text-surface-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute z-[100] mt-1 w-full bg-white dark:bg-dark-card rounded-xl border border-light-border dark:border-dark-border shadow-2xl max-h-60 flex flex-col overflow-hidden animate-fadeIn">
+          <div className="p-2 border-b border-light-border dark:border-dark-border flex-shrink-0">
+            <input autoFocus type="text" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder={`Search ${label}…`}
+              className="w-full px-3 py-2 text-sm rounded-lg bg-surface-50 dark:bg-dark-input border border-surface-200 dark:border-dark-border focus:outline-none focus:border-primary-500 text-surface-900 dark:text-white" />
+          </div>
+          <ul className="overflow-y-auto flex-1">
+            {filtered.length === 0 ? (
+              <li className="px-4 py-3 text-sm text-surface-400 text-center">No results found</li>
+            ) : filtered.map(opt => (
+              <li key={opt.value}>
+                <button type="button"
+                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-surface-50 dark:hover:bg-dark-hover transition-colors ${opt.value === value ? "text-primary-500 font-bold bg-primary-50 dark:bg-primary-500/10" : "text-surface-900 dark:text-white"}`}
+                  onClick={() => { onChange(opt.value, opt.label); setOpen(false); }}>
+                  {opt.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Schema fields the wizard already collects — hide from the generic attributes block. */
+function bfsSchemaAttrSupersededByWizard(attr: any): boolean {
+  const k = String(attr.key ?? "").toLowerCase().trim().replace(/[\s-]+/g, "_");
+  const n = String(attr.name ?? "").toLowerCase().trim();
+  const km = (frag: string) => k === frag || k.includes(`_${frag}`) || k.includes(`${frag}_`) || k.includes(frag);
+  const nm = (frag: string) => n === frag || n.includes(frag);
+  if (km("country") || n === "country") return true;
+  if (km("state") || km("province") || nm("state / province") || nm("state/province")) return true;
+  if (km("city") || n === "city") return true;
+  if (km("zip") || km("postal") || km("postcode") || nm("zip code") || nm("postal code")) return true;
+  if (km("industry") || nm("industry")) return true;
+  if (km("short_description") || nm("short description") || nm("brief description") || (n === "summary" && !nm("order"))) return true;
+  if (k === "name" || k === "title" || nm("listing title") || nm("business name") || nm("business title")) return true;
+  if (nm("meta description")) return false;
+  if (k === "description" || k === "long_description" || k === "product_description") return true;
+  if (/^(full description|long description|product description|listing description)$/.test(n)) return true;
+  if (["mrp", "unit_price", "asking_price", "list_price", "regular_price"].includes(k)) return true;
+  if (nm("asking price") || nm("list price") || nm("regular price")) return true;
+  if (km("revenue") || km("ebitda") || km("sde") || km("growth_trend") || nm("annual revenue") || nm("growth trend")) return true;
+  return false;
+}
+
 // ============ MAIN COMPONENT ============
 const EditProduct = () => {
   const params = useParams();
@@ -142,6 +223,13 @@ const EditProduct = () => {
 
   /** Skip one subcategory reload when hydrating edit form (avoids clearing pre-selected subcategory). */
   const skipSubcategoryEffectRef = useRef(false);
+  const bfsWizardRef = useRef<BusinessForSaleListingWizardHandle>(null);
+
+  // Location data for the BFS wizard
+  const [allCountries, setAllCountries] = useState<{ name: string; code: string }[]>([]);
+  const [allStates, setAllStates] = useState<{ name: string; code: string }[]>([]);
+  const [selectedCountryName, setSelectedCountryName] = useState("");
+  const [loadingStates, setLoadingStates] = useState(false);
 
   const ReactQuill = useMemo(
     () => dynamic(() => import("react-quill"), { ssr: false }),
@@ -159,6 +247,12 @@ const EditProduct = () => {
   const isBusinessForSale = useMemo(() => isBusinessForSaleCategory(selectedCategoryName), [selectedCategoryName]);
   const isRealEstate = useMemo(() => selectedCategoryName.trim().toLowerCase().includes("real estate"), [selectedCategoryName]);
   const showNdaSection = isBusinessForSale || isRealEstate;
+  const businessForSaleSchemaRows = useMemo(() => {
+    if (!isBusinessForSale) return [];
+    return nonVariantAttributes
+      .map((attr: any, index: number) => ({ attr, index }))
+      .filter(({ attr }) => !bfsSchemaAttrSupersededByWizard(attr));
+  }, [isBusinessForSale, nonVariantAttributes]);
 
   // Total image count (existing + new uploads)
   const totalImages = existingImages.length + files.length;
@@ -486,6 +580,35 @@ const EditProduct = () => {
   const removeFile = (index: number) => setFiles((prev) => prev.filter((_, i) => i !== index));
   const removeExistingImage = (index: number) => setExistingImages((prev) => prev.filter((_, i) => i !== index));
 
+  // Load countries once (for the BFS wizard location step)
+  useEffect(() => {
+    const { Country } = require("country-state-city");
+    setAllCountries(Country.getAllCountries().map((c: any) => ({ name: c.name, code: c.isoCode })));
+  }, []);
+
+  // Load states when selected country changes
+  useEffect(() => {
+    if (!selectedCountryName) { setAllStates([]); return; }
+    setLoadingStates(true);
+    const { Country, State } = require("country-state-city");
+    const country = Country.getAllCountries().find((c: any) => c.name === selectedCountryName);
+    if (country) {
+      setAllStates(State.getStatesOfCountry(country.isoCode).map((s: any) => ({ name: s.name, code: s.isoCode })));
+    } else {
+      setAllStates([]);
+    }
+    setLoadingStates(false);
+  }, [selectedCountryName]);
+
+  // Pre-seed selectedCountryName from attributes when editing a BFS product
+  useEffect(() => {
+    const allAttrs = [...variantAttributes, ...nonVariantAttributes];
+    const countryAttr = allAttrs.find((a: any) => a.name?.toLowerCase() === "country");
+    if (countryAttr?.value && countryAttr.value !== selectedCountryName) {
+      setSelectedCountryName(countryAttr.value);
+    }
+  }, [variantAttributes, nonVariantAttributes, selectedCountryName]);
+
   // ============================================================
   // STEP NAVIGATION
   // ============================================================
@@ -493,6 +616,7 @@ const EditProduct = () => {
     switch (currentStep) {
       case 1: return selectedCategory && selectedSubcategory;
       case 2:
+        if (isBusinessForSale) return false; // wizard handles its own navigation
         // Images required unless category hides them OR existing images are present
         const hasImages = shouldHideMedia || files.length > 0 || existingImages.length > 0;
         return productData.name && productData.mrp && hasImages;
@@ -532,6 +656,13 @@ const EditProduct = () => {
     const { mrp, unit_price } = productData;
     const finalUnitPrice = hasDiscount ? unit_price : mrp;
     const cleanedProductData: any = { ...productData, unit_price: finalUnitPrice };
+
+    // Append BFS wizard's structured description appendix (financial summary, tags, etc.)
+    if (isBusinessForSale && bfsWizardRef.current) {
+      const ap = bfsWizardRef.current.getDescriptionAppendixHtml();
+      const descBase = cleanedProductData.description || "";
+      cleanedProductData.description = ap ? `${descBase}${ap}` : descBase;
+    }
 
     if (cleanedProductData.quantity === "" || cleanedProductData.quantity === null || cleanedProductData.quantity === undefined) {
       delete cleanedProductData.quantity;
@@ -1275,7 +1406,44 @@ const EditProduct = () => {
   const renderStepContent = () => {
     switch (currentStep) {
       case 1: return renderCategoryStep();
-      case 2: return renderDetailsStep();
+      case 2:
+        if (isBusinessForSale && selectedSubcategory) {
+          return (
+            <BusinessForSaleListingWizard
+              key={selectedSubcategory}
+              ref={bfsWizardRef}
+              selectedCategoryName={selectedCategoryName}
+              selectedSubcategoryName={selectedSubcategoryName}
+              productData={productData}
+              setProductData={setProductData}
+              hasDiscount={hasDiscount}
+              setHasDiscount={setHasDiscount}
+              nonVariantAttributes={nonVariantAttributes}
+              setNonVariantAttributes={setNonVariantAttributes}
+              files={files}
+              setFiles={setFiles}
+              allCountries={allCountries}
+              allStates={allStates}
+              selectedCountryName={selectedCountryName}
+              setSelectedCountryName={setSelectedCountryName}
+              loadingStates={loadingStates}
+              setShortDescPlainLen={setShortDescPlainLen}
+              SearchableSelect={SearchableSelect}
+              renderAttributeInput={renderAttributeInput}
+              schemaAttributeRows={businessForSaleSchemaRows}
+              onBackToCategoryStep={() => setCurrentStep(1)}
+              onContinueToVendorReview={() => {
+                if (!bfsWizardRef.current?.canGoToVendorReview()) {
+                  toast.error("Please complete all required sections before continuing.");
+                  return;
+                }
+                setCompletedSteps((prev) => (prev.includes(2) ? prev : [...prev, 2]));
+                setCurrentStep(3);
+              }}
+            />
+          );
+        }
+        return renderDetailsStep();
       case 3: return renderReviewStep();
       default: return null;
     }
@@ -1326,8 +1494,8 @@ const EditProduct = () => {
                     {isCompleted ? <CheckIcon /> : <StepIcon />}
                   </div>
                   <div className="text-left hidden sm:block">
-                    <p className="font-semibold text-sm">{step.name}</p>
-                    <p className={`text-xs ${isCurrent ? "text-white/70" : "text-surface-500"}`}>{step.description}</p>
+                    <p className="font-semibold text-sm">{isBusinessForSale && step.id === 2 ? "Listing" : step.name}</p>
+                    <p className={`text-xs ${isCurrent ? "text-white/70" : "text-surface-500"}`}>{isBusinessForSale && step.id === 2 ? "Business details" : step.description}</p>
                   </div>
                 </button>
                 {index < STEPS.length - 1 && (
@@ -1342,7 +1510,8 @@ const EditProduct = () => {
       {/* Step Content */}
       <div className="mb-8">{renderStepContent()}</div>
 
-      {/* Navigation Buttons */}
+      {/* Navigation Buttons — hidden when BFS wizard is active (wizard has its own nav) */}
+      {!(currentStep === 2 && isBusinessForSale) && (
       <div className="fixed left-0 right-0 bg-white/80 dark:bg-dark-bg/80 backdrop-blur-xl border-t border-surface-200 dark:border-dark-border p-4 md:p-6 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <button
@@ -1394,6 +1563,7 @@ const EditProduct = () => {
           )}
         </div>
       </div>
+      )}
 
       <ToastContainer position="top-right" autoClose={3000} />
     </div>
