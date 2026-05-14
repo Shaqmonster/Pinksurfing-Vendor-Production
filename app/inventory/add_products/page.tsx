@@ -5,7 +5,6 @@ import {
   getSchemaSubcategories,
   getFormSchema,
   saveProducts,
-  createSquareListingPaymentLink,
 } from "@/api/products";
 import { Product } from "@/types/product";
 import { useRouter } from "next/navigation";
@@ -23,9 +22,7 @@ import {
 } from "@/utils/shortDescription";
 import {
   PendingListing,
-  getPendingListings,
   upsertPendingListing,
-  updatePendingListingState,
 } from "@/utils/pendingListings";
 import { isBusinessForSaleCategory } from "@/components/inventory/businessForSaleCategory";
 import {
@@ -382,7 +379,6 @@ const AddProducts = () => {
   const [loading, setLoading] = useState(false);
   const [showDimensions, setShowDimensions] = useState(false);
   const [createdListing, setCreatedListing] = useState<PendingListing | null>(null);
-  const [paymentLoading, setPaymentLoading] = useState(false);
 
   const router = useRouter();
 
@@ -455,17 +451,7 @@ const AddProducts = () => {
     });
   }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const pendingListings = getPendingListings().sort(
-      (left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()
-    );
-
-    if (!createdListing && pendingListings.length > 0) {
-      setCreatedListing(pendingListings[0]);
-    }
-  }, [createdListing]);
+  // Pending listings are shown on the Products page — not loaded here to avoid blocking new listings.
 
   // Load subcategories when category changes using schema API
   useEffect(() => {
@@ -758,57 +744,7 @@ const AddProducts = () => {
     }
   };
 
-  const handlePayListingFee = async () => {
-    if (!createdListing) return;
-
-    const token = getCookie("access_token");
-    if (!token) {
-      toast.error("Authentication error. Please sign in again.");
-      return;
-    }
-
-    setPaymentLoading(true);
-    try {
-      const result = await createSquareListingPaymentLink(token, createdListing.productId);
-
-      if (result.error) {
-          const details = result.data?.hint || result.data?.details || result.message || "Could not create payment link, try again.";
-        if (result.status === 403) {
-          toast.error(`Not allowed for this product. ${details}`);
-          } else if (result.status === 401) {
-          toast.error(`Square platform credentials need attention. ${details}`);
-        } else if (result.status === 502) {
-          toast.error(`Payments temporarily unavailable. ${details}`);
-        } else if (result.status === 400) {
-          toast.error(details);
-        } else {
-          toast.error(details);
-        }
-        return;
-      }
-
-      updatePendingListingState(createdListing.productId, "PAYMENT_REDIRECTED");
-      setCreatedListing((prev) =>
-        prev
-          ? {
-              ...prev,
-              state: "PAYMENT_REDIRECTED",
-              updatedAt: new Date().toISOString(),
-            }
-          : prev
-      );
-
-      const paymentUrl = result.data?.payment_link;
-      if (!paymentUrl) {
-        toast.error("Could not create payment link, try again.");
-        return;
-      }
-
-      window.location.href = paymentUrl;
-    } finally {
-      setPaymentLoading(false);
-    }
-  };
+  // Payment is handled from the My Listings page — no pay handler needed here.
 
   // Render input based on data type
   const renderAttributeInput = (attr: any, isVariant: boolean, index: number) => {
@@ -2049,31 +1985,25 @@ const AddProducts = () => {
   return (
     <div className="min-h-screen pb-20">
       {createdListing && (
-        <div className="mb-6 premium-card p-5 border border-warning/30 bg-warning/10 dark:bg-warning/10">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-surface-900 dark:text-white">Listing created</p>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold bg-warning/20 text-warning-dark dark:text-warning">
-                  Pending payment
-                </span>
-                <span className="text-sm text-surface-600 dark:text-surface-300">
-                  Pay {Number(createdListing.listingFeeAmount).toString()} {createdListing.listingFeeCurrency} to publish.
-                </span>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handlePayListingFee}
-              disabled={paymentLoading}
-              className={`inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-semibold transition-all ${paymentLoading
-                ? "bg-surface-300 text-surface-500 cursor-not-allowed"
-                : "bg-gradient-pink text-white shadow-glow-pink hover:opacity-90"
-                }`}
-            >
-              {paymentLoading ? "Preparing checkout..." : `Pay ${Number(createdListing.listingFeeAmount).toString()} ${createdListing.listingFeeCurrency} to publish`}
-            </button>
-          </div>
+        <div className="mb-6 flex items-center gap-3 px-5 py-3 rounded-xl bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20">
+          <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          <p className="text-sm font-medium text-green-700 dark:text-green-400 flex-1">
+            <span className="font-semibold">{createdListing.productName || "Listing"}</span> saved.
+            Pay to publish it whenever you&apos;re ready — find it in{" "}
+            <a href="/inventory/products" className="underline hover:no-underline">My Listings</a>.
+          </p>
+          <button
+            type="button"
+            onClick={() => setCreatedListing(null)}
+            className="text-green-500 hover:text-green-700 dark:hover:text-green-300 flex-shrink-0"
+            aria-label="Dismiss"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       )}
 
@@ -2185,14 +2115,10 @@ const AddProducts = () => {
             <button
               type="button"
               onClick={handleSave}
-              disabled={Boolean(createdListing)}
-              className={`flex items-center gap-2 px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${createdListing
-                ? "bg-surface-300 text-surface-500 cursor-not-allowed"
-                : "bg-gradient-pink text-white shadow-glow-pink hover:opacity-90"
-                }`}
+              className="flex items-center gap-2 px-8 py-3 rounded-xl font-semibold transition-all duration-300 bg-gradient-pink text-white shadow-glow-pink hover:opacity-90"
             >
               <SparklesIcon />
-              <span>{createdListing ? "Listing Created" : "Create Listing"}</span>
+              <span>Create Listing</span>
             </button>
           )}
         </div>
