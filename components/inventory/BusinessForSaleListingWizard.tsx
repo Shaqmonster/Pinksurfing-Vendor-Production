@@ -238,6 +238,75 @@ export const BusinessForSaleListingWizard = forwardRef<
     if (typeof z === "string" && z && !bfsZip) setBfsZip(z);
   }, [zipAttr, bfsZip]);
 
+  // Seed financial fields from saved attributes when editing an existing listing
+  useEffect(() => {
+    const attr = findAttr(nonVariantAttributes, "revenue", "annual_revenue");
+    const v = attr?.value != null ? String(attr.value).trim() : "";
+    if (v && !finRevenue) setFinRevenue(v);
+  }, [nonVariantAttributes]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const attr = findAttr(nonVariantAttributes, "ebitda");
+    const v = attr?.value != null ? String(attr.value).trim() : "";
+    if (v && !finEbitda) setFinEbitda(v);
+  }, [nonVariantAttributes]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const attr = findAttr(nonVariantAttributes, "sde");
+    const v = attr?.value != null ? String(attr.value).trim() : "";
+    if (v && !finSde) setFinSde(v);
+  }, [nonVariantAttributes]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const attr = findAttr(nonVariantAttributes, "growth_trend", "growth");
+    const v = attr?.value != null ? String(attr.value).trim() : "";
+    if (v && !finGrowth) setFinGrowth(v);
+  }, [nonVariantAttributes]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Seed boolean location flags from saved attributes
+  useEffect(() => {
+    const rf = findAttr(nonVariantAttributes, "remote_friendly");
+    if (rf?.value === true || rf?.value === "true") setRemoteFriendly(true);
+    const wo = findAttr(nonVariantAttributes, "web_mobile_only", "web_only");
+    if (wo?.value === true || wo?.value === "true") setWebOnly(true);
+    const ml = findAttr(nonVariantAttributes, "multi_location");
+    if (ml?.value === true || ml?.value === "true") setMultiLoc(true);
+  }, [nonVariantAttributes]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Seed smart tags from saved attributes
+  useEffect(() => {
+    const attr = findAttr(nonVariantAttributes, "smart_tags");
+    if (!attr?.value) return;
+    const saved: string[] = Array.isArray(attr.value)
+      ? attr.value
+      : String(attr.value).split(",").map((s: string) => s.trim()).filter(Boolean);
+    if (saved.length === 0) return;
+    setSmartOn((prev) => {
+      const next = { ...prev };
+      SMART_TAG_DEFS.forEach((t) => {
+        if (saved.some((s) => s.toLowerCase() === t.label.toLowerCase())) {
+          next[t.id] = true;
+        }
+      });
+      return next;
+    });
+  }, [nonVariantAttributes]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Seed sale type and creator type from saved attributes
+  useEffect(() => {
+    const st = findAttr(nonVariantAttributes, "sale_type");
+    const v = st?.value != null ? String(st.value).trim() : "";
+    if (v && !saleType) setSaleType(v);
+  }, [nonVariantAttributes]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const ct = findAttr(nonVariantAttributes, "creator_type");
+    const v = ct?.value != null ? String(ct.value).trim() : "";
+    if (v && (v === "human_built" || v === "ai_built" || v === "hybrid")) {
+      setCreatorType(v as "human_built" | "ai_built" | "hybrid");
+    }
+  }, [nonVariantAttributes]); // eslint-disable-line react-hooks/exhaustive-deps
+
   /** Schema industry wins; otherwise default Industry to the selected subcategory (wizard remounts on subcategory change via parent `key`). */
   useEffect(() => {
     const ind = findAttr(nonVariantAttributes, "industry");
