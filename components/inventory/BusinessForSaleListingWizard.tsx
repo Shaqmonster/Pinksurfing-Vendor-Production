@@ -947,6 +947,72 @@ export const BusinessForSaleListingWizard = forwardRef<
                 </div>
                 <div className="toggle-switch" />
               </div>
+
+              {/* Document checklist — shown when at least one NDA lock is on */}
+              {(productData.nda_lock_ebitda || productData.nda_lock_full_financials) && (() => {
+                const NDA_DOC_OPTIONS = [
+                  { id: "pl_statement",        label: "P&L Statement (3 years)",          icon: "📈" },
+                  { id: "tax_returns",          label: "Tax Returns (3 years)",             icon: "🧾" },
+                  { id: "revenue_breakdown",    label: "Revenue Breakdown",                 icon: "💰" },
+                  { id: "cim",                  label: "CIM / Info Memorandum",             icon: "📊" },
+                  { id: "bank_statements",      label: "Bank Statements",                   icon: "🏦" },
+                  { id: "lease_agreement",      label: "Lease Agreement",                   icon: "📋" },
+                  { id: "franchise_agreement",  label: "Franchise / Operating Agreement",   icon: "🤝" },
+                  { id: "asset_list",           label: "Asset List / Equipment List",       icon: "🏭" },
+                ];
+                const selectedDocs: string[] = (productData.nda_available_docs || "")
+                  .split(",")
+                  .map((s: string) => s.trim())
+                  .filter(Boolean);
+                const toggleDoc = (docId: string) => {
+                  const next = selectedDocs.includes(docId)
+                    ? selectedDocs.filter((d: string) => d !== docId)
+                    : [...selectedDocs, docId];
+                  setProductData((p: any) => ({ ...p, nda_available_docs: next.join(",") }));
+                };
+                return (
+                  <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--border, #2a2a33)" }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-2, #b0b0c0)", marginBottom: 4 }}>
+                      📂 What documents do you have available behind the NDA?
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--text-3, #66667a)", marginBottom: 12 }}>
+                      Buyers will see these listed when they are asked to sign the NDA. Tick everything you will share after they sign.
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                      {NDA_DOC_OPTIONS.map((opt) => {
+                        const checked = selectedDocs.includes(opt.id);
+                        return (
+                          <label
+                            key={opt.id}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                              padding: "8px 10px",
+                              borderRadius: 6,
+                              border: `1.5px solid ${checked ? "rgba(240,49,138,.45)" : "var(--border, #2a2a33)"}`,
+                              background: checked ? "rgba(240,49,138,.08)" : "var(--surface-2, #1c1c22)",
+                              cursor: "pointer",
+                              fontSize: 12,
+                              fontWeight: checked ? 600 : 400,
+                              color: checked ? "var(--text, #f0f0f4)" : "var(--text-2, #b0b0c0)",
+                              transition: "all .15s",
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleDoc(opt.id)}
+                              style={{ accentColor: "#f0318a", width: 14, height: 14, flexShrink: 0 }}
+                            />
+                            <span>{opt.icon} {opt.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 

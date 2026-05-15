@@ -299,6 +299,7 @@ const EditProduct = () => {
           description: p.description || "",
           nda_lock_ebitda: Boolean(p.nda_lock_ebitda),
           nda_lock_full_financials: Boolean(p.nda_lock_full_financials),
+          nda_available_docs: p.nda_available_docs || "",
           image: "",
           id: p.id || productId,
         });

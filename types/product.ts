@@ -20,4 +20,6 @@ export type Product = {
   nda_lock_ebitda?: boolean;
   /** Hide full revenue breakdown and P&L tables from buyers until they sign the NDA. */
   nda_lock_full_financials?: boolean;
+  /** Comma-separated list of document types available behind the NDA. */
+  nda_available_docs?: string;
 };

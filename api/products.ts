@@ -228,7 +228,7 @@ export async function saveProducts(
 
   for (let [key, value] of Object.entries(payload)) {
     if (key !== "image") {
-      form.append(key, value.toString());
+      form.append(key, value === null || value === undefined ? "" : value.toString());
     }
   }
 
@@ -278,7 +278,7 @@ export async function updateProducts(
       if (key === "attributes") {
         form.append(key, JSON.stringify(value));
       } else {
-        form.append(key, `${value}`);
+        form.append(key, value === null || value === undefined ? "" : `${value}`);
       }
     }
   }
