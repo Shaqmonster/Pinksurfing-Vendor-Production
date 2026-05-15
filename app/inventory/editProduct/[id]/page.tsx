@@ -206,6 +206,7 @@ const EditProduct = () => {
     image: "", id: productId || "",
     nda_lock_ebitda: false,
     nda_lock_full_financials: false,
+    nda_available_docs: "",
   });
 
   // Image states

@@ -112,6 +112,10 @@ type Props = {
     description: string;
     meta_title: string;
     tags: string;
+    nda_lock_ebitda?: boolean;
+    nda_lock_full_financials?: boolean;
+    nda_available_docs?: string;
+    [key: string]: unknown;
   };
   setProductData: React.Dispatch<React.SetStateAction<any>>;
   hasDiscount: boolean;
