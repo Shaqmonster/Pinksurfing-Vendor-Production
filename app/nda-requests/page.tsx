@@ -26,6 +26,7 @@ const DOCUMENT_TYPE_OPTIONS = [
 
 function statusLabel(s: string) {
   const map: Record<string, string> = {
+    pending_payment:  "Awaiting buyer payment",
     pending_vendor:   "Action needed",
     accepted:         "Accepted — awaiting your documents",
     rejected:         "Rejected / refunded",
@@ -37,6 +38,7 @@ function statusLabel(s: string) {
 
 function statusBadge(s: string) {
   const color: Record<string, string> = {
+    pending_payment:  "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
     pending_vendor:   "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
     accepted:         "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
     rejected:         "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
@@ -348,6 +350,12 @@ export default function NdaRequestsPage() {
 
                 {/* Right: actions */}
                 <div className="flex min-w-[220px] flex-col gap-2">
+                  {row.status === "pending_payment" && (
+                    <p className="text-xs text-surface-500 dark:text-surface-400">
+                      Waiting for the buyer to complete the $1 NDA payment. When payment clears, status becomes &quot;Action needed&quot;
+                      and you can accept or reject.
+                    </p>
+                  )}
                   {row.status === "pending_vendor" && (
                     <>
                       <button
