@@ -1422,6 +1422,8 @@ const EditProduct = () => {
               setNonVariantAttributes={setNonVariantAttributes}
               files={files}
               setFiles={setFiles}
+              existingImages={existingImages}
+              onRemoveExistingImage={(i) => setExistingImages((prev) => prev.filter((_, idx) => idx !== i))}
               allCountries={allCountries}
               allStates={allStates}
               selectedCountryName={selectedCountryName}

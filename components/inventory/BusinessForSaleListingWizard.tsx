@@ -120,6 +120,9 @@ type Props = {
   setNonVariantAttributes: React.Dispatch<React.SetStateAction<any[]>>;
   files: File[];
   setFiles: React.Dispatch<React.SetStateAction<File[]>>;
+  /** Existing image URLs from the server (edit mode only) */
+  existingImages?: string[];
+  onRemoveExistingImage?: (index: number) => void;
   allCountries: { name: string; code: string }[];
   allStates: { name: string; code: string }[];
   selectedCountryName: string;
@@ -159,6 +162,8 @@ export const BusinessForSaleListingWizard = forwardRef<
     setNonVariantAttributes,
     files,
     setFiles,
+    existingImages = [],
+    onRemoveExistingImage,
     allCountries,
     allStates,
     selectedCountryName,
@@ -422,7 +427,7 @@ export const BusinessForSaleListingWizard = forwardRef<
       return true;
     }
     if (step === 5) {
-      return files.length > 0;
+      return files.length > 0 || existingImages.length > 0;
     }
     return true;
   };
@@ -981,6 +986,35 @@ export const BusinessForSaleListingWizard = forwardRef<
                 Photos <span className="req">*</span>
               </div>
               <div className="card-sub">Up to 4 images (first image is the cover).</div>
+
+              {/* Existing images (edit mode) */}
+              {existingImages.length > 0 && (
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text-2, #888)", marginBottom: 8 }}>
+                    Current images — hover to remove
+                  </div>
+                  <div className="photo-grid">
+                    {existingImages.map((src, i) => (
+                      <div className="photo-thumb" key={`existing-${i}`} style={{ position: "relative" }}>
+                        <img src={src} alt={`Existing ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }} />
+                        {i === 0 && (
+                          <span style={{ position: "absolute", top: 4, left: 4, background: "#f0318a", color: "#fff", fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4 }}>
+                            Cover
+                          </span>
+                        )}
+                        {onRemoveExistingImage && (
+                          <button type="button" className="photo-remove" onClick={() => onRemoveExistingImage(i)}>
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload zone — only show if slots remain */}
+              {(existingImages.length + files.length) < 4 && (
               <div
                 className={"photo-upload-zone" + (dragActive ? " drag" : "")}
                 onDragEnter={(e) => {
@@ -1006,11 +1040,12 @@ export const BusinessForSaleListingWizard = forwardRef<
                   onChange={onFile}
                 />
                 <div className="upload-icon">📷</div>
-                <div className="upload-title">Drag photos here or click to upload</div>
+                <div className="upload-title">{existingImages.length > 0 ? "Upload additional or replacement photos" : "Drag photos here or click to upload"}</div>
                 <div className="upload-sub">
                   PNG, JPG up to 10MB each — <span className="upload-link">browse files</span>
                 </div>
               </div>
+              )}
               {files.length > 0 && (
                 <div className="photo-grid" style={{ marginTop: 14 }}>
                   {files.map((f, i) => (
@@ -1052,7 +1087,11 @@ export const BusinessForSaleListingWizard = forwardRef<
           <div className={"form-panel" + (bfsStep === 6 ? " active" : "")}>
             <div className="review-preview">
               <div className="review-photo">
-                {files[0] ? <img src={photoPreviewUrls[0]} alt="" /> : "📷"}
+                {files[0] ? (
+                  <img src={photoPreviewUrls[0]} alt="" />
+                ) : existingImages[0] ? (
+                  <img src={existingImages[0]} alt="" />
+                ) : "📷"}
               </div>
               <div className="review-body">
                 <div className="review-badges">
