@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getCookie } from "@/utils/cookies";
+import { validateFinancialDocumentFile } from "@/utils/financialDocumentUpload";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -14,8 +15,19 @@ export type ProductNdaDocument = {
   document_type: string;
   document_name: string;
   file: string;
+  file_size?: number;
   uploaded_at: string;
 };
+
+function uploadErrorMessage(err: unknown): string {
+  const data = (err as { response?: { data?: Record<string, unknown> } })?.response?.data;
+  if (!data) return "Could not upload document.";
+  const fileErr = data.file;
+  if (Array.isArray(fileErr) && fileErr[0]) return String(fileErr[0]);
+  if (typeof fileErr === "string") return fileErr;
+  if (typeof data.detail === "string") return data.detail;
+  return "Could not upload document.";
+}
 
 export async function listProductNdaDocuments(
   productId: string
@@ -37,7 +49,7 @@ export async function uploadProductNdaDocument(
   documentType: string,
   documentName: string,
   file: File
-): Promise<{ error: boolean; data?: ProductNdaDocument }> {
+): Promise<{ error: boolean; data?: ProductNdaDocument; message?: string }> {
   const h = authHeader();
   if (!h || !BASE) return { error: true };
   const form = new FormData();
@@ -49,8 +61,8 @@ export async function uploadProductNdaDocument(
       headers: { ...h, "Content-Type": "multipart/form-data" },
     });
     return { error: false, data: res.data as ProductNdaDocument };
-  } catch {
-    return { error: true };
+  } catch (err) {
+    return { error: true, message: uploadErrorMessage(err) };
   }
 }
 
@@ -60,7 +72,13 @@ export async function uploadPendingProductNdaDocuments(
 ): Promise<{ uploaded: number; failed: number }> {
   let uploaded = 0;
   let failed = 0;
+  let usedBytes = 0;
   for (const doc of pending) {
+    const check = validateFinancialDocumentFile(doc.file, usedBytes);
+    if (!check.ok) {
+      failed += 1;
+      continue;
+    }
     const { error } = await uploadProductNdaDocument(
       productId,
       doc.document_type,
@@ -68,7 +86,10 @@ export async function uploadPendingProductNdaDocuments(
       doc.file
     );
     if (error) failed += 1;
-    else uploaded += 1;
+    else {
+      uploaded += 1;
+      usedBytes += doc.file.size;
+    }
   }
   return { uploaded, failed };
 }
