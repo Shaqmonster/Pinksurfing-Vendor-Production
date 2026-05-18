@@ -29,6 +29,8 @@ import {
   BusinessForSaleListingWizard,
   type BusinessForSaleListingWizardHandle,
 } from "@/components/inventory/BusinessForSaleListingWizard";
+import type { PendingNdaListingDoc } from "@/components/inventory/ProductNdaDocumentsSection";
+import { uploadPendingProductNdaDocuments } from "@/api/productNdaDocuments";
 
 // ============ ICONS ============
 const CheckIcon = () => (
@@ -371,6 +373,7 @@ const AddProducts = () => {
 
   // Image states
   const [files, setFiles] = useState<File[]>([]);
+  const [pendingNdaDocs, setPendingNdaDocs] = useState<PendingNdaListingDoc[]>([]);
   const [dragActive, setDragActive] = useState(false);
 
   // UI states
@@ -713,6 +716,24 @@ const AddProducts = () => {
         if (!res.error) {
           const listingStatus = res?.data?.listing_status;
           const createdProductId = res?.data?.product_id;
+
+          if (createdProductId && pendingNdaDocs.length > 0) {
+            const { uploaded, failed } = await uploadPendingProductNdaDocuments(
+              createdProductId,
+              pendingNdaDocs
+            );
+            if (uploaded > 0) {
+              toast.success(
+                `Uploaded ${uploaded} NDA-locked document${uploaded === 1 ? "" : "s"}.`
+              );
+            }
+            if (failed > 0) {
+              toast.warn(
+                `${failed} document${failed === 1 ? "" : "s"} could not be uploaded. Add them from Edit Product.`
+              );
+            }
+            setPendingNdaDocs([]);
+          }
 
           if (listingStatus === "PENDING_PAYMENT" && createdProductId) {
             const listing: PendingListing = {
@@ -1489,6 +1510,8 @@ const AddProducts = () => {
               setNonVariantAttributes={setNonVariantAttributes}
               files={files}
               setFiles={setFiles}
+              pendingNdaDocs={pendingNdaDocs}
+              setPendingNdaDocs={setPendingNdaDocs}
               allCountries={allCountries}
               allStates={allStates}
               selectedCountryName={selectedCountryName}

@@ -14,6 +14,10 @@ import {
   plainToQuillShortDescriptionHtml,
 } from "@/utils/shortDescription";
 import "./business-for-sale-wizard.css";
+import {
+  PendingNdaListingDoc,
+  ProductNdaDocumentsSection,
+} from "@/components/inventory/ProductNdaDocumentsSection";
 
 const TOTAL_STEPS = 7;
 
@@ -124,6 +128,8 @@ type Props = {
   setNonVariantAttributes: React.Dispatch<React.SetStateAction<any[]>>;
   files: File[];
   setFiles: React.Dispatch<React.SetStateAction<File[]>>;
+  pendingNdaDocs?: PendingNdaListingDoc[];
+  setPendingNdaDocs?: React.Dispatch<React.SetStateAction<PendingNdaListingDoc[]>>;
   /** Existing image URLs from the server (edit mode only) */
   existingImages?: string[];
   onRemoveExistingImage?: (index: number) => void;
@@ -166,6 +172,8 @@ export const BusinessForSaleListingWizard = forwardRef<
     setNonVariantAttributes,
     files,
     setFiles,
+    pendingNdaDocs = [],
+    setPendingNdaDocs,
     existingImages = [],
     onRemoveExistingImage,
     allCountries,
@@ -980,7 +988,7 @@ export const BusinessForSaleListingWizard = forwardRef<
                       📂 What documents do you have available behind the NDA?
                     </div>
                     <div style={{ fontSize: 11, color: "var(--text-3, #66667a)", marginBottom: 12 }}>
-                      Buyers will see these listed when they are asked to sign the NDA. Tick everything you will share after they sign.
+                      Buyers will see these listed when they sign the NDA. Upload the actual files below — they unlock instantly when a buyer pays the NDA fee.
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                       {NDA_DOC_OPTIONS.map((opt) => {
@@ -1017,6 +1025,17 @@ export const BusinessForSaleListingWizard = forwardRef<
                   </div>
                 );
               })()}
+              {(productData.nda_lock_ebitda || productData.nda_lock_full_financials) &&
+                setPendingNdaDocs && (
+                  <ProductNdaDocumentsSection
+                    pendingDocs={pendingNdaDocs}
+                    onPendingDocsChange={setPendingNdaDocs}
+                    ndaLocksEnabled={
+                      !!(productData.nda_lock_ebitda || productData.nda_lock_full_financials)
+                    }
+                    variant="wizard"
+                  />
+                )}
             </div>
           </div>
 

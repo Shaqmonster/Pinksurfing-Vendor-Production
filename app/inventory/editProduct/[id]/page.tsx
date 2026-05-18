@@ -32,6 +32,7 @@ import {
   BusinessForSaleListingWizard,
   type BusinessForSaleListingWizardHandle,
 } from "@/components/inventory/BusinessForSaleListingWizard";
+import { ProductNdaDocumentsSection } from "@/components/inventory/ProductNdaDocumentsSection";
 
 // ============ ICONS (identical to add_products) ============
 const CheckIcon = () => (
@@ -1336,6 +1337,15 @@ const EditProduct = () => {
               <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${productData.nda_lock_full_financials ? "translate-x-[18px]" : "translate-x-0.5"}`} />
             </div>
           </div>
+          {(productData.nda_lock_ebitda || productData.nda_lock_full_financials) && productId && (
+            <ProductNdaDocumentsSection
+              productId={productId}
+              ndaLocksEnabled={
+                !!(productData.nda_lock_ebitda || productData.nda_lock_full_financials)
+              }
+              variant="panel"
+            />
+          )}
         </div>
       )}
 

@@ -28,7 +28,7 @@ function statusLabel(s: string) {
   const map: Record<string, string> = {
     pending_payment:  "Awaiting buyer payment",
     pending_vendor:   "Action needed",
-    accepted:         "Accepted — awaiting your documents",
+    accepted:         "Buyer unlocked — instant access",
     rejected:         "Rejected / refunded",
     disputed:         "Disputed",
     dispute_refunded: "Closed (refunded)",
