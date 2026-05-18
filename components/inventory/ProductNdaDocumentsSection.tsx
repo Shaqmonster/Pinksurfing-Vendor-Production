@@ -7,6 +7,7 @@ import {
   ProductNdaDocument,
   uploadProductNdaDocument,
 } from "@/api/productNdaDocuments";
+import { buildNdaDocumentDisplayName } from "@/utils/ndaDocumentNaming";
 import { toast } from "react-toastify";
 
 const DOC_TYPE_OPTIONS = [
@@ -46,7 +47,6 @@ export function ProductNdaDocumentsSection({
   const inputRef = useRef<HTMLInputElement>(null);
   const [remoteDocs, setRemoteDocs] = useState<ProductNdaDocument[]>([]);
   const [docType, setDocType] = useState("pl_statement");
-  const [docName, setDocName] = useState("");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -65,20 +65,21 @@ export function ProductNdaDocumentsSection({
   if (!ndaLocksEnabled) return null;
 
   const isWizard = variant === "wizard";
+  const selectedLabel =
+    DOC_TYPE_OPTIONS.find((o) => o.id === docType)?.label || "Document";
 
   const addPending = (file: File) => {
     if (!onPendingDocsChange) return;
-    const name = docName.trim() || file.name;
+    const displayName = buildNdaDocumentDisplayName(docType, file.name);
     onPendingDocsChange([
       ...pendingDocs,
       {
         id: `${Date.now()}-${file.name}`,
         file,
         document_type: docType,
-        document_name: name,
+        document_name: displayName,
       },
     ]);
-    setDocName("");
     if (inputRef.current) inputRef.current.value = "";
   };
 
@@ -86,24 +87,29 @@ export function ProductNdaDocumentsSection({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const displayName = buildNdaDocumentDisplayName(docType, file.name);
+
     if (productId) {
       setUploading(true);
-      const name = docName.trim() || file.name;
-      const { error } = await uploadProductNdaDocument(productId, docType, name, file);
+      const { error } = await uploadProductNdaDocument(
+        productId,
+        docType,
+        displayName,
+        file
+      );
       setUploading(false);
       if (error) {
         toast.error("Could not upload document.");
         return;
       }
-      toast.success("Document uploaded.");
-      setDocName("");
+      toast.success(`Uploaded as ${displayName}`);
       if (inputRef.current) inputRef.current.value = "";
       loadRemote();
       return;
     }
 
     addPending(file);
-    toast.success("Document added — will upload when you save the listing.");
+    toast.success(`Added ${displayName} — uploads when you save the listing.`);
   };
 
   const renderDocList = (
@@ -157,14 +163,24 @@ export function ProductNdaDocumentsSection({
             : "text-xs text-surface-500 mb-3 leading-relaxed"
         }
       >
-        Upload PDFs or spreadsheets now. Buyers unlock them instantly after they sign the NDA and pay the $1 fee — no manual approval needed.
+        Choose a document type, then upload a file. It will be saved automatically as{" "}
+        <strong>PNL_2026-05-18.pdf</strong> style names (type + today&apos;s date).
       </p>
 
-      <div className={isWizard ? "grid grid-cols-2 gap-2 mb-2" : "grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2"}>
+      <div className={isWizard ? "mb-2" : "mb-3"}>
+        <label
+          className={
+            isWizard
+              ? "block text-[11px] font-semibold text-[var(--text-2,#b0b0c0)] mb-1"
+              : "block text-xs font-medium text-surface-600 dark:text-surface-400 mb-1"
+          }
+        >
+          Document type
+        </label>
         <select
           className={
             isWizard
-              ? "fs"
+              ? "fs w-full"
               : "w-full px-3 py-2 rounded-lg border border-surface-200 dark:border-dark-border bg-surface-50 dark:bg-dark-input text-sm"
           }
           value={docType}
@@ -176,16 +192,18 @@ export function ProductNdaDocumentsSection({
             </option>
           ))}
         </select>
-        <input
+        <p
           className={
             isWizard
-              ? "fi"
-              : "w-full px-3 py-2 rounded-lg border border-surface-200 dark:border-dark-border bg-surface-50 dark:bg-dark-input text-sm"
+              ? "text-[10px] text-[var(--text-3,#66667a)] mt-1"
+              : "text-[11px] text-surface-500 mt-1"
           }
-          placeholder="Display name (optional)"
-          value={docName}
-          onChange={(e) => setDocName(e.target.value)}
-        />
+        >
+          Next upload will be named like:{" "}
+          <span className="font-mono">
+            {buildNdaDocumentDisplayName(docType, "file.pdf")}
+          </span>
+        </p>
       </div>
 
       <div
@@ -215,7 +233,9 @@ export function ProductNdaDocumentsSection({
             : undefined
         }
       >
-        {uploading ? "Uploading…" : "+ Choose file to upload"}
+        {uploading
+          ? "Uploading…"
+          : `+ Upload ${selectedLabel}`}
       </div>
       <input
         ref={inputRef}

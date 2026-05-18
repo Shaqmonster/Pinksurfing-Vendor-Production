@@ -130,6 +130,8 @@ type Props = {
   setFiles: React.Dispatch<React.SetStateAction<File[]>>;
   pendingNdaDocs?: PendingNdaListingDoc[];
   setPendingNdaDocs?: React.Dispatch<React.SetStateAction<PendingNdaListingDoc[]>>;
+  /** Set when editing an existing listing so NDA files upload immediately. */
+  listingProductId?: string;
   /** Existing image URLs from the server (edit mode only) */
   existingImages?: string[];
   onRemoveExistingImage?: (index: number) => void;
@@ -174,6 +176,7 @@ export const BusinessForSaleListingWizard = forwardRef<
     setFiles,
     pendingNdaDocs = [],
     setPendingNdaDocs,
+    listingProductId,
     existingImages = [],
     onRemoveExistingImage,
     allCountries,
@@ -1026,8 +1029,9 @@ export const BusinessForSaleListingWizard = forwardRef<
                 );
               })()}
               {(productData.nda_lock_ebitda || productData.nda_lock_full_financials) &&
-                setPendingNdaDocs && (
+                (listingProductId || setPendingNdaDocs) && (
                   <ProductNdaDocumentsSection
+                    productId={listingProductId}
                     pendingDocs={pendingNdaDocs}
                     onPendingDocsChange={setPendingNdaDocs}
                     ndaLocksEnabled={

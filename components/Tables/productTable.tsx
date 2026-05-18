@@ -3,7 +3,6 @@ import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  createSquareListingPaymentLink,
   getCategories,
   getProducts,
   getSubcategories,
@@ -31,7 +30,10 @@ import {
   getPendingListings,
   removePendingListing,
   updatePendingListingState,
+  isListingFeePayDisabled,
+  listingFeePayButtonLabel,
 } from "@/utils/pendingListings";
+import { prepareListingFeePayment } from "@/utils/listingPayment";
 
 const ProductsTable = (props: { Products?: Product[] }) => {
   const rowRef = useRef<any>(null);
@@ -225,32 +227,17 @@ const ProductsTable = (props: { Products?: Product[] }) => {
 
     setPayingListingId(listing.productId);
     try {
-      const result = await createSquareListingPaymentLink(token, listing.productId);
-
-      if (result.error) {
-        const errorMsg = result.data?.hint || result.data?.details || result.message || "Could not create payment link";
-        if (result.status === 403) {
-          toast.error(`Not allowed: ${errorMsg}`);
-        } else if (result.status === 401) {
-          toast.error(`Square platform credentials need attention: ${errorMsg}`);
-        } else if (result.status === 502) {
-          toast.error(`Configuration error: ${errorMsg}`);
-        } else {
-          toast.error(`Payment Error: ${errorMsg}`);
-        }
+      const result = await prepareListingFeePayment(
+        token,
+        listing.productId,
+        listing.productName
+      );
+      if (!result.ok) {
+        toast.error(result.message);
         return;
       }
-
-      updatePendingListingState(listing.productId, "PAYMENT_REDIRECTED");
       loadPendingListings();
-
-      const paymentUrl = result.data?.payment_link;
-      if (!paymentUrl) {
-        toast.error("Could not create payment link, try again.");
-        return;
-      }
-
-      window.location.href = paymentUrl;
+      window.location.href = result.paymentUrl;
     } finally {
       setPayingListingId("");
     }
@@ -265,34 +252,13 @@ const ProductsTable = (props: { Products?: Product[] }) => {
 
     setPayingListingId(product.id);
     try {
-      const result = await createSquareListingPaymentLink(token, product.id);
-
-      if (result.error) {
-        const errorMsg = result.data?.hint || result.data?.details || result.message || "Could not create payment link";
-        if (result.status === 403) {
-          toast.error(`Not allowed: ${errorMsg}`);
-        } else if (result.status === 401) {
-          toast.error(`Square platform credentials need attention: ${errorMsg}`);
-        } else if (result.status === 502) {
-          toast.error(`Configuration error: ${errorMsg}`);
-        } else {
-          toast.error(`Payment Error: ${errorMsg}`);
-        }
+      const result = await prepareListingFeePayment(token, product.id, product.name);
+      if (!result.ok) {
+        toast.error(result.message);
         return;
       }
-
-      // If a payment link was created, mark local pending state and redirect
-      // so the pending listing UI can show until webhook confirms activation.
-      updatePendingListingState(product.id, "PAYMENT_REDIRECTED");
       loadPendingListings();
-
-      const paymentUrl = result.data?.payment_link;
-      if (!paymentUrl) {
-        toast.error("Could not create payment link, try again.");
-        return;
-      }
-
-      window.location.href = paymentUrl;
+      window.location.href = result.paymentUrl;
     } finally {
       setPayingListingId("");
     }
@@ -464,14 +430,14 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); handlePayForProduct(product); }}
-                              disabled={pendingListings.some((p) => p.productId === product.id) || payingListingId === product.id}
+                              disabled={isListingFeePayDisabled(product.id, payingListingId)}
                               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                                pendingListings.some((p) => p.productId === product.id) || payingListingId === product.id
+                                isListingFeePayDisabled(product.id, payingListingId)
                                   ? "bg-surface-200 text-surface-400 cursor-not-allowed dark:bg-dark-border dark:text-surface-500"
                                   : "bg-gradient-pink text-white hover:opacity-90 shadow-sm"
                               }`}
                             >
-                              {payingListingId === product.id ? "Preparing..." : "Publish listing"}
+                              {listingFeePayButtonLabel(product.id, payingListingId)}
                             </button>
                           )}
                           <Link
@@ -601,14 +567,14 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); handlePayForProduct(product); }}
-                                  disabled={pendingListings.some((p) => p.productId === product.id) || payingListingId === product.id}
+                                  disabled={isListingFeePayDisabled(product.id, payingListingId)}
                                   className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                                    pendingListings.some((p) => p.productId === product.id) || payingListingId === product.id
+                                    isListingFeePayDisabled(product.id, payingListingId)
                                       ? "bg-surface-200 text-surface-400 cursor-not-allowed dark:bg-dark-border dark:text-surface-500"
                                       : "bg-gradient-pink text-white hover:opacity-90 shadow-sm"
                                   }`}
                                 >
-                                  {payingListingId === product.id ? "Preparing…" : "Publish listing →"}
+                                  {listingFeePayButtonLabel(product.id, payingListingId, true)}
                                 </button>
                               </div>
                             )}

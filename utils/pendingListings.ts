@@ -93,3 +93,33 @@ export function removePendingListing(productId: string): PendingListing[] {
   savePendingListings(next);
   return next;
 }
+
+export function getPendingListing(productId: string): PendingListing | undefined {
+  return getPendingListings().find((item) => item.productId === productId);
+}
+
+/** Pay is only disabled while checkout is in flight or webhook is pending. */
+export function isListingFeePayDisabled(
+  productId: string,
+  payingListingId: string
+): boolean {
+  if (payingListingId === productId) return true;
+  const pending = getPendingListing(productId);
+  if (!pending) return false;
+  return (
+    pending.state === "PAYMENT_REDIRECTED" || pending.state === "AWAITING_WEBHOOK"
+  );
+}
+
+export function listingFeePayButtonLabel(
+  productId: string,
+  payingListingId: string,
+  withArrow = false
+): string {
+  if (payingListingId === productId) return "Preparing…";
+  const pending = getPendingListing(productId);
+  if (pending?.state === "PAYMENT_REDIRECTED") return "Continue to payment…";
+  if (pending?.state === "AWAITING_WEBHOOK") return "Confirming payment…";
+  const label = "Publish listing";
+  return withArrow ? `${label} →` : label;
+}

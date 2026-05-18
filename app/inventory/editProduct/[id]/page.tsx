@@ -6,7 +6,6 @@ import {
   getFormSchema,
   saveProducts,
   getSingleProduct,
-  createSquareListingPaymentLink,
   updateProducts,
 } from "@/api/products";
 import { Product } from "@/types/product";
@@ -33,6 +32,7 @@ import {
   type BusinessForSaleListingWizardHandle,
 } from "@/components/inventory/BusinessForSaleListingWizard";
 import { ProductNdaDocumentsSection } from "@/components/inventory/ProductNdaDocumentsSection";
+import { prepareListingFeePayment } from "@/utils/listingPayment";
 
 // ============ ICONS (identical to add_products) ============
 const CheckIcon = () => (
@@ -717,27 +717,16 @@ const EditProduct = () => {
     try {
       // show lightweight loading
       setLoading(true);
-      const result: any = await createSquareListingPaymentLink(token, productData.id);
-      if (result.error) {
-        const errorMsg = result.data?.hint || result.data?.details || result.message || "Could not create payment link";
-        if (result.status === 403) {
-          toast.error(`Not allowed: ${errorMsg}`);
-        } else if (result.status === 401) {
-          toast.error(`Square platform credentials need attention: ${errorMsg}`);
-        } else {
-          toast.error(`Payment Error: ${errorMsg}`);
-        }
+      const result = await prepareListingFeePayment(
+        token,
+        productData.id,
+        productData.name
+      );
+      if (!result.ok) {
+        toast.error(result.message);
         return;
       }
-
-      // Mark pending locally and redirect
-      updatePendingListingState(productData.id, "PAYMENT_REDIRECTED");
-      const paymentUrl = result.data?.payment_link;
-      if (!paymentUrl) {
-        toast.error("Could not create payment link, try again.");
-        return;
-      }
-      window.location.href = paymentUrl;
+      window.location.href = result.paymentUrl;
     } finally {
       setLoading(false);
     }
@@ -1424,6 +1413,7 @@ const EditProduct = () => {
             <BusinessForSaleListingWizard
               key={selectedSubcategory}
               ref={bfsWizardRef}
+              listingProductId={productId}
               selectedCategoryName={selectedCategoryName}
               selectedSubcategoryName={selectedSubcategoryName}
               productData={productData}

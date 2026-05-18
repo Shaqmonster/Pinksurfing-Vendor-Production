@@ -31,6 +31,7 @@ import {
 } from "@/components/inventory/BusinessForSaleListingWizard";
 import type { PendingNdaListingDoc } from "@/components/inventory/ProductNdaDocumentsSection";
 import { uploadPendingProductNdaDocuments } from "@/api/productNdaDocuments";
+import { prepareListingFeePayment } from "@/utils/listingPayment";
 
 // ============ ICONS ============
 const CheckIcon = () => (
@@ -750,7 +751,21 @@ const AddProducts = () => {
 
             upsertPendingListing(listing);
             setCreatedListing(listing);
-            toast.success("Product created in pending state. Pay listing fee to publish.");
+
+            const pay = await prepareListingFeePayment(
+              token,
+              createdProductId,
+              cleanedProductData.name
+            );
+            if (pay.ok) {
+              toast.info("Redirecting to Square to pay the $1 listing fee…");
+              window.location.href = pay.paymentUrl;
+              return;
+            }
+            toast.warn(
+              pay.message ||
+                "Listing saved as draft. Pay the listing fee from My Listings to publish."
+            );
           } else {
             toast.success(res.data.Status || "Product added successfully!");
             router.push("/inventory/products");
@@ -2004,10 +2019,27 @@ const AddProducts = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
           <p className="text-sm font-medium text-green-700 dark:text-green-400 flex-1">
-            <span className="font-semibold">{createdListing.productName || "Listing"}</span> saved.
-            Pay to publish it whenever you&apos;re ready — find it in{" "}
+            <span className="font-semibold">{createdListing.productName || "Listing"}</span> saved as draft.
+            Pay the $1 listing fee to publish, or open{" "}
             <a href="/inventory/products" className="underline hover:no-underline">My Listings</a>.
           </p>
+          <button
+            type="button"
+            className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-gradient-pink text-white text-xs font-semibold"
+            onClick={async () => {
+              const token = getCookie("access_token");
+              if (!token || !createdListing?.productId) return;
+              const pay = await prepareListingFeePayment(
+                token,
+                createdListing.productId,
+                createdListing.productName
+              );
+              if (pay.ok) window.location.href = pay.paymentUrl;
+              else toast.error(pay.message);
+            }}
+          >
+            Pay $1 now
+          </button>
           <button
             type="button"
             onClick={() => setCreatedListing(null)}
