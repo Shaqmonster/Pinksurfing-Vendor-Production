@@ -83,9 +83,11 @@ export default function DiditVerificationGate({
         onVerified();
         return;
       }
-      const url = data.verification_url;
+      const url = data.verification_url || data.url;
       if (!url) {
-        handleError("Could not start verification.");
+        handleError(
+          data.detail || "Could not start verification. Please try again later."
+        );
         return;
       }
       pollRef.current = setInterval(async () => {
