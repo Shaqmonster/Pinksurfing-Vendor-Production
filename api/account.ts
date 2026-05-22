@@ -136,7 +136,12 @@ export async function signUp(payload: any) {
           { email, password }
         );
         const token = tokenResponse.data;
-        data = { ...token, vendor_id: response.data.vendor_id };
+        data = {
+          ...token,
+          vendor_id: response.data.vendor_id,
+          kyc_required: response.data.kyc_required,
+          kyc: response.data.kyc,
+        };
         console.log("Token fetched after sign up:", data);
       } else {
         data = response.data;

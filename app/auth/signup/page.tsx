@@ -37,6 +37,7 @@ import Loader from "@/components/common/Loader";
 import { Country, State, City } from "country-state-city";
 import { getVendorProfile } from "@/api/products";
 import { handleError, handleSuccess } from "@/utils/toast";
+import { identityVerifyPath } from "@/api/identity";
 
 type SignUpProps = {
   setIsLoggedIn: Dispatch<SetStateAction<boolean>>;
@@ -252,7 +253,11 @@ const SignUp: React.FC = () => {
       handleSuccess("Vendor registration successful!");
       localStorage.setItem("vendor_id", response.data.vendor_id);
       setIsLoggedIn(true);
-      router.push("/dashboard");
+      if (response.data.kyc_required) {
+        router.push(identityVerifyPath("vendor", "/dashboard"));
+      } else {
+        router.push("/dashboard");
+      }
     } else {
       handleError(response.error || "Registration failed");
     }
@@ -288,7 +293,11 @@ const SignUp: React.FC = () => {
           console.error("Error fetching profile:", error);
         }
         setIsLoggedIn(true);
-        router.push("/dashboard");
+        if (response.kyc_required) {
+          router.push(identityVerifyPath("vendor", "/dashboard"));
+        } else {
+          router.push("/dashboard");
+        }
       }
     } else if (response.status || response.error) {
       setIsError(true);

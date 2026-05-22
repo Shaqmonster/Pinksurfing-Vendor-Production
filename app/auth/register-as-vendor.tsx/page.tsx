@@ -33,6 +33,7 @@ import {
 // import { ToastContainer, toast } from "react-toastify";
 import Loader from "@/components/common/Loader";
 import { handleError, handleSuccess } from "@/utils/toast";
+import { identityVerifyPath } from "@/api/identity";
 
 type SignUpProps = {
   setIsLoggedIn: Dispatch<SetStateAction<boolean>>;
@@ -155,7 +156,11 @@ const RegisterAsVendor: React.FC = () => {
         localStorage.setItem("vendor_id", response.vendor_id);
         localStorage.setItem("store", parseJwt(response.token));
         setIsLoggedIn(true);
-        router.push("/dashboard");
+        if (response.kyc_required) {
+          router.push(identityVerifyPath("vendor", "/dashboard"));
+        } else {
+          router.push("/dashboard");
+        }
       }
     } else {
       let { data } = response;
