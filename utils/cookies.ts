@@ -22,14 +22,25 @@ export function getCookie(name: string): string | null {
   return null;
 }
 
-/** Access token: cookie first, then localStorage (cookies often missing on vendor host). */
+/** Access token with JWT expiry validation. */
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null;
+  const fromStorage =
+    localStorage.getItem("access_token") ?? localStorage.getItem("access");
+  if (fromStorage) {
+    const token = fromStorage.replaceAll('"', "");
+    try {
+      const part = token.split(".")[1];
+      if (part) {
+        const payload = JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/")));
+        if (payload.exp * 1000 > Date.now() + 60_000) return token;
+      }
+    } catch {
+      /* fall through */
+    }
+  }
   const fromCookie = getCookie("access_token");
   if (fromCookie) return fromCookie.replaceAll('"', "");
-  const fromStorage =
-    localStorage.getItem("access") ?? localStorage.getItem("access_token");
-  if (fromStorage) return fromStorage.replaceAll('"', "");
   return null;
 }
 
@@ -52,13 +63,11 @@ export function getAuthCookieDomain(): string | undefined {
   return undefined;
 }
 
-const LOGOUT_GUARD_KEY = "ps_sso_logout_at";
 const SSO_LOGOUT_COOKIE = "ps_sso_logged_out";
 
 export function markSsoLoggedOut(): void {
   if (typeof window === "undefined") return;
-  sessionStorage.setItem(LOGOUT_GUARD_KEY, String(Date.now()));
-  setCookie(SSO_LOGOUT_COOKIE, "1", 1 / 24); // ~1 hour
+  setCookie(SSO_LOGOUT_COOKIE, "1", 1 / 24);
   const domain = getAuthCookieDomain();
   if (domain) setCookie(SSO_LOGOUT_COOKIE, "1", 1 / 24, domain);
 }
@@ -67,7 +76,7 @@ export function markSsoLoggedOut(): void {
 export const markVendorLoggedOut = markSsoLoggedOut;
 
 export function clearSsoLoggedOutFlag(): void {
-  if (typeof window === "undefined") return;
+  if (typeof document === "undefined") return;
   deleteCookie(SSO_LOGOUT_COOKIE);
   const domain = getAuthCookieDomain();
   if (domain) deleteCookie(SSO_LOGOUT_COOKIE, domain);
@@ -77,22 +86,8 @@ export function isSsoLoggedOutGlobally(): boolean {
   return getCookie(SSO_LOGOUT_COOKIE) === "1";
 }
 
-/** Skip SSO cookie bootstrap briefly after explicit logout (same tab). */
-export function shouldSkipSsoBootstrap(): boolean {
-  if (typeof window === "undefined") return false;
-  const raw = sessionStorage.getItem(LOGOUT_GUARD_KEY);
-  if (!raw) return false;
-  const elapsed = Date.now() - Number(raw);
-  if (elapsed > 5 * 60 * 1000) {
-    sessionStorage.removeItem(LOGOUT_GUARD_KEY);
-    return false;
-  }
-  return true;
-}
-
+/** @deprecated Use clearSsoLoggedOutFlag on login via persistAuthSession */
 export function clearVendorLogoutGuard(): void {
-  if (typeof window === "undefined") return;
-  sessionStorage.removeItem(LOGOUT_GUARD_KEY);
   clearSsoLoggedOutFlag();
 }
 
@@ -117,6 +112,8 @@ export function clearAuthStorage(): void {
   deleteCookie("access_token");
   deleteCookie("refresh_token");
   deleteCookie("user_id");
+  deleteCookie(SSO_LOGOUT_COOKIE);
+  if (domain) deleteCookie(SSO_LOGOUT_COOKIE, domain);
 }
 
 /**

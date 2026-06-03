@@ -1,20 +1,17 @@
 import axios, { AxiosError } from "axios";
 import { toast } from "react-toastify";
+import { getAccessToken } from "@/utils/cookies";
 import {
-  getAccessToken,
-  getRefreshToken,
-  getCookie,
-  getAuthCookieDomain,
-  setCookie,
-  clearAuthStorage,
-  markVendorLoggedOut,
-  clearVendorLogoutGuard,
-  shouldSkipSsoBootstrap,
-  isSsoLoggedOutGlobally,
-  clearSsoLoggedOutFlag,
-} from "@/utils/cookies";
+  ensureSession,
+  persistAuthSession,
+  signOut,
+} from "@/utils/ssoSession";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+
+export { ensureSession, signOut, getAccessToken, persistAuthSession };
+/** @deprecated Use ensureSession() */
+export const resolveSharedSession = ensureSession;
 
 export async function isCustomer(email: string) {
   try {
@@ -78,31 +75,6 @@ export async function logout(token: string) {
   return signOut(token);
 }
 
-/** Ends vendor session locally and on auth (clears shared HttpOnly SSO cookies). */
-export async function signOut(explicitToken?: string | null) {
-  const access = explicitToken ?? getAccessToken();
-  const refresh = getRefreshToken();
-
-  markVendorLoggedOut();
-
-  try {
-    await axios.post(
-      "https://auth.pinksurfing.com/api/logout/",
-      refresh ? { refresh } : {},
-      {
-        withCredentials: true,
-        headers: access
-          ? { Authorization: `Bearer ${access.replaceAll('"', "")}` }
-          : {},
-      }
-    );
-  } catch (error) {
-    console.error("Auth logout failed (clearing client session anyway):", error);
-  }
-
-  clearAuthStorage();
-}
-
 export async function getOnboardingUrl(token: string) {
   try {
     const response = await axios.get(`${BASE_URL}/vendor/get-onboarding-url/`, {
@@ -138,82 +110,6 @@ export async function refreshToken(token: string, refresh: string) {
   }
 }
 
-/**
- * When the user signed in on pinksurfing.com, auth sets HttpOnly cookies on
- * .pinksurfing.com. JS cannot read them — exchange the refresh cookie for tokens.
- */
-export function getJwtUserId(token: string | null): string | null {
-  if (!token) return null;
-  try {
-    const part = token.split(".")[1];
-    const json = JSON.parse(
-      atob(part.replace(/-/g, "+").replace(/_/g, "/"))
-    );
-    const id = (json as { user_id?: string; sub?: string }).user_id ?? (json as { sub?: string }).sub;
-    return id != null ? String(id) : null;
-  } catch {
-    return null;
-  }
-}
-
-export async function bootstrapAccessFromSsoCookies(): Promise<{
-  access: string;
-  refresh?: string;
-} | null> {
-  if (shouldSkipSsoBootstrap()) return null;
-  try {
-    const response = await axios.post(
-      "https://auth.pinksurfing.com/api/token/refresh/",
-      {},
-      { withCredentials: true }
-    );
-    const access = response.data?.access;
-    if (!access) return null;
-    return { access, refresh: response.data?.refresh };
-  } catch {
-    return null;
-  }
-}
-
-/** Resolve session: shared cookies → SSO bootstrap → local cache. */
-export async function resolveSharedSession(): Promise<{
-  access: string;
-  refresh?: string;
-} | null> {
-  if (isSsoLoggedOutGlobally()) {
-    clearAuthStorage();
-    return null;
-  }
-
-  if (shouldSkipSsoBootstrap()) return null;
-
-  const cookieAccess = getCookie("access_token");
-  if (cookieAccess) {
-    return {
-      access: cookieAccess.replaceAll('"', ""),
-      refresh: getRefreshToken() ?? undefined,
-    };
-  }
-
-  const boot = await bootstrapAccessFromSsoCookies();
-  if (boot?.access) {
-    clearSsoLoggedOutFlag();
-    persistAuthTokens(boot.access, boot.refresh);
-    return boot;
-  }
-
-  const stored =
-    localStorage.getItem("access") ?? localStorage.getItem("access_token");
-  if (stored) {
-    return {
-      access: stored.replaceAll('"', ""),
-      refresh: getRefreshToken() ?? undefined,
-    };
-  }
-
-  return null;
-}
-
 export async function signUp(payload: any) {
   const formData = new FormData();
   Object.keys(payload).forEach((key) => {
@@ -233,7 +129,8 @@ export async function signUp(payload: any) {
         const { email, password } = payload;
         const tokenResponse = await axios.post(
           `https://auth.pinksurfing.com/api/token/`,
-          { email, password }
+          { email, password },
+          { withCredentials: true }
         );
         const token = tokenResponse.data;
         data = {
@@ -357,7 +254,6 @@ export async function signIn(payload: { email: string; password: string }) {
       };
     }
 
-    clearVendorLogoutGuard();
     persistAuthTokens(access, refresh, vendorId);
     return { ...profile, id: vendorId, token: access, refresh };
   } catch (err: any) {
@@ -481,30 +377,5 @@ export function persistAuthTokens(
   vendorId?: string | number | null,
   userId?: string | number | null
 ) {
-  if (typeof window === "undefined") return;
-
-  clearVendorLogoutGuard();
-  localStorage.setItem("access", access);
-  localStorage.setItem("access_token", access);
-  if (refresh) {
-    localStorage.setItem("refresh", refresh);
-    localStorage.setItem("refresh_token", refresh);
-  }
-  if (vendorId != null) localStorage.setItem("vendor_id", String(vendorId));
-
-  // Host-only cookie always works on the current vendor origin.
-  setCookie("access_token", access, 7);
-  if (refresh) setCookie("refresh_token", refresh, 7);
-
-  const sharedDomain = getAuthCookieDomain();
-  if (sharedDomain) {
-    setCookie("access_token", access, 7, sharedDomain);
-    if (refresh) setCookie("refresh_token", refresh, 7, sharedDomain);
-    const cookieUserId = userId ?? vendorId;
-    if (cookieUserId != null) {
-      setCookie("user_id", String(cookieUserId), 7, sharedDomain);
-    }
-  }
+  persistAuthSession(access, refresh, vendorId, userId);
 }
-
-export { getAccessToken };
