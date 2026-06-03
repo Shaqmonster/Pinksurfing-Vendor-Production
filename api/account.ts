@@ -1,6 +1,10 @@
 import axios, { AxiosError } from "axios";
 import { toast } from "react-toastify";
-import { setCookie } from "@/utils/cookies";
+import {
+  getAccessToken,
+  getAuthCookieDomain,
+  setCookie,
+} from "@/utils/cookies";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -387,12 +391,19 @@ export function persistAuthTokens(
   if (refresh) localStorage.setItem("refresh", refresh);
   if (vendorId != null) localStorage.setItem("vendor_id", String(vendorId));
 
-  const domain = window.location.hostname.includes("localhost")
-    ? undefined
-    : ".pinksurfing.com";
+  // Host-only cookie always works on the current vendor origin.
+  setCookie("access_token", access, 7);
+  if (refresh) setCookie("refresh_token", refresh, 7);
 
-  setCookie("access_token", access, 7, domain);
-  if (refresh) setCookie("refresh_token", refresh, 7, domain);
-  const cookieUserId = userId ?? vendorId;
-  if (cookieUserId != null) setCookie("user_id", String(cookieUserId), 7, domain);
+  const sharedDomain = getAuthCookieDomain();
+  if (sharedDomain) {
+    setCookie("access_token", access, 7, sharedDomain);
+    if (refresh) setCookie("refresh_token", refresh, 7, sharedDomain);
+    const cookieUserId = userId ?? vendorId;
+    if (cookieUserId != null) {
+      setCookie("user_id", String(cookieUserId), 7, sharedDomain);
+    }
+  }
 }
+
+export { getAccessToken };

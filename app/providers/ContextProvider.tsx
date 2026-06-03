@@ -1,7 +1,14 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { MyContext } from "./context";
-import { getCookie } from "@/utils/cookies";
+import {
+  getAccessToken,
+  getRefreshToken,
+  getCookie,
+  setCookie,
+  getAuthCookieDomain,
+  clearAuthStorage,
+} from "@/utils/cookies";
 import { resolveVendorSession } from "@/api/account";
 
 const MyProvider = ({ children }: { children: React.ReactNode }) => {
@@ -13,32 +20,42 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const refreshAuth = useCallback(async () => {
-    const access = getCookie("access_token");
-    const cookieRefresh = getCookie("refresh_token");
+    const access = getAccessToken();
+    const refresh = getRefreshToken();
 
     if (!access) {
-      localStorage.clear();
       setIsLoggedIn(false);
       return false;
     }
 
     localStorage.setItem("access", access);
-    if (cookieRefresh) localStorage.setItem("refresh", cookieRefresh);
+    if (refresh) localStorage.setItem("refresh", refresh);
+
+    if (!getCookie("access_token")) {
+      setCookie("access_token", access, 7);
+      const sharedDomain = getAuthCookieDomain();
+      if (sharedDomain) setCookie("access_token", access, 7, sharedDomain);
+    }
 
     const session = await resolveVendorSession(access);
     if (session.unauthorized) {
-      localStorage.clear();
+      clearAuthStorage();
       setIsLoggedIn(false);
       return false;
     }
-    const vendorId = session.profile?.id ?? session.profile?.pk;
+
+    const vendorId =
+      session.profile?.id ??
+      session.profile?.pk ??
+      localStorage.getItem("vendor_id");
+
     if (session.isVendor && vendorId) {
       localStorage.setItem("vendor_id", String(vendorId));
       setIsLoggedIn(true);
       return true;
     }
 
-    if (getCookie("access_token") && localStorage.getItem("vendor_id")) {
+    if (localStorage.getItem("vendor_id")) {
       setIsLoggedIn(true);
       return true;
     }

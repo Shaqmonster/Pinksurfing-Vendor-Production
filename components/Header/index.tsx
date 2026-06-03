@@ -13,7 +13,7 @@ import { FiMenu, FiSearch, FiBell, FiMessageSquare } from "react-icons/fi";
 import { FaStore } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "../Sidebar";
-import { getCookie } from "@/utils/cookies";
+import { getAccessToken, getRefreshToken } from "@/utils/cookies";
 
 const Header = (props: { loggedIn: boolean | undefined }) => {
   const pathname = usePathname();
@@ -33,11 +33,11 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const access = getCookie("access_token");
+    const access = getAccessToken();
     const isPublicRoute = pathname === "/" || pathname.startsWith("/auth");
 
     if (isPublicRoute) {
-      setLogged(Boolean(props.loggedIn && access));
+      setLogged(Boolean(props.loggedIn || access));
       return;
     }
 
@@ -52,7 +52,7 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
       setTokens({
         access: access || localStorage.getItem("access"),
         vendor_id: localStorage.getItem("vendor_id"),
-        refresh: getCookie("refresh_token"),
+        refresh: getRefreshToken(),
       });
 
       void (async () => {
@@ -80,7 +80,7 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
 
       if (profileRes.status === 401 || profileRes.status === 403) {
         if (props.loggedIn) return;
-        const refresh = getCookie("refresh_token");
+        const refresh = getRefreshToken();
         if (!refresh) {
           setLogged(false);
           router.push("/");

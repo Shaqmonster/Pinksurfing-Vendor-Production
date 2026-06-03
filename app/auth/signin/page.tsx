@@ -17,7 +17,7 @@ const SignIn: React.FC = () => {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { setIsLoggedIn, setVendor, setAuthpage, refreshAuth } = useContext(MyContext);
+  const { setIsLoggedIn, setVendor, setAuthpage } = useContext(MyContext);
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
@@ -95,8 +95,7 @@ const SignIn: React.FC = () => {
         }
         setIsLoggedIn(true);
         handleSuccess("Welcome back! Login successful");
-        router.push("/dashboard");
-        void refreshAuth();
+        router.replace("/dashboard");
       } else if (data?.error) {
         handleError(data.message || data.detail || "Sign in failed");
       } else {

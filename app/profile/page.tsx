@@ -18,7 +18,7 @@ import {
   FaEdit
 } from "react-icons/fa";
 import { FiMapPin, FiMail, FiPhone, FiGlobe, FiPackage, FiTrendingUp } from "react-icons/fi";
-import { getCookie } from "@/utils/cookies";
+import { getAccessToken } from "@/utils/cookies";
 import Link from "next/link";
 
 const Profile = () => {
@@ -45,29 +45,36 @@ const Profile = () => {
   const router = useRouter();
 
   useEffect(() => {
-    let access = getCookie("access_token");
-    let vendor_id = localStorage.getItem("vendor_id");
+    const access = getAccessToken();
     const store: string | null = localStorage.getItem("store");
-    
-    if (access && store) {
-      getProfile(access).then((data) => {
-        if (data && "response" in data && data.response.status >= 400) {
-          setIsLoggedIn(false);
-          router.push("/");
-        }
-        if (data && "data" in data) {
-          setProfile(data.data);
-        }
-      });
-      
-      const storeObject = JSON.parse(store);
-      const store_name = storeObject.store_name;
 
-      getProducts(access, store_name).then((data) => {
-        if (data && "data" in data && "Products" in data.data) {
-          setProducts(data.data.Products.length);
+    if (access) {
+      getProfile(access).then((res) => {
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            setIsLoggedIn(false);
+            router.push("/");
+          }
+          return;
+        }
+        if (res.data) {
+          setProfile(res.data);
         }
       });
+
+      if (store) {
+        try {
+          const storeObject = JSON.parse(store);
+          const store_name = storeObject.store_name;
+          getProducts(access, store_name).then((data) => {
+            if (data && "data" in data && "Products" in data.data) {
+              setProducts(data.data.Products.length);
+            }
+          });
+        } catch {
+          /* ignore stale store cache */
+        }
+      }
 
       getOrders(access).then((data) => {
         if (data && "data" in data && "Order Request" in data.data) {

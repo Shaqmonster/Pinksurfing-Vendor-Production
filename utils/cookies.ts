@@ -2,35 +2,94 @@
  * Get a cookie value by name
  */
 export function getCookie(name: string): string | null {
-  if (typeof document === 'undefined') return null;
-  
+  if (typeof document === "undefined") return null;
+
   const nameEQ = name + "=";
-  const ca = document.cookie.split(';');
-  
+  const ca = document.cookie.split(";");
+
   for (let i = 0; i < ca.length; i++) {
     let c = ca[i];
-    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+    while (c.charAt(0) === " ") c = c.substring(1, c.length);
+    if (c.indexOf(nameEQ) === 0) {
+      const raw = c.substring(nameEQ.length, c.length);
+      try {
+        return decodeURIComponent(raw);
+      } catch {
+        return raw;
+      }
+    }
   }
   return null;
+}
+
+/** Access token: cookie first, then localStorage (cookies often missing on vendor host). */
+export function getAccessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  const fromCookie = getCookie("access_token");
+  if (fromCookie) return fromCookie.replaceAll('"', "");
+  const fromStorage = localStorage.getItem("access");
+  if (fromStorage) return fromStorage.replaceAll('"', "");
+  return null;
+}
+
+export function getRefreshToken(): string | null {
+  if (typeof window === "undefined") return null;
+  const fromCookie = getCookie("refresh_token");
+  if (fromCookie) return fromCookie.replaceAll('"', "");
+  const fromStorage = localStorage.getItem("refresh");
+  if (fromStorage) return fromStorage.replaceAll('"', "");
+  return null;
+}
+
+export function getAuthCookieDomain(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  const host = window.location.hostname;
+  if (host === "localhost" || host === "127.0.0.1") return undefined;
+  if (host.endsWith(".pinksurfing.com") || host === "pinksurfing.com") {
+    return ".pinksurfing.com";
+  }
+  return undefined;
+}
+
+export function clearAuthStorage(): void {
+  if (typeof window === "undefined") return;
+  const keys = ["access", "refresh", "vendor_id", "store", "vendorAccess", "user.vendorAccess"];
+  keys.forEach((k) => localStorage.removeItem(k));
+  const domain = getAuthCookieDomain();
+  deleteCookie("access_token", domain);
+  deleteCookie("refresh_token", domain);
+  deleteCookie("user_id", domain);
+  deleteCookie("access_token");
+  deleteCookie("refresh_token");
+  deleteCookie("user_id");
 }
 
 /**
  * Set a cookie with subdomain support
  */
 export function setCookie(name: string, value: string, days: number = 7, domain?: string): void {
-  if (typeof document === 'undefined') return;
-  
+  if (typeof document === "undefined") return;
+
   let expires = "";
   if (days) {
     const date = new Date();
-    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+    date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
     expires = "; expires=" + date.toUTCString();
   }
-  
-  // Set cookie for subdomain (e.g., .pinksurfing.com)
-  const domainString = domain ? `; domain=${domain}` : '';
-  document.cookie = name + "=" + (value || "") + expires + "; path=/" + domainString;
+
+  const domainString = domain ? `; domain=${domain}` : "";
+  const secure =
+    window.location.protocol === "https:" ? "; Secure" : "";
+  const encoded = encodeURIComponent(value || "");
+  document.cookie =
+    name +
+    "=" +
+    encoded +
+    expires +
+    "; path=/" +
+    domainString +
+    "; SameSite=Lax" +
+    secure;
 }
 
 /**
