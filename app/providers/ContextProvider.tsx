@@ -8,13 +8,8 @@ import {
   setCookie,
   getAuthCookieDomain,
   clearAuthStorage,
-  shouldSkipSsoBootstrap,
 } from "@/utils/cookies";
-import {
-  bootstrapAccessFromSsoCookies,
-  persistAuthTokens,
-  resolveVendorSession,
-} from "@/api/account";
+import { resolveSharedSession, resolveVendorSession } from "@/api/account";
 
 const MyProvider = ({ children }: { children: React.ReactNode }) => {
   const [loggedIn, setIsLoggedIn] = useState(false);
@@ -25,17 +20,9 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const refreshAuth = useCallback(async () => {
-    let access = getAccessToken();
-    let refresh = getRefreshToken();
-
-    if (!access && !shouldSkipSsoBootstrap()) {
-      const boot = await bootstrapAccessFromSsoCookies();
-      if (boot?.access) {
-        access = boot.access;
-        refresh = boot.refresh ?? refresh ?? undefined;
-        persistAuthTokens(access, refresh);
-      }
-    }
+    const sharedSession = await resolveSharedSession();
+    let access = sharedSession?.access ?? null;
+    let refresh = sharedSession?.refresh ?? getRefreshToken();
 
     if (!access) {
       setIsLoggedIn(false);
@@ -51,19 +38,19 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
       if (sharedDomain) setCookie("access_token", access, 7, sharedDomain);
     }
 
-    const session = await resolveVendorSession(access);
-    if (session.unauthorized) {
+    const vendorSession = await resolveVendorSession(access);
+    if (vendorSession.unauthorized) {
       clearAuthStorage();
       setIsLoggedIn(false);
       return false;
     }
 
     const vendorId =
-      session.profile?.id ??
-      session.profile?.pk ??
+      vendorSession.profile?.id ??
+      vendorSession.profile?.pk ??
       localStorage.getItem("vendor_id");
 
-    if (session.isVendor && vendorId) {
+    if (vendorSession.isVendor && vendorId) {
       localStorage.setItem("vendor_id", String(vendorId));
       setIsLoggedIn(true);
       return true;

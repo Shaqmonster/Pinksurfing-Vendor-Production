@@ -3,11 +3,13 @@ import { toast } from "react-toastify";
 import {
   getAccessToken,
   getRefreshToken,
+  getCookie,
   getAuthCookieDomain,
   setCookie,
   clearAuthStorage,
   markVendorLoggedOut,
   clearVendorLogoutGuard,
+  shouldSkipSsoBootstrap,
 } from "@/utils/cookies";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -138,10 +140,25 @@ export async function refreshToken(token: string, refresh: string) {
  * When the user signed in on pinksurfing.com, auth sets HttpOnly cookies on
  * .pinksurfing.com. JS cannot read them — exchange the refresh cookie for tokens.
  */
+export function getJwtUserId(token: string | null): string | null {
+  if (!token) return null;
+  try {
+    const part = token.split(".")[1];
+    const json = JSON.parse(
+      atob(part.replace(/-/g, "+").replace(/_/g, "/"))
+    );
+    const id = (json as { user_id?: string; sub?: string }).user_id ?? (json as { sub?: string }).sub;
+    return id != null ? String(id) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function bootstrapAccessFromSsoCookies(): Promise<{
   access: string;
   refresh?: string;
 } | null> {
+  if (shouldSkipSsoBootstrap()) return null;
   try {
     const response = await axios.post(
       "https://auth.pinksurfing.com/api/token/refresh/",
@@ -154,6 +171,46 @@ export async function bootstrapAccessFromSsoCookies(): Promise<{
   } catch {
     return null;
   }
+}
+
+/** SSO cookies first — avoids stale vendor-only localStorage showing another user. */
+export async function resolveSharedSession(): Promise<{
+  access: string;
+  refresh?: string;
+} | null> {
+  if (shouldSkipSsoBootstrap()) return null;
+
+  const previous = getAccessToken();
+  const boot = await bootstrapAccessFromSsoCookies();
+
+  if (boot?.access) {
+    const prevUid = getJwtUserId(previous);
+    const bootUid = getJwtUserId(boot.access);
+    if (previous && prevUid && bootUid && prevUid !== bootUid) {
+      clearAuthStorage();
+    }
+    persistAuthTokens(boot.access, boot.refresh);
+    return boot;
+  }
+
+  const cookieAccess = getCookie("access_token");
+  if (cookieAccess) {
+    return {
+      access: cookieAccess.replaceAll('"', ""),
+      refresh: getRefreshToken() ?? undefined,
+    };
+  }
+
+  const stored =
+    localStorage.getItem("access") ?? localStorage.getItem("access_token");
+  if (stored) {
+    return {
+      access: stored.replaceAll('"', ""),
+      refresh: getRefreshToken() ?? undefined,
+    };
+  }
+
+  return null;
 }
 
 export async function signUp(payload: any) {
