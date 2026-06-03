@@ -173,25 +173,12 @@ export async function bootstrapAccessFromSsoCookies(): Promise<{
   }
 }
 
-/** SSO cookies first — avoids stale vendor-only localStorage showing another user. */
+/** Resolve session; bootstrap only when this origin has no readable access token. */
 export async function resolveSharedSession(): Promise<{
   access: string;
   refresh?: string;
 } | null> {
   if (shouldSkipSsoBootstrap()) return null;
-
-  const previous = getAccessToken();
-  const boot = await bootstrapAccessFromSsoCookies();
-
-  if (boot?.access) {
-    const prevUid = getJwtUserId(previous);
-    const bootUid = getJwtUserId(boot.access);
-    if (previous && prevUid && bootUid && prevUid !== bootUid) {
-      clearAuthStorage();
-    }
-    persistAuthTokens(boot.access, boot.refresh);
-    return boot;
-  }
 
   const cookieAccess = getCookie("access_token");
   if (cookieAccess) {
@@ -208,6 +195,12 @@ export async function resolveSharedSession(): Promise<{
       access: stored.replaceAll('"', ""),
       refresh: getRefreshToken() ?? undefined,
     };
+  }
+
+  const boot = await bootstrapAccessFromSsoCookies();
+  if (boot?.access) {
+    persistAuthTokens(boot.access, boot.refresh);
+    return boot;
   }
 
   return null;
