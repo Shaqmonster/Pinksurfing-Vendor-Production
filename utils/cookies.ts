@@ -27,7 +27,8 @@ export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null;
   const fromCookie = getCookie("access_token");
   if (fromCookie) return fromCookie.replaceAll('"', "");
-  const fromStorage = localStorage.getItem("access");
+  const fromStorage =
+    localStorage.getItem("access") ?? localStorage.getItem("access_token");
   if (fromStorage) return fromStorage.replaceAll('"', "");
   return null;
 }

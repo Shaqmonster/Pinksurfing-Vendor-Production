@@ -9,7 +9,11 @@ import {
   getAuthCookieDomain,
   clearAuthStorage,
 } from "@/utils/cookies";
-import { resolveVendorSession } from "@/api/account";
+import {
+  bootstrapAccessFromSsoCookies,
+  persistAuthTokens,
+  resolveVendorSession,
+} from "@/api/account";
 
 const MyProvider = ({ children }: { children: React.ReactNode }) => {
   const [loggedIn, setIsLoggedIn] = useState(false);
@@ -20,8 +24,17 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const refreshAuth = useCallback(async () => {
-    const access = getAccessToken();
-    const refresh = getRefreshToken();
+    let access = getAccessToken();
+    let refresh = getRefreshToken();
+
+    if (!access) {
+      const boot = await bootstrapAccessFromSsoCookies();
+      if (boot?.access) {
+        access = boot.access;
+        refresh = boot.refresh ?? refresh ?? undefined;
+        persistAuthTokens(access, refresh);
+      }
+    }
 
     if (!access) {
       setIsLoggedIn(false);

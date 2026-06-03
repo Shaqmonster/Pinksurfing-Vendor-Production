@@ -101,21 +101,42 @@ export async function getOnboardingUrl(token: string) {
 export async function refreshToken(token: string, refresh: string) {
   try {
     const response = await axios.post(
-      `https://auth.pinksurfing.com/api/token/refresh`,
-      {
-        refresh,
-      },
+      `https://auth.pinksurfing.com/api/token/refresh/`,
+      { refresh },
       {
         headers: {
           Authorization: `Bearer ${token.replaceAll('"', "")}`,
         },
+        withCredentials: true,
       }
     );
 
     return response.data;
   } catch (error) {
-    console.error("Error fetching onboarding URL:", error);
+    console.error("Error refreshing token:", error);
     throw error;
+  }
+}
+
+/**
+ * When the user signed in on pinksurfing.com, auth sets HttpOnly cookies on
+ * .pinksurfing.com. JS cannot read them — exchange the refresh cookie for tokens.
+ */
+export async function bootstrapAccessFromSsoCookies(): Promise<{
+  access: string;
+  refresh?: string;
+} | null> {
+  try {
+    const response = await axios.post(
+      "https://auth.pinksurfing.com/api/token/refresh/",
+      {},
+      { withCredentials: true }
+    );
+    const access = response.data?.access;
+    if (!access) return null;
+    return { access, refresh: response.data?.refresh };
+  } catch {
+    return null;
   }
 }
 
