@@ -8,6 +8,7 @@ import {
   setCookie,
   getAuthCookieDomain,
   clearAuthStorage,
+  shouldSkipSsoBootstrap,
 } from "@/utils/cookies";
 import {
   bootstrapAccessFromSsoCookies,
@@ -27,7 +28,7 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
     let access = getAccessToken();
     let refresh = getRefreshToken();
 
-    if (!access) {
+    if (!access && !shouldSkipSsoBootstrap()) {
       const boot = await bootstrapAccessFromSsoCookies();
       if (boot?.access) {
         access = boot.access;

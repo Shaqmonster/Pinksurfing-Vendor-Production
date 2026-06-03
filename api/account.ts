@@ -2,8 +2,12 @@ import axios, { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import {
   getAccessToken,
+  getRefreshToken,
   getAuthCookieDomain,
   setCookie,
+  clearAuthStorage,
+  markVendorLoggedOut,
+  clearVendorLogoutGuard,
 } from "@/utils/cookies";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -65,22 +69,34 @@ export async function customerVendorRegistration(token: string, payload: any) {
   }
 }
 
+/** @deprecated Use signOut() */
 export async function logout(token: string) {
+  return signOut(token);
+}
+
+/** Ends vendor session locally and on auth (clears shared HttpOnly SSO cookies). */
+export async function signOut(explicitToken?: string | null) {
+  const access = explicitToken ?? getAccessToken();
+  const refresh = getRefreshToken();
+
+  markVendorLoggedOut();
+
   try {
-    const response = await axios.post(
-      `https://auth.pinksurfing.com/api/logout/`,
-      {},
+    await axios.post(
+      "https://auth.pinksurfing.com/api/logout/",
+      refresh ? { refresh } : {},
       {
-        headers: {
-          Authorization: `Bearer ${token.replaceAll('"', "")}`,
-        },
+        withCredentials: true,
+        headers: access
+          ? { Authorization: `Bearer ${access.replaceAll('"', "")}` }
+          : {},
       }
     );
-    return { success: true, data: response.data };
   } catch (error) {
-    console.error("Error during logout:", error);
-    return { success: false, error };
+    console.error("Auth logout failed (clearing client session anyway):", error);
   }
+
+  clearAuthStorage();
 }
 
 export async function getOnboardingUrl(token: string) {
@@ -283,6 +299,7 @@ export async function signIn(payload: { email: string; password: string }) {
       };
     }
 
+    clearVendorLogoutGuard();
     persistAuthTokens(access, refresh, vendorId);
     return { ...profile, id: vendorId, token: access, refresh };
   } catch (err: any) {
@@ -408,6 +425,7 @@ export function persistAuthTokens(
 ) {
   if (typeof window === "undefined") return;
 
+  clearVendorLogoutGuard();
   localStorage.setItem("access", access);
   if (refresh) localStorage.setItem("refresh", refresh);
   if (vendorId != null) localStorage.setItem("vendor_id", String(vendorId));

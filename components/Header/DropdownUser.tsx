@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { MyContext } from "@/app/providers/context";
 import { getVendorProfile } from "@/api/products";
-import { logout as logoutAPI } from "@/api/account";
-import { deleteCookie, getCookie } from "@/utils/cookies";
+import { signOut } from "@/api/account";
+import { getAccessToken } from "@/utils/cookies";
 import { 
   FiUser, 
   FiSettings, 
@@ -33,9 +33,11 @@ const DropdownUser = ({ setLogged, profile }: DropdownUserProps) => {
   const trigger = useRef<HTMLButtonElement>(null);
   const dropdown = useRef<HTMLDivElement>(null);
 
-  const tokenFromLocalStorage =
-    typeof window !== "undefined" ? getCookie("access_token") : null;
-  const [token, setToken] = useState(tokenFromLocalStorage);
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    setToken(getAccessToken());
+  }, []);
 
   const [user, setUser] = useState({
     contact_person_name: "",
@@ -72,35 +74,8 @@ const DropdownUser = ({ setLogged, profile }: DropdownUserProps) => {
   }, [token]);
 
   const signout = async () => {
-    if (typeof window !== "undefined") {
-      const token = getCookie("access_token");
-
-      if (token) {
-        try {
-          await logoutAPI(token);
-          console.log("Successfully logged out from server");
-        } catch (error) {
-          console.error("Error logging out from server:", error);
-        }
-      }
-
-      localStorage.removeItem("access");
-      localStorage.removeItem("vendor_id");
-      localStorage.removeItem("store");
-      localStorage.removeItem("refresh");
-      localStorage.removeItem("vendorAccess"); // Clear the e-commerce side flag too
-      localStorage.removeItem("user.vendorAccess"); // Alternative key name used in Home.jsx
-      localStorage.clear(); // Nuclear option to ensure absolute isolation on logout
-
-      const domain = window.location.hostname.includes("localhost")
-        ? undefined
-        : ".pinksurfing.com";
-
-      deleteCookie("access_token", domain);
-      deleteCookie("refresh_token", domain);
-      deleteCookie("user_id", domain);
-    }
-
+    setDropdownOpen(false);
+    await signOut(token);
     setIsLoggedIn(false);
     setLogged(false);
     window.location.href = "/";

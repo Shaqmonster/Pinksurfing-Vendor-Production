@@ -52,9 +52,44 @@ export function getAuthCookieDomain(): string | undefined {
   return undefined;
 }
 
+const LOGOUT_GUARD_KEY = "ps_vendor_logout_at";
+
+export function markVendorLoggedOut(): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(LOGOUT_GUARD_KEY, String(Date.now()));
+}
+
+/** Skip SSO cookie bootstrap briefly after explicit logout. */
+export function shouldSkipSsoBootstrap(): boolean {
+  if (typeof window === "undefined") return false;
+  const raw = sessionStorage.getItem(LOGOUT_GUARD_KEY);
+  if (!raw) return false;
+  const elapsed = Date.now() - Number(raw);
+  if (elapsed > 5 * 60 * 1000) {
+    sessionStorage.removeItem(LOGOUT_GUARD_KEY);
+    return false;
+  }
+  return true;
+}
+
+export function clearVendorLogoutGuard(): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(LOGOUT_GUARD_KEY);
+}
+
 export function clearAuthStorage(): void {
   if (typeof window === "undefined") return;
-  const keys = ["access", "refresh", "vendor_id", "store", "vendorAccess", "user.vendorAccess"];
+  const keys = [
+    "access",
+    "access_token",
+    "refresh",
+    "refresh_token",
+    "vendor_id",
+    "store",
+    "vendorAccess",
+    "user.vendorAccess",
+    "user_id",
+  ];
   keys.forEach((k) => localStorage.removeItem(k));
   const domain = getAuthCookieDomain();
   deleteCookie("access_token", domain);
@@ -97,10 +132,17 @@ export function setCookie(name: string, value: string, days: number = 7, domain?
  * Delete a cookie
  */
 export function deleteCookie(name: string, domain?: string): void {
-  if (typeof document === 'undefined') return;
-  
-  const domainString = domain ? `; domain=${domain}` : '';
-  document.cookie = name + "=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC" + domainString;
+  if (typeof document === "undefined") return;
+
+  const domainString = domain ? `; domain=${domain}` : "";
+  const secure =
+    window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie =
+    name +
+    "=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC" +
+    domainString +
+    "; SameSite=Lax" +
+    secure;
 }
 
 /**
