@@ -52,7 +52,7 @@ export function getAuthCookieDomain(): string | undefined {
   return undefined;
 }
 
-const LOGOUT_GUARD_KEY = "ps_vendor_logout_at";
+const LOGOUT_GUARD_KEY = "ps_sso_logout_at";
 
 export function markVendorLoggedOut(): void {
   if (typeof window === "undefined") return;

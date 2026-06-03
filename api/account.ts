@@ -427,7 +427,11 @@ export function persistAuthTokens(
 
   clearVendorLogoutGuard();
   localStorage.setItem("access", access);
-  if (refresh) localStorage.setItem("refresh", refresh);
+  localStorage.setItem("access_token", access);
+  if (refresh) {
+    localStorage.setItem("refresh", refresh);
+    localStorage.setItem("refresh_token", refresh);
+  }
   if (vendorId != null) localStorage.setItem("vendor_id", String(vendorId));
 
   // Host-only cookie always works on the current vendor origin.
