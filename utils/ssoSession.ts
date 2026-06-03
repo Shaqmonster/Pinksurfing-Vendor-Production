@@ -94,6 +94,8 @@ export function persistAuthSession(
 ) {
   if (typeof window === "undefined" || !access) return;
 
+  const prevAccess = localStorage.getItem("access_token");
+
   clearSsoLoggedOutFlag();
   localStorage.setItem("access_token", access);
   localStorage.setItem("access", access);
@@ -116,7 +118,6 @@ export function persistAuthSession(
     if (refresh) writeCookie("refresh_token", refresh, 7 * 24 * 60 * 60, undefined);
   }
 
-  const prevAccess = localStorage.getItem("access_token");
   if (prevAccess !== access) bumpSsoEpoch();
 }
 
@@ -196,29 +197,27 @@ export function attachSharedSsoSync(onSync: () => void) {
   let lastEpoch = getSsoEpoch();
   let timer: ReturnType<typeof setTimeout> | null = null;
 
-  const scheduleSync = () => {
+  const checkEpoch = () => {
+    const epoch = getSsoEpoch();
+    if (!epoch || epoch === lastEpoch) return;
+    lastEpoch = epoch;
+    onSync();
+  };
+
+  const scheduleEpochCheck = () => {
     if (timer) clearTimeout(timer);
-    timer = setTimeout(() => {
-      const epoch = getSsoEpoch();
-      const epochChanged = Boolean(epoch && epoch !== lastEpoch);
-      if (epochChanged) lastEpoch = epoch;
-      if (epochChanged || document.visibilityState === "visible") {
-        onSync();
-      }
-    }, 250);
+    timer = setTimeout(checkEpoch, 300);
   };
 
   const onVisible = () => {
-    if (document.visibilityState === "visible") scheduleSync();
+    if (document.visibilityState === "visible") scheduleEpochCheck();
   };
 
   window.addEventListener("visibilitychange", onVisible);
-  window.addEventListener("focus", scheduleSync);
 
   return () => {
     if (timer) clearTimeout(timer);
     window.removeEventListener("visibilitychange", onVisible);
-    window.removeEventListener("focus", scheduleSync);
   };
 }
 

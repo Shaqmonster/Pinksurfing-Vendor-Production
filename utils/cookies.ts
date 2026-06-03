@@ -76,6 +76,7 @@ function writeEpochCookie(name: string, value: string, maxAgeSeconds: number, do
 
 export function markSsoLoggedOut(): void {
   if (typeof window === "undefined") return;
+  if (isSsoLoggedOutGlobally()) return;
   const domain = getAuthCookieDomain();
   setCookie(SSO_LOGOUT_COOKIE, "1", 1 / 24);
   if (domain) setCookie(SSO_LOGOUT_COOKIE, "1", 1 / 24, domain);

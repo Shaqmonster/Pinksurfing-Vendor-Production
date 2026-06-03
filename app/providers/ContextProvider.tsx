@@ -7,6 +7,7 @@ import {
   isSsoLoggedOutGlobally,
   reconcileSharedSession,
 } from "@/utils/ssoSession";
+import { clearAuthStorage } from "@/utils/cookies";
 import { resolveVendorSession } from "@/api/account";
 
 const MyProvider = ({ children }: { children: React.ReactNode }) => {
@@ -57,7 +58,7 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       if (isSsoLoggedOutGlobally()) {
         if (loggedIn) {
-          localStorage.removeItem("vendor_id");
+          clearAuthStorage();
           setIsLoggedIn(false);
         }
         return;
