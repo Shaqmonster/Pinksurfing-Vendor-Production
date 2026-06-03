@@ -64,12 +64,24 @@ export function getAuthCookieDomain(): string | undefined {
 }
 
 const SSO_LOGOUT_COOKIE = "ps_sso_logged_out";
+const SSO_EPOCH_COOKIE = "ps_sso_epoch";
+
+function writeEpochCookie(name: string, value: string, maxAgeSeconds: number, domain?: string) {
+  if (typeof document === "undefined") return;
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  const encoded = encodeURIComponent(value || "");
+  const domainPart = domain ? `; domain=${domain}` : "";
+  document.cookie = `${name}=${encoded}; path=/${domainPart}; max-age=${maxAgeSeconds}; SameSite=Lax${secure}`;
+}
 
 export function markSsoLoggedOut(): void {
   if (typeof window === "undefined") return;
-  setCookie(SSO_LOGOUT_COOKIE, "1", 1 / 24);
   const domain = getAuthCookieDomain();
+  setCookie(SSO_LOGOUT_COOKIE, "1", 1 / 24);
   if (domain) setCookie(SSO_LOGOUT_COOKIE, "1", 1 / 24, domain);
+  const epoch = String(Date.now());
+  writeEpochCookie(SSO_EPOCH_COOKIE, epoch, 60 * 60, undefined);
+  if (domain) writeEpochCookie(SSO_EPOCH_COOKIE, epoch, 60 * 60, domain);
 }
 
 /** @deprecated */
