@@ -31,7 +31,14 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoggedIn(false);
       return false;
     }
-    if (session.isVendor && session.profile?.id) {
+    const vendorId = session.profile?.id ?? session.profile?.pk;
+    if (session.isVendor && vendorId) {
+      localStorage.setItem("vendor_id", String(vendorId));
+      setIsLoggedIn(true);
+      return true;
+    }
+
+    if (getCookie("access_token") && localStorage.getItem("vendor_id")) {
       setIsLoggedIn(true);
       return true;
     }

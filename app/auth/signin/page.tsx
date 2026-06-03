@@ -87,18 +87,16 @@ const SignIn: React.FC = () => {
         setAuthpage("signup");
       } else if (data && "token" in data) {
         const { token, refresh } = data;
+        const vendorId = data.id ?? data.pk;
         if (typeof window !== "undefined") {
-          persistAuthTokens(token, refresh, data.id);
+          persistAuthTokens(token, refresh, vendorId);
           localStorage.setItem("store", JSON.stringify(data));
           setVendor(data);
         }
-        const ok = await refreshAuth();
-        if (ok) {
-          handleSuccess("Welcome back! Login successful");
-          router.push("/dashboard");
-        } else {
-          handleError("Signed in to auth, but vendor session could not start. Try again.");
-        }
+        setIsLoggedIn(true);
+        handleSuccess("Welcome back! Login successful");
+        router.push("/dashboard");
+        void refreshAuth();
       } else if (data?.error) {
         handleError(data.message || data.detail || "Sign in failed");
       } else {

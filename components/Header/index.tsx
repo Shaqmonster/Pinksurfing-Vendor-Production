@@ -34,46 +34,39 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
     if (typeof window === "undefined") return;
 
     const access = getCookie("access_token");
-    const isPublicRoute =
-      pathname === "/" || pathname.startsWith("/auth");
+    const isPublicRoute = pathname === "/" || pathname.startsWith("/auth");
 
     if (isPublicRoute) {
+      setLogged(Boolean(props.loggedIn && access));
+      return;
+    }
+
+    if (!access && !props.loggedIn) {
+      router.replace("/");
       setLogged(false);
       return;
     }
 
-    if (!access) {
-      if (!props.loggedIn) {
-        router.push("/");
-      }
-      setLogged(false);
-      return;
-    }
-
-    let vendor_id = localStorage.getItem("vendor_id");
-
-    const syncSession = async () => {
-      if (!vendor_id) {
-        const profileRes = await getProfile(access);
-        if (profileRes.ok && profileRes.data?.id) {
-          vendor_id = String(profileRes.data.id);
-          localStorage.setItem("vendor_id", vendor_id);
-        }
-      }
-
-      if (!vendor_id) {
-        if (!props.loggedIn) {
-          router.push("/");
-        }
-        setLogged(false);
-        return;
-      }
-
+    if (access || props.loggedIn) {
       setLogged(true);
-      setTokens({ access, vendor_id, refresh: getCookie("refresh_token") });
-    };
+      setTokens({
+        access: access || localStorage.getItem("access"),
+        vendor_id: localStorage.getItem("vendor_id"),
+        refresh: getCookie("refresh_token"),
+      });
 
-    void syncSession();
+      void (async () => {
+        if (localStorage.getItem("vendor_id") || !access) return;
+        const profileRes = await getProfile(access);
+        const vid = profileRes.data?.id ?? profileRes.data?.pk;
+        if (profileRes.ok && vid) {
+          localStorage.setItem("vendor_id", String(vid));
+          setTokens((prev) => ({ ...prev, vendor_id: String(vid) }));
+        }
+      })();
+    } else {
+      setLogged(false);
+    }
   }, [pathname, router, props.loggedIn]);
 
   useMemo(() => {

@@ -221,32 +221,45 @@ export async function signIn(payload: { email: string; password: string }) {
     }
 
     const { access, refresh } = response.data;
-    const session = await resolveVendorSession(access);
+    const headers = { Authorization: `Bearer ${access}` };
 
-    if (session.unauthorized) {
-      const detail =
-        session.error?.detail ||
-        "Marketplace API rejected your login token. Ensure ecommerce API JWT_SIGNING_KEY matches auth.";
-      return { error: true, message: detail, detail };
+    try {
+      const checkVendorResponse = await axios.post(
+        `${BASE_URL}/vendor/check-vendor/`,
+        {},
+        { headers }
+      );
+      if (checkVendorResponse.status === 409) {
+        return { status: 409, message: "Vendor needs to register", token: access };
+      }
+    } catch (checkVendorError: any) {
+      if (checkVendorError?.response?.status === 409) {
+        return {
+          status: 409,
+          message: "Vendor needs to register",
+          token: access,
+        };
+      }
+      if (checkVendorError?.response?.status === 401 || checkVendorError?.response?.status === 403) {
+        const detail = checkVendorError?.response?.data?.detail || "Marketplace API rejected your login token.";
+        return { error: true, message: detail, detail };
+      }
+      throw checkVendorError;
     }
 
-    if (!session.isVendor) {
-      return {
-        status: 409,
-        message: "Vendor needs to register",
-        token: access,
-      };
-    }
+    const vendorProfile = await axios.get(`${BASE_URL}/vendor/profile/`, { headers });
+    const profile = vendorProfile.data;
+    const vendorId = profile?.id ?? profile?.pk;
 
-    if (!session.profile?.id) {
+    if (!vendorId) {
       return {
         error: true,
         message: "Vendor profile could not be loaded. Please try again or contact support.",
       };
     }
 
-    persistAuthTokens(access, refresh, session.profile.id);
-    return { ...session.profile, token: access, refresh };
+    persistAuthTokens(access, refresh, vendorId);
+    return { ...profile, id: vendorId, token: access, refresh };
   } catch (err: any) {
     console.error("signIn failed:", err?.response?.data || err);
     if (err?.response?.status === 401) {
@@ -297,30 +310,23 @@ export async function resolveVendorSession(token: string | null) {
   }
 
   const bearer = token.replaceAll('"', "");
+  const headers = { Authorization: `Bearer ${bearer}` };
 
   try {
-    const vendorCheck = await axios.get(`${BASE_URL}/vendor/is-vendor/`, {
-      headers: { Authorization: `Bearer ${bearer}` },
-    });
+    const profileRes = await axios.get(`${BASE_URL}/vendor/profile/`, { headers });
+    const profile = profileRes.data;
+    const vendorId = profile?.id ?? profile?.pk;
 
-    if (!vendorCheck.data?.is_vendor) {
-      return { ok: true, isVendor: false, unauthorized: false, profile: null };
-    }
-
-    const profileRes = await axios.get(`${BASE_URL}/vendor/profile/`, {
-      headers: { Authorization: `Bearer ${bearer}` },
-    });
-
-    if (profileRes.data?.id && typeof window !== "undefined") {
-      localStorage.setItem("vendor_id", String(profileRes.data.id));
+    if (vendorId && typeof window !== "undefined") {
+      localStorage.setItem("vendor_id", String(vendorId));
       localStorage.setItem("access", bearer);
     }
 
     return {
       ok: true,
-      isVendor: true,
+      isVendor: Boolean(vendorId),
       unauthorized: false,
-      profile: profileRes.data,
+      profile: vendorId ? { ...profile, id: vendorId } : null,
     };
   } catch (error: any) {
     const status = error?.response?.status;
@@ -333,15 +339,31 @@ export async function resolveVendorSession(token: string | null) {
         error: error?.response?.data,
       };
     }
-    if (status === 404 || status === 409) {
-      return {
-        ok: true,
-        isVendor: false,
-        unauthorized: false,
-        profile: null,
-        error: error?.response?.data,
-      };
+    if (status === 404) {
+      return { ok: true, isVendor: false, unauthorized: false, profile: null };
     }
+
+    try {
+      const check = await axios.post(`${BASE_URL}/vendor/check-vendor/`, {}, { headers });
+      if (check.status === 200) {
+        const profileRes = await axios.get(`${BASE_URL}/vendor/profile/`, { headers });
+        const profile = profileRes.data;
+        const vendorId = profile?.id ?? profile?.pk;
+        if (vendorId && typeof window !== "undefined") {
+          localStorage.setItem("vendor_id", String(vendorId));
+          localStorage.setItem("access", bearer);
+        }
+        return {
+          ok: true,
+          isVendor: Boolean(vendorId),
+          unauthorized: false,
+          profile: vendorId ? { ...profile, id: vendorId } : null,
+        };
+      }
+    } catch {
+      /* fall through */
+    }
+
     console.error("Error resolving vendor session:", error);
     return {
       ok: false,
