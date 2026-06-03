@@ -208,7 +208,7 @@ export async function sendOtp(email: any) {
   }
 }
 
-export async function signIn(payload: any) {
+export async function signIn(payload: { email: string; password: string }) {
   try {
     const response = await axios.post(
       `https://auth.pinksurfing.com/api/token/`,
@@ -216,56 +216,43 @@ export async function signIn(payload: any) {
       { withCredentials: true }
     );
 
-    if (response.status < 205 && response.data.access) {
-      const { access, refresh } = response.data;
-
-      try {
-        const checkVendorResponse = await axios.post(
-          `${BASE_URL}/vendor/check-vendor/`,
-          null,
-          {
-            headers: {
-              Authorization: `Bearer ${access}`,
-            },
-          }
-        );
-
-        if (checkVendorResponse.status === 409) {
-          return {
-            status: 409,
-            message: "Vendor needs to register",
-          };
-        }
-      } catch (checkVendorError) {
-        if (checkVendorError?.response?.status === 409) {
-          return {
-            status: 409,
-            message: "Vendor needs to register",
-            token: access,
-          };
-        } else {
-          throw checkVendorError;
-        }
-      }
-
-      const vendorProfile = await axios.get(`${BASE_URL}/vendor/profile/`, {
-        headers: {
-          Authorization: `Bearer ${access}`,
-        },
-      });
-
-      const profile = vendorProfile.data;
-      if (typeof window !== "undefined" && profile?.id) {
-        persistAuthTokens(access, refresh, profile.id);
-      }
-
-      return { ...profile, token: access, refresh };
-    } else {
+    if (response.status >= 205 || !response.data?.access) {
       return response.data;
     }
-  } catch (err) {
-    console.error(err);
-    return err.response ? err.response.data : { error: "An error occurred" };
+
+    const { access, refresh } = response.data;
+    const session = await resolveVendorSession(access);
+
+    if (session.unauthorized) {
+      const detail =
+        session.error?.detail ||
+        "Marketplace API rejected your login token. Ensure ecommerce API JWT_SIGNING_KEY matches auth.";
+      return { error: true, message: detail, detail };
+    }
+
+    if (!session.isVendor) {
+      return {
+        status: 409,
+        message: "Vendor needs to register",
+        token: access,
+      };
+    }
+
+    if (!session.profile?.id) {
+      return {
+        error: true,
+        message: "Vendor profile could not be loaded. Please try again or contact support.",
+      };
+    }
+
+    persistAuthTokens(access, refresh, session.profile.id);
+    return { ...session.profile, token: access, refresh };
+  } catch (err: any) {
+    console.error("signIn failed:", err?.response?.data || err);
+    if (err?.response?.status === 401) {
+      return { message: "Invalid email or password" };
+    }
+    return err?.response?.data ?? { error: "An error occurred" };
   }
 }
 

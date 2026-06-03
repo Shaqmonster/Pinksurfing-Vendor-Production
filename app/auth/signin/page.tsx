@@ -17,7 +17,7 @@ const SignIn: React.FC = () => {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { setIsLoggedIn, setVendor, setAuthpage } = useContext(MyContext);
+  const { setIsLoggedIn, setVendor, setAuthpage, refreshAuth } = useContext(MyContext);
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
@@ -91,16 +91,18 @@ const SignIn: React.FC = () => {
           persistAuthTokens(token, refresh, data.id);
           localStorage.setItem("store", JSON.stringify(data));
           setVendor(data);
-          setIsLoggedIn(true);
+        }
+        const ok = await refreshAuth();
+        if (ok) {
           handleSuccess("Welcome back! Login successful");
-        }
-        router.push("/dashboard");
-      } else {
-        if (data && "response" in data && data.response.status > 399) {
-          handleError("Invalid email or password");
+          router.push("/dashboard");
         } else {
-          handleError(data?.message || "Invalid email or password");
+          handleError("Signed in to auth, but vendor session could not start. Try again.");
         }
+      } else if (data?.error) {
+        handleError(data.message || data.detail || "Sign in failed");
+      } else {
+        handleError(data?.message || "Invalid email or password");
       }
     } else {
       !email ? setError("Email is required") : setError("Password is required");

@@ -1,26 +1,52 @@
 "use client";
-// MyProvider.tsx
-import { useState, Dispatch, SetStateAction, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MyContext } from "./context";
+import { getCookie } from "@/utils/cookies";
+import { resolveVendorSession } from "@/api/account";
 
-const MyProvider = ({
-  setLoggedIn,
-
-  children,
-}: {
-  setLoggedIn: (loggedIn: boolean) => void;
-
-  children: React.ReactNode;
-}) => {
+const MyProvider = ({ children }: { children: React.ReactNode }) => {
   const [loggedIn, setIsLoggedIn] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const [authPage, setAuthpage] = useState("signin");
-  const [resetEmail, setResetEmail] = useState("")
-  const [vendor, setVendor] = useState();
+  const [resetEmail, setResetEmail] = useState("");
+  const [vendor, setVendor] = useState<any>();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  const refreshAuth = useCallback(async () => {
+    const access = getCookie("access_token");
+    const cookieRefresh = getCookie("refresh_token");
+
+    if (!access) {
+      localStorage.clear();
+      setIsLoggedIn(false);
+      return false;
+    }
+
+    localStorage.setItem("access", access);
+    if (cookieRefresh) localStorage.setItem("refresh", cookieRefresh);
+
+    const session = await resolveVendorSession(access);
+    if (session.unauthorized) {
+      localStorage.clear();
+      setIsLoggedIn(false);
+      return false;
+    }
+    if (session.isVendor && session.profile?.id) {
+      setIsLoggedIn(true);
+      return true;
+    }
+
+    localStorage.removeItem("vendor_id");
+    setIsLoggedIn(false);
+    return false;
+  }, []);
+
   useEffect(() => {
-    setLoggedIn(loggedIn);
-  }, [loggedIn, setLoggedIn]);
+    void (async () => {
+      await refreshAuth();
+      setAuthReady(true);
+    })();
+  }, [refreshAuth]);
 
   return (
     <MyContext.Provider
@@ -35,6 +61,8 @@ const MyProvider = ({
         setVendor,
         sidebarOpen,
         setSidebarOpen,
+        refreshAuth,
+        authReady,
       }}
     >
       {children}

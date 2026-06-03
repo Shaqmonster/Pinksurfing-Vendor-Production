@@ -12,6 +12,8 @@ interface IMyContext {
   setVendor: Dispatch<SetStateAction<any>>;
   sidebarOpen: boolean;
   setSidebarOpen: Dispatch<SetStateAction<boolean>>;
+  refreshAuth: () => Promise<boolean>;
+  authReady: boolean;
 }
 
 export const MyContext = createContext<IMyContext>({
@@ -25,4 +27,6 @@ export const MyContext = createContext<IMyContext>({
   setVendor: () => {},
   sidebarOpen: false,
   setSidebarOpen: () => {},
+  refreshAuth: async () => false,
+  authReady: false,
 });

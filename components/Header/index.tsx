@@ -43,7 +43,9 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
     }
 
     if (!access) {
-      router.push("/");
+      if (!props.loggedIn) {
+        router.push("/");
+      }
       setLogged(false);
       return;
     }
@@ -60,7 +62,9 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
       }
 
       if (!vendor_id) {
-        router.push("/");
+        if (!props.loggedIn) {
+          router.push("/");
+        }
         setLogged(false);
         return;
       }
@@ -70,7 +74,7 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
     };
 
     void syncSession();
-  }, [pathname, router]);
+  }, [pathname, router, props.loggedIn]);
 
   useMemo(() => {
     if (!tokens.access) return;
@@ -82,6 +86,7 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
       }
 
       if (profileRes.status === 401 || profileRes.status === 403) {
+        if (props.loggedIn) return;
         const refresh = getCookie("refresh_token");
         if (!refresh) {
           setLogged(false);
