@@ -8,6 +8,7 @@ import {
   setCookie,
   getAuthCookieDomain,
   clearAuthStorage,
+  isSsoLoggedOutGlobally,
 } from "@/utils/cookies";
 import { resolveSharedSession, resolveVendorSession } from "@/api/account";
 
@@ -20,6 +21,12 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const refreshAuth = useCallback(async () => {
+    if (isSsoLoggedOutGlobally()) {
+      clearAuthStorage();
+      setIsLoggedIn(false);
+      return false;
+    }
+
     const sharedSession = await resolveSharedSession();
     let access = sharedSession?.access ?? null;
     let refresh = sharedSession?.refresh ?? getRefreshToken();
@@ -71,6 +78,14 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
       await refreshAuth();
       setAuthReady(true);
     })();
+  }, [refreshAuth]);
+
+  useEffect(() => {
+    const syncOnFocus = () => {
+      void refreshAuth();
+    };
+    window.addEventListener("focus", syncOnFocus);
+    return () => window.removeEventListener("focus", syncOnFocus);
   }, [refreshAuth]);
 
   return (

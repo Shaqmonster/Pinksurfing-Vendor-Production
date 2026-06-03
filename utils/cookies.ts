@@ -53,13 +53,31 @@ export function getAuthCookieDomain(): string | undefined {
 }
 
 const LOGOUT_GUARD_KEY = "ps_sso_logout_at";
+const SSO_LOGOUT_COOKIE = "ps_sso_logged_out";
 
-export function markVendorLoggedOut(): void {
+export function markSsoLoggedOut(): void {
   if (typeof window === "undefined") return;
   sessionStorage.setItem(LOGOUT_GUARD_KEY, String(Date.now()));
+  setCookie(SSO_LOGOUT_COOKIE, "1", 1 / 24); // ~1 hour
+  const domain = getAuthCookieDomain();
+  if (domain) setCookie(SSO_LOGOUT_COOKIE, "1", 1 / 24, domain);
 }
 
-/** Skip SSO cookie bootstrap briefly after explicit logout. */
+/** @deprecated */
+export const markVendorLoggedOut = markSsoLoggedOut;
+
+export function clearSsoLoggedOutFlag(): void {
+  if (typeof window === "undefined") return;
+  deleteCookie(SSO_LOGOUT_COOKIE);
+  const domain = getAuthCookieDomain();
+  if (domain) deleteCookie(SSO_LOGOUT_COOKIE, domain);
+}
+
+export function isSsoLoggedOutGlobally(): boolean {
+  return getCookie(SSO_LOGOUT_COOKIE) === "1";
+}
+
+/** Skip SSO cookie bootstrap briefly after explicit logout (same tab). */
 export function shouldSkipSsoBootstrap(): boolean {
   if (typeof window === "undefined") return false;
   const raw = sessionStorage.getItem(LOGOUT_GUARD_KEY);
@@ -75,6 +93,7 @@ export function shouldSkipSsoBootstrap(): boolean {
 export function clearVendorLogoutGuard(): void {
   if (typeof window === "undefined") return;
   sessionStorage.removeItem(LOGOUT_GUARD_KEY);
+  clearSsoLoggedOutFlag();
 }
 
 export function clearAuthStorage(): void {

@@ -10,6 +10,8 @@ import {
   markVendorLoggedOut,
   clearVendorLogoutGuard,
   shouldSkipSsoBootstrap,
+  isSsoLoggedOutGlobally,
+  clearSsoLoggedOutFlag,
 } from "@/utils/cookies";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -173,11 +175,16 @@ export async function bootstrapAccessFromSsoCookies(): Promise<{
   }
 }
 
-/** Resolve session; bootstrap only when this origin has no readable access token. */
+/** Resolve session: shared cookies → SSO bootstrap → local cache. */
 export async function resolveSharedSession(): Promise<{
   access: string;
   refresh?: string;
 } | null> {
+  if (isSsoLoggedOutGlobally()) {
+    clearAuthStorage();
+    return null;
+  }
+
   if (shouldSkipSsoBootstrap()) return null;
 
   const cookieAccess = getCookie("access_token");
@@ -188,6 +195,13 @@ export async function resolveSharedSession(): Promise<{
     };
   }
 
+  const boot = await bootstrapAccessFromSsoCookies();
+  if (boot?.access) {
+    clearSsoLoggedOutFlag();
+    persistAuthTokens(boot.access, boot.refresh);
+    return boot;
+  }
+
   const stored =
     localStorage.getItem("access") ?? localStorage.getItem("access_token");
   if (stored) {
@@ -195,12 +209,6 @@ export async function resolveSharedSession(): Promise<{
       access: stored.replaceAll('"', ""),
       refresh: getRefreshToken() ?? undefined,
     };
-  }
-
-  const boot = await bootstrapAccessFromSsoCookies();
-  if (boot?.access) {
-    persistAuthTokens(boot.access, boot.refresh);
-    return boot;
   }
 
   return null;
