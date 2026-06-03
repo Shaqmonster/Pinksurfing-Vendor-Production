@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { toast } from "react-toastify";
+import { setCookie } from "@/utils/cookies";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -253,7 +254,12 @@ export async function signIn(payload: any) {
         },
       });
 
-      return { ...vendorProfile.data, token: access, refresh };
+      const profile = vendorProfile.data;
+      if (typeof window !== "undefined" && profile?.id) {
+        persistAuthTokens(access, refresh, profile.id);
+      }
+
+      return { ...profile, token: access, refresh };
     } else {
       return response.data;
     }
@@ -264,32 +270,120 @@ export async function signIn(payload: any) {
 }
 
 export async function getProfile(token: string | null) {
-  let res = await axios
-    .get(`${BASE_URL}/vendor/profile/`, {
-      headers: {
-        Authorization: `Bearer ${token?.replaceAll('"', "")}`,
-      },
-    })
-    .then((response) => response)
-    .catch((error) => error);
-  return res;
-}
-
-export async function isVendor(token: string) {
+  if (!token) {
+    return { ok: false as const, data: null, status: 0 };
+  }
   try {
-    const response = await axios.get(`${BASE_URL}/vendor/is-vendor/`, {
+    const response = await axios.get(`${BASE_URL}/vendor/profile/`, {
       headers: {
         Authorization: `Bearer ${token.replaceAll('"', "")}`,
       },
     });
-    return { success: response.data.is_vendor };
+    return { ok: true as const, data: response.data, status: response.status };
   } catch (error: any) {
-    // If 404 or 403, user is not a vendor
-    if (error?.response?.status === 404 || error?.response?.status === 403 || error?.response?.status === 409) {
-      return { success: true, isVendor: false, error: error.response?.data };
-    }
-    // Other errors
-    console.error("Error checking vendor status:", error);
-    return { success: false, isVendor: false, error };
+    return {
+      ok: false as const,
+      data: null,
+      status: error?.response?.status ?? 0,
+      error: error?.response?.data,
+    };
   }
+}
+
+/** @deprecated Use resolveVendorSession — kept for callers expecting Axios-shaped errors */
+export async function isVendor(token: string) {
+  const session = await resolveVendorSession(token);
+  return {
+    success: session.isVendor,
+    isVendor: session.isVendor,
+    unauthorized: session.unauthorized,
+    error: session.error,
+  };
+}
+
+/**
+ * Validates SSO token, confirms vendor record, loads profile, persists vendor_id.
+ */
+export async function resolveVendorSession(token: string | null) {
+  if (!token) {
+    return { ok: false, isVendor: false, unauthorized: false, profile: null as any };
+  }
+
+  const bearer = token.replaceAll('"', "");
+
+  try {
+    const vendorCheck = await axios.get(`${BASE_URL}/vendor/is-vendor/`, {
+      headers: { Authorization: `Bearer ${bearer}` },
+    });
+
+    if (!vendorCheck.data?.is_vendor) {
+      return { ok: true, isVendor: false, unauthorized: false, profile: null };
+    }
+
+    const profileRes = await axios.get(`${BASE_URL}/vendor/profile/`, {
+      headers: { Authorization: `Bearer ${bearer}` },
+    });
+
+    if (profileRes.data?.id && typeof window !== "undefined") {
+      localStorage.setItem("vendor_id", String(profileRes.data.id));
+      localStorage.setItem("access", bearer);
+    }
+
+    return {
+      ok: true,
+      isVendor: true,
+      unauthorized: false,
+      profile: profileRes.data,
+    };
+  } catch (error: any) {
+    const status = error?.response?.status;
+    if (status === 401 || status === 403) {
+      return {
+        ok: false,
+        isVendor: false,
+        unauthorized: true,
+        profile: null,
+        error: error?.response?.data,
+      };
+    }
+    if (status === 404 || status === 409) {
+      return {
+        ok: true,
+        isVendor: false,
+        unauthorized: false,
+        profile: null,
+        error: error?.response?.data,
+      };
+    }
+    console.error("Error resolving vendor session:", error);
+    return {
+      ok: false,
+      isVendor: false,
+      unauthorized: false,
+      profile: null,
+      error,
+    };
+  }
+}
+
+export function persistAuthTokens(
+  access: string,
+  refresh?: string,
+  vendorId?: string | number | null,
+  userId?: string | number | null
+) {
+  if (typeof window === "undefined") return;
+
+  localStorage.setItem("access", access);
+  if (refresh) localStorage.setItem("refresh", refresh);
+  if (vendorId != null) localStorage.setItem("vendor_id", String(vendorId));
+
+  const domain = window.location.hostname.includes("localhost")
+    ? undefined
+    : ".pinksurfing.com";
+
+  setCookie("access_token", access, 7, domain);
+  if (refresh) setCookie("refresh_token", refresh, 7, domain);
+  const cookieUserId = userId ?? vendorId;
+  if (cookieUserId != null) setCookie("user_id", String(cookieUserId), 7, domain);
 }

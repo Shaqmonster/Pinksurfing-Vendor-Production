@@ -3,13 +3,12 @@ import React, { useState, useContext } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { signIn } from "@/api/account";
+import { persistAuthTokens, signIn } from "@/api/account";
 import { useRouter } from "next/navigation";
 import { MyContext } from "@/app/providers/context";
 import Loader from "@/components/common/Loader";
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight } from "react-icons/fi";
 import { handleError, handleSuccess } from "@/utils/toast";
-import { setCookie } from "@/utils/cookies";
 
 const SignIn: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -87,27 +86,13 @@ const SignIn: React.FC = () => {
         localStorage.setItem("customer", JSON.stringify(parseJwt(data.token)));
         setAuthpage("signup");
       } else if (data && "token" in data) {
-        let { token, refresh } = data;
+        const { token, refresh } = data;
         if (typeof window !== "undefined") {
-          localStorage.setItem("access", token);
-          localStorage.setItem("refresh", refresh);
-          localStorage.setItem("vendor_id", data.id);
-
-          const domain = window.location.hostname.includes("localhost")
-            ? undefined
-            : ".pinksurfing.com";
-
-          setCookie("access_token", token, 7, domain);
-          setCookie("refresh_token", refresh, 7, domain);
-          setCookie("user_id", data.id, 7, domain);
-
-          setIsLoggedIn(true);
-          handleSuccess("Welcome back! Login successful");
-        }
-
-        if (data) {
+          persistAuthTokens(token, refresh, data.id);
           localStorage.setItem("store", JSON.stringify(data));
           setVendor(data);
+          setIsLoggedIn(true);
+          handleSuccess("Welcome back! Login successful");
         }
         router.push("/dashboard");
       } else {

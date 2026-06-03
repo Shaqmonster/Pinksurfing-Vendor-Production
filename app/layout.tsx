@@ -14,9 +14,8 @@ import SignIn from "./auth/signin/page";
 import { redirect, usePathname } from "next/navigation";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { getTopSellingProducts } from "@/api/products";
 import { getCookie } from "@/utils/cookies";
-import { getProfile, isVendor } from "@/api/account";
+import { resolveVendorSession } from "@/api/account";
 
 export default function RootLayout({
   children
@@ -34,17 +33,8 @@ export default function RootLayout({
   }, []);
   
   const checkLoginState = async () => {
-    console.log("Checking login state...");
-    let access = getCookie("access_token");
+    const access = getCookie("access_token");
     const cookieRefresh = getCookie("refresh_token");
-
-    if (access) {
-      localStorage.setItem("access", access);
-      if (cookieRefresh) {
-        localStorage.setItem("refresh", cookieRefresh);
-      }
-      console.log("SSO: Tokens found in cookies, stored in localStorage");
-    }
 
     if (!access) {
       localStorage.clear();
@@ -52,16 +42,24 @@ export default function RootLayout({
       return;
     }
 
-    const vendor_access = await isVendor(access);
-    if (access && vendor_access.success) {
-      const vendor = await getProfile(access);
-      localStorage.setItem("vendor_id", vendor.data.id);
-      console.log("Vendor profile:", vendor);
-      setLoggedIn(true);
-    } else {
+    localStorage.setItem("access", access);
+    if (cookieRefresh) {
+      localStorage.setItem("refresh", cookieRefresh);
+    }
+
+    const session = await resolveVendorSession(access);
+    if (session.unauthorized) {
       localStorage.clear();
       setLoggedIn(false);
+      return;
     }
+    if (session.isVendor && session.profile?.id) {
+      setLoggedIn(true);
+      return;
+    }
+
+    localStorage.removeItem("vendor_id");
+    setLoggedIn(false);
   };
   
   useEffect(() => {
@@ -89,19 +87,6 @@ export default function RootLayout({
       setSidebarOpen(true);
     }
   }, [setSidebarOpen]);
-
-  useMemo(() => {
-    if (typeof window !== "undefined") {
-      let token = getCookie("access_token");
-      if (!token) return;
-      (async () => {
-        const res = await getTopSellingProducts(token);
-        if (res.error) {
-          setLoggedIn(false);
-        }
-      })();
-    }
-  }, []);
 
   return (
     <html lang="en" suppressHydrationWarning>

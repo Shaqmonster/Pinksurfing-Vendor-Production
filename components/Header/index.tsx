@@ -31,76 +31,77 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
   });
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      let access = getCookie("access_token");
-      let vendor_id = localStorage.getItem("vendor_id");
-      if (
-        pathname !== "/" &&
-        ["inventory", "profile", "orders", "settings"].includes(pathname)
-      ) {
-        setLogged(true);
-      } else if (pathname === "/") {
-        setLogged(false);
+    if (typeof window === "undefined") return;
+
+    const access = getCookie("access_token");
+    const isPublicRoute =
+      pathname === "/" || pathname.startsWith("/auth");
+
+    if (isPublicRoute) {
+      setLogged(false);
+      return;
+    }
+
+    if (!access) {
+      router.push("/");
+      setLogged(false);
+      return;
+    }
+
+    let vendor_id = localStorage.getItem("vendor_id");
+
+    const syncSession = async () => {
+      if (!vendor_id) {
+        const profileRes = await getProfile(access);
+        if (profileRes.ok && profileRes.data?.id) {
+          vendor_id = String(profileRes.data.id);
+          localStorage.setItem("vendor_id", vendor_id);
+        }
       }
-      if (!access || !vendor_id) {
+
+      if (!vendor_id) {
         router.push("/");
         setLogged(false);
         return;
-      } else {
-        setLogged(true);
-        setTokens((token: any) => {
-          return { ...token, access, vendor_id };
-        });
       }
-    }
-  }, [pathname]);
+
+      setLogged(true);
+      setTokens({ access, vendor_id, refresh: getCookie("refresh_token") });
+    };
+
+    void syncSession();
+  }, [pathname, router]);
 
   useMemo(() => {
-    getProfile(tokens.access)
-      .then((data: any) => {
-        if (
-          data &&
-          "response" in data &&
-          data.response &&
-          data.response.status >= 400
-        ) {
-          try {
-            if (typeof window !== "undefined") {
-              let refresh = getCookie("refresh_token");
-              if (!refresh) {
-                setLogged(false);
-                router.push("/");
-                return null;
-              }
-              refreshToken(String(tokens.access), refresh).then((token) => {
-                localStorage.setItem("access", token?.access);
-                setTokens((_token) => {
-                  return {
-                    ..._token,
-                    access: token.access,
-                  };
-                });
-                setLogged(true);
-              });
-            }
-          } catch (e) {
-            if (typeof window !== "undefined") {
-              setLogged(false);
-              router.push("/");
-            }
-          }
+    if (!tokens.access) return;
+
+    getProfile(tokens.access).then(async (profileRes) => {
+      if (profileRes.ok && profileRes.data) {
+        setProfile(profileRes.data);
+        return;
+      }
+
+      if (profileRes.status === 401 || profileRes.status === 403) {
+        const refresh = getCookie("refresh_token");
+        if (!refresh) {
+          setLogged(false);
+          router.push("/");
+          return;
         }
-        if (data && "data" in data) {
-          let Profile = data.data;
-          if (typeof Profile == "object") {
-            setProfile(Profile);
+        try {
+          const token = await refreshToken(String(tokens.access), refresh);
+          if (token?.access) {
+            localStorage.setItem("access", token.access);
+            setTokens((prev) => ({ ...prev, access: token.access }));
+            setLogged(true);
           }
+        } catch {
+          setLogged(false);
+          router.push("/");
         }
-      })
-      .catch((error) => {
-        console.error("Error fetching profile:", error);
-      });
-  }, [tokens.access, tokens.vendor_id]);
+      }
+    });
+  }, [tokens.access, tokens.vendor_id, router]);
 
   // Get page title based on current route
   const getPageTitle = () => {
