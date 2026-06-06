@@ -9,7 +9,6 @@ import {
   getVendorProfile,
 } from "@/api/products";
 import { Product } from "@/types/product";
-import { redirect } from "next/navigation";
 import { deleteProduct } from "@/api/products";
 import React from "react";
 import Loader from "../common/Loader";
@@ -25,7 +24,7 @@ import {
 } from "react-icons/fi";
 import ConfirmationModal from "../Modals/ConfirmDelete";
 import { toast } from "react-toastify";
-import { getCookie } from "@/utils/cookies";
+import { getAccessToken } from "@/utils/cookies";
 import {
   PendingListing,
   getPendingListings,
@@ -57,11 +56,11 @@ const ProductsTable = (props: { Products?: Product[] }) => {
 
   const handleDelete = async (productId: string) => {
     if (typeof window !== "undefined") {
-      const token: string | null = getCookie("access_token");
+      const token = getAccessToken();
       const vendor_id: string | null = localStorage.getItem("vendor_id");
 
       if (!token || !vendor_id) {
-        redirect("/");
+        toast.error("Session expired. Please sign in again.");
         return;
       }
 
@@ -119,10 +118,11 @@ const ProductsTable = (props: { Products?: Product[] }) => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const token: string | null = getCookie("access_token");
+      const token = getAccessToken();
 
       if (!token) {
-        redirect("/");
+        toast.error("Session expired. Please sign in again.");
+        setLoading(false);
         return;
       }
 
@@ -183,7 +183,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
   useEffect(() => {
     if (pendingListings.length === 0) return;
     let cancelled = false;
-    const token: string | null = getCookie("access_token");
+    const token = getAccessToken();
     const storeRaw = typeof window !== "undefined" ? localStorage.getItem("store") : null;
     if (!token || !storeRaw) return;
     let intervalId: any = null;
@@ -258,7 +258,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
   );
 
   const handlePayListingFee = async (listing: PendingListing) => {
-    const token = getCookie("access_token");
+    const token = getAccessToken();
     if (!token) {
       toast.error("Authentication error. Please sign in again.");
       return;
@@ -283,7 +283,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
   };
 
   const handlePayForProduct = async (product: any) => {
-    const token = getCookie("access_token");
+    const token = getAccessToken();
     if (!token) {
       toast.error("Authentication error. Please sign in again.");
       return;
