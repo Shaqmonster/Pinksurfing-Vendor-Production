@@ -6,6 +6,7 @@ import {
   getCategories,
   getProducts,
   getSubcategories,
+  getVendorProfile,
 } from "@/api/products";
 import { Product } from "@/types/product";
 import { redirect } from "next/navigation";
@@ -119,25 +120,63 @@ const ProductsTable = (props: { Products?: Product[] }) => {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const token: string | null = getCookie("access_token");
-      const store: string | null = localStorage.getItem("store");
 
-      if (store) {
-        try {
-          const storeObject = JSON.parse(store);
-          const store_slug = storeObject.slug;
-          if (token && store_slug) {
-            setLoading(true);
-            getProducts(token, store_slug).then((data) => {
-              setProducts(data.data?.Products || []);
-              setLoading(false);
-            });
-          }
-        } catch (e) {
-          console.error("Error parsing store data", e);
-        }
+      if (!token) {
+        redirect("/");
+        return;
       }
+
+      const loadInventory = async () => {
+        setLoading(true);
+        try {
+          let store_slug: string | null = null;
+          const storeRaw = localStorage.getItem("store");
+          if (storeRaw) {
+            try {
+              store_slug = JSON.parse(storeRaw)?.slug ?? null;
+            } catch (e) {
+              console.error("Error parsing store data", e);
+            }
+          }
+
+          if (!store_slug) {
+            const profile = await getVendorProfile(token);
+            if (profile.data?.slug) {
+              store_slug = profile.data.slug;
+              localStorage.setItem("store", JSON.stringify(profile.data));
+            }
+          }
+
+          if (!store_slug) {
+            toast.error("Could not load your store profile. Please sign in again.");
+            setProducts([]);
+            return;
+          }
+
+          const response: any = await getProducts(token, store_slug);
+          if (response?.status && response.status >= 400) {
+            toast.error(
+              response?.data?.detail ||
+                response?.data?.error ||
+                "Unable to load your listings."
+            );
+            setProducts([]);
+            return;
+          }
+
+          setProducts(response.data?.Products || []);
+        } catch (err) {
+          console.error("Error loading vendor products", err);
+          toast.error("Unable to load your listings.");
+          setProducts([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      loadInventory();
     }
-  }, [loading === false && products.length === 0]); // Dependency on initial load or empty state
+  }, []);
 
   // Poll for product state changes while there are pending listings so the UI
   // can detect activation and remove Pay buttons automatically.

@@ -335,15 +335,23 @@ export async function getProducts(
   token: string | null,
   store_slug: string | null
 ) {
-  let res = await axios
-    .get(`${BASE_URL}/product/vendor-products/${store_slug}/`, {
-      headers: {
-        Authorization: `Bearer ${token?.replaceAll('"', "")}`,
-      },
-    })
-    .then((response) => response)
-    .catch((error) => error);
-  return res;
+  if (!token) {
+    return { error: true, status: 401, data: null };
+  }
+
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/product/vendor-products/${store_slug}/`,
+      {
+        headers: {
+          Authorization: `Bearer ${token.replaceAll('"', "")}`,
+        },
+      }
+    );
+    return response;
+  } catch (error: any) {
+    return error?.response ?? { error: true, status: error?.response?.status ?? 0, data: null };
+  }
 }
 
 export async function getSingleProduct(
