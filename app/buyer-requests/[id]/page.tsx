@@ -38,6 +38,7 @@ import {
   deleteBid,
 } from "@/api/buyerRequests";
 import { handleError, handleSuccess } from "@/utils/toast";
+import { getAccessToken } from "@/utils/cookies";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -1458,8 +1459,11 @@ export default function RequestDetailPage() {
   const router = useRouter();
   const requestId = params?.id as string;
 
-  const token =
-    typeof window !== "undefined" ? (localStorage.getItem("access") ?? "") : "";
+  const [token, setToken] = useState("");
+
+  useEffect(() => {
+    setToken(getAccessToken() || "");
+  }, []);
 
   // Data state
   const [request, setRequest] = useState<BuyerRequest | null>(null);

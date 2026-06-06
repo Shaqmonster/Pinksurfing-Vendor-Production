@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { getOpenRequests } from "@/api/buyerRequests";
 import { handleError } from "@/utils/toast";
+import { resolveVendorApiToken } from "@/utils/vendorAuth";
 
 interface BuyerRequest {
   id: string;
@@ -57,7 +58,7 @@ export default function BuyerRequestsPage() {
   const [sortBy, setSortBy] = useState("newest");
 
   const fetchRequests = async () => {
-    const token = localStorage.getItem("access");
+    const token = await resolveVendorApiToken();
     if (!token) return;
     try {
       setLoading(true);

@@ -14,7 +14,8 @@ import { Loader2 } from "@/components/common/Loader";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { handleError } from "@/utils/toast";
-import { getCookie } from "@/utils/cookies";
+import { getAccessToken } from "@/utils/cookies";
+import { resolveVendorApiToken } from "@/utils/vendorAuth";
 import {
   SHORT_DESCRIPTION_MAX_PLAIN,
   truncateUnicodePlain,
@@ -657,7 +658,7 @@ const AddProducts = () => {
   // Submit handler
   const handleSave = async () => {
     if (typeof window !== "undefined") {
-      let token = getCookie("access_token");
+      let token = await resolveVendorApiToken();
       let vendor_id = localStorage.getItem("vendor_id");
 
       const { mrp, unit_price } = productData;
@@ -2027,7 +2028,7 @@ const AddProducts = () => {
             type="button"
             className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-gradient-pink text-white text-xs font-semibold"
             onClick={async () => {
-              const token = getCookie("access_token");
+              const token = await resolveVendorApiToken();
               if (!token || !createdListing?.productId) return;
               const pay = await prepareListingFeePayment(
                 token,

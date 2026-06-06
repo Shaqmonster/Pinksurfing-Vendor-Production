@@ -1,12 +1,10 @@
 import axios from "axios";
-import { getCookie } from "@/utils/cookies";
+import { vendorAuthHeaders } from "@/utils/vendorAuth";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_URL;
 
 function authHeader() {
-  const token = getCookie("access_token");
-  if (!token) return null;
-  return { Authorization: `Bearer ${token.replaceAll('"', "")}` };
+  return vendorAuthHeaders();
 }
 
 export async function getPropertyVisitCount(): Promise<number> {

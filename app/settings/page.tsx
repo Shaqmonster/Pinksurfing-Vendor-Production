@@ -25,6 +25,7 @@ import {
 import { FaStore } from "react-icons/fa";
 import Link from "next/link";
 import { Country, State, City } from "country-state-city";
+import { getAccessToken } from "@/utils/cookies";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface CountryOption { name: string; code: string; }
@@ -117,9 +118,7 @@ function SearchableSelect({
 }
 
 const Settings = () => {
-  const tokenFromLocalStorage =
-    typeof window !== "undefined" ? localStorage.getItem("access") : null;
-  const [token, setToken] = useState<string | null>(tokenFromLocalStorage);
+  const [token, setToken] = useState<string | null>(null);
 
   const [storeName, setStoreName] = useState("");
   const [contactPersonName, setContactPersonName] = useState("");
@@ -151,6 +150,10 @@ const Settings = () => {
 
   const [vendorId, setVendorId] = useState("");
   const [squareConnected, setSquareConnected] = useState(false);
+
+  useEffect(() => {
+    setToken(getAccessToken());
+  }, []);
 
   const fetchProfile = async () => {
     setLoading(true);

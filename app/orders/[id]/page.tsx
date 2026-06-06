@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
-import { getCookie } from "@/utils/cookies";
+import { resolveVendorApiToken } from "@/utils/vendorAuth";
 import { getSingleOrder } from "@/api/products";
 import { changeStatus } from "@/api/orders";
 import {
@@ -108,25 +108,29 @@ export default function OrderDetailPage() {
 
   useEffect(() => {
     if (!orderId) return;
-    const token = getCookie("access_token");
-    if (!token) {
-      router.push("/auth/signin");
-      return;
-    }
 
-    getSingleOrder(token, orderId)
-      .then((res: any) => {
-        if (!res.error && res.data?.["Order Details"]) {
-          setOrder(res.data["Order Details"]);
-        } else {
-          toast.error("Failed to load order details.");
-        }
-      })
-      .finally(() => setLoading(false));
-  }, [orderId, router]);
+    void (async () => {
+      const token = await resolveVendorApiToken();
+      if (!token) {
+        toast.error("Session expired. Please sign in again.");
+        setLoading(false);
+        return;
+      }
+
+      getSingleOrder(token, orderId)
+        .then((res: any) => {
+          if (!res.error && res.data?.["Order Details"]) {
+            setOrder(res.data["Order Details"]);
+          } else {
+            toast.error("Failed to load order details.");
+          }
+        })
+        .finally(() => setLoading(false));
+    })();
+  }, [orderId]);
 
   const handleStatusChange = async (itemId: string, newStatus: string) => {
-    const token = getCookie("access_token");
+    const token = await resolveVendorApiToken();
     if (!token) return;
 
     setUpdatingStatus(itemId);

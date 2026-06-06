@@ -6,10 +6,19 @@ import {
   persistAuthSession,
   signOut,
 } from "@/utils/ssoSession";
+import { resolveVendorApiToken, vendorAuthHeaders, getVendorId } from "@/utils/vendorAuth";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
-export { ensureSession, signOut, getAccessToken, persistAuthSession };
+export {
+  ensureSession,
+  signOut,
+  getAccessToken,
+  persistAuthSession,
+  resolveVendorApiToken,
+  vendorAuthHeaders,
+  getVendorId,
+};
 /** @deprecated Use ensureSession() */
 export const resolveSharedSession = ensureSession;
 

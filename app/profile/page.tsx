@@ -19,6 +19,7 @@ import {
 } from "react-icons/fa";
 import { FiMapPin, FiMail, FiPhone, FiGlobe, FiPackage, FiTrendingUp } from "react-icons/fi";
 import { getAccessToken } from "@/utils/cookies";
+import { resolveVendorApiToken } from "@/utils/vendorAuth";
 import Link from "next/link";
 
 const Profile = () => {
@@ -45,10 +46,10 @@ const Profile = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const access = getAccessToken();
-    const store: string | null = localStorage.getItem("store");
+    void (async () => {
+      const access = (await resolveVendorApiToken()) ?? getAccessToken();
+      if (!access) return;
 
-    if (access) {
       getProfile(access).then((res) => {
         if (!res.ok) {
           if (res.status === 401 || res.status === 403) {
@@ -59,29 +60,23 @@ const Profile = () => {
         }
         if (res.data) {
           setProfile(res.data);
+          const slug = res.data.slug;
+          if (slug) {
+            getProducts(access, slug).then((data) => {
+              if (data && "data" in data && "Products" in data.data) {
+                setProducts(data.data.Products.length);
+              }
+            });
+          }
         }
       });
-
-      if (store) {
-        try {
-          const storeObject = JSON.parse(store);
-          const store_name = storeObject.store_name;
-          getProducts(access, store_name).then((data) => {
-            if (data && "data" in data && "Products" in data.data) {
-              setProducts(data.data.Products.length);
-            }
-          });
-        } catch {
-          /* ignore stale store cache */
-        }
-      }
 
       getOrders(access).then((data) => {
         if (data && "data" in data && "Order Request" in data.data) {
           setOrders(data.data["Order Request"].length);
         }
       });
-    }
+    })();
   }, [setIsLoggedIn, router]);
 
   const containerVariants = {

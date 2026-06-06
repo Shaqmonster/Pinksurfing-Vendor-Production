@@ -4,6 +4,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import DiditVerificationGate from "@/components/DiditVerificationGate";
 import { MyContext } from "@/app/providers/context";
+import { getAccessToken } from "@/utils/cookies";
 
 export default function IdentityVerifyPage() {
   const router = useRouter();
@@ -17,7 +18,7 @@ export default function IdentityVerifyPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setToken(localStorage.getItem("access") || "");
+      setToken(getAccessToken() || "");
     }
   }, []);
 

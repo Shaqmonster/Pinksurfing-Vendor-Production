@@ -2,6 +2,7 @@
 import "./globals.css";
 import "./data-tables-css.css";
 import "./satoshi.css";
+import "@/utils/setupVendorAxios";
 import { useEffect, useContext } from "react";
 import Loader from "@/components/common/Loader";
 import Sidebar from "@/components/Sidebar";

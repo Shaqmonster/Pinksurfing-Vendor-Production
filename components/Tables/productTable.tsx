@@ -25,7 +25,7 @@ import {
 import ConfirmationModal from "../Modals/ConfirmDelete";
 import { toast } from "react-toastify";
 import { getAccessToken } from "@/utils/cookies";
-import { ensureSession } from "@/api/account";
+import { resolveVendorApiToken } from "@/utils/vendorAuth";
 import {
   PendingListing,
   getPendingListings,
@@ -123,11 +123,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
     const loadInventory = async () => {
       setLoading(true);
       try {
-        let token = getAccessToken();
-        if (!token) {
-          const session = await ensureSession();
-          token = session?.access ?? getAccessToken();
-        }
+        let token = await resolveVendorApiToken();
 
         if (!token) {
           toast.error("Session expired. Please sign in again.");

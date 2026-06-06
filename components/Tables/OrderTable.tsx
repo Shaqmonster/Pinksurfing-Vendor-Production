@@ -14,7 +14,8 @@ import Link from "next/link";
 import Loader from "../common/Loader";
 import Parcel from "../Order/Parcel/page";
 import { toast } from "react-toastify";
-import { getCookie } from "@/utils/cookies";
+import { getAccessToken } from "@/utils/cookies";
+import { resolveVendorApiToken } from "@/utils/vendorAuth";
 import { 
   FiPackage, 
   FiArrowRight, 
@@ -146,14 +147,17 @@ const OrderTable = ({ recentOrders }: any) => {
     "ERROR",
   ];
 
-  const vendor_id =
-    typeof window !== "undefined" ? getCookie("access_token") : "";
+  const [apiToken, setApiToken] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!vendor_id) return;
+    void resolveVendorApiToken().then(setApiToken);
+  }, []);
+
+  useEffect(() => {
+    if (!apiToken) return;
 
     setLoading(true);
-    getOrders(vendor_id).then((data: any) => {
+    getOrders(apiToken).then((data: any) => {
       if (
         typeof data === "object" &&
         "data" in data &&
@@ -173,14 +177,14 @@ const OrderTable = ({ recentOrders }: any) => {
         }
       }
     });
-  }, [vendor_id]);
+  }, [apiToken, recentOrders]);
 
   useEffect(() => {
-    if (orders.length === 0) return;
+    if (orders.length === 0 || !apiToken) return;
 
     orders.forEach((order) => {
       if (order.order_status === "PACKED") {
-        getShippingDetails(order.id, vendor_id)
+        getShippingDetails(order.id, apiToken)
           .then((response: any) => {
             if (response && response.data) {
               setLabelUrls((prevUrls) => ({
@@ -194,14 +198,16 @@ const OrderTable = ({ recentOrders }: any) => {
           });
       }
     });
-  }, [orders, vendor_id]);
+  }, [orders, apiToken]);
 
   const handleStatusChange = (order: Order, newStatus: string) => {
+    const token = apiToken ?? getAccessToken();
+    if (!token) return;
     if (newStatus === "PACKED") {
       setCurrentOrder(order);
       setIsModalOpen(true);
     } else {
-      changeStatus(getCookie("access_token"), order.id, newStatus).then(
+      changeStatus(token, order.id, newStatus).then(
         () => {
           setOrders((prevOrders) =>
             prevOrders.map((o) =>
@@ -214,7 +220,8 @@ const OrderTable = ({ recentOrders }: any) => {
   };
 
   const handleDisputeReturn = async (order: Order) => {
-    const token = getCookie("access_token");
+    const token = apiToken ?? getAccessToken();
+    if (!token) return;
     const result = await disputeReturn(order.id, token);
     if (!result.error) {
       toast.success("Dispute filed. Admin team has been notified. The auto-refund clock is now frozen.");
@@ -229,9 +236,10 @@ const OrderTable = ({ recentOrders }: any) => {
   };
 
   const handleParcelSubmit = (details: Package) => {
-    if (currentOrder) {
+    const token = apiToken ?? getAccessToken();
+    if (currentOrder && token) {
       changeStatus(
-        getCookie("access_token"),
+        token,
         currentOrder.id,
         "PACKED",
         details.length,

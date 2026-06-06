@@ -18,7 +18,7 @@ import dynamic from "next/dynamic";
 // @ts-ignore
 import "react-quill/dist/quill.snow.css";
 import { handleError } from "@/utils/toast";
-import { getCookie } from "@/utils/cookies";
+import { resolveVendorApiToken } from "@/utils/vendorAuth";
 import { updatePendingListingState } from "@/utils/pendingListings";
 import {
   SHORT_DESCRIPTION_MAX_PLAIN,
@@ -267,11 +267,15 @@ const EditProduct = () => {
       setInitialLoading(false);
       return;
     }
-    const token = getCookie("access_token");
-    if (!token) { router.push("/auth/signin"); return; }
-
     (async () => {
-        try {
+      const token = await resolveVendorApiToken();
+      if (!token) {
+        toast.error("Session expired. Please sign in again.");
+        setInitialLoading(false);
+        return;
+      }
+
+      try {
         const res: any = await getSingleProduct(token, productId);
         if (res.error || !res.data) {
           toast.error("Failed to load product data.");
@@ -653,7 +657,11 @@ const EditProduct = () => {
   const handleSave = async () => {
     if (typeof window === "undefined") return;
 
-    const token = getCookie("access_token");
+    const token = await resolveVendorApiToken();
+    if (!token) {
+      toast.error("Session expired. Please sign in again.");
+      return;
+    }
     const vendor_id = localStorage.getItem("vendor_id");
 
     const { mrp, unit_price } = productData;
@@ -704,7 +712,7 @@ const EditProduct = () => {
   };
 
   const handlePayForCurrentProduct = async () => {
-    const token = getCookie("access_token");
+    const token = await resolveVendorApiToken();
     if (!token) {
       toast.error("Authentication error. Please sign in again.");
       return;

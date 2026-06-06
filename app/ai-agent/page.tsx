@@ -21,7 +21,7 @@ import { useAIAgent } from "@/hooks/useAIAgent";
 import type { AgentProduct } from "@/hooks/useAIAgent";
 import { getSchemaCategories, getSchemaSubcategories, saveProducts } from "@/api/products";
 import { downloadImageAsFile, markAgentProductPosted } from "@/api/aiAgent";
-import { getCookie } from "@/utils/cookies";
+import { resolveVendorApiToken } from "@/utils/vendorAuth";
 import { PendingListing, upsertPendingListing } from "@/utils/pendingListings";
 
 // ─── Pinksurfing-mapped AliExpress categories ─────────────────────────────────
@@ -81,7 +81,7 @@ function PostToStoreModal({ product, onClose, onSuccess }: PostModalProps) {
       toast.warning("Please enter a valid price.");
       return;
     }
-    const token = getCookie("access_token");
+    const token = await resolveVendorApiToken();
     const vendorId = typeof window !== "undefined" ? localStorage.getItem("vendor_id") : null;
     if (!token || !vendorId) {
       toast.error("Authentication error. Please refresh and try again.");
