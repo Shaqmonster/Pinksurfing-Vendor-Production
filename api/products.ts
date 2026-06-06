@@ -178,7 +178,7 @@ export async function deleteProduct(
   productId: string
 ) {
   if (!token || !vendor) {
-    return false;
+    return { error: true, message: "Session expired. Please sign in again." };
   }
 
   try {
@@ -193,7 +193,19 @@ export async function deleteProduct(
 
     const { status, data } = response;
     return { status, data, error: false };
-  } catch (error) {}
+  } catch (error: any) {
+    const data = error?.response?.data;
+    return {
+      error: true,
+      status: error?.response?.status,
+      data,
+      message:
+        data?.Status ||
+        data?.detail ||
+        data?.error ||
+        "Could not delete this listing.",
+    };
+  }
 }
 
 export async function getSubcategories(category_slug: string | null) {

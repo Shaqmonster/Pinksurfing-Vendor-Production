@@ -69,8 +69,13 @@ const ProductsTable = (props: { Products?: Product[] }) => {
         const result = await deleteProduct(token, vendor_id, productId);
 
         if (result && typeof result === "object") {
-          if ("error" in result && "message" in result) {
-            toast.error(result.message);
+          if (result.error) {
+            toast.error(
+              result.message ||
+                result.data?.Status ||
+                result.data?.detail ||
+                "Failed to delete product"
+            );
           } else {
             const updatedProducts = products.filter(
               (product) => product.id !== productId
