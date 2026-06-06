@@ -9,6 +9,7 @@ import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import MyProvider from "./providers/ContextProvider";
 import { MyContext } from "./providers/context";
+import ChunkLoadRecovery from "@/components/ChunkLoadRecovery";
 import { redirect, usePathname } from "next/navigation";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -80,6 +81,7 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning className="antialiased">
         <MyProvider>
+          <ChunkLoadRecovery />
           <AppShell>{children}</AppShell>
         </MyProvider>
         <ToastContainer position="top-right" autoClose={4000} theme="colored" />
