@@ -25,6 +25,7 @@ import {
 import ConfirmationModal from "../Modals/ConfirmDelete";
 import { toast } from "react-toastify";
 import { getAccessToken } from "@/utils/cookies";
+import { ensureSession } from "@/api/account";
 import {
   PendingListing,
   getPendingListings,
@@ -117,65 +118,64 @@ const ProductsTable = (props: { Products?: Product[] }) => {
   }, [products, pendingListings, loadPendingListings]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = getAccessToken();
+    if (typeof window === "undefined") return;
 
-      if (!token) {
-        toast.error("Session expired. Please sign in again.");
-        setLoading(false);
-        return;
-      }
-
-      const loadInventory = async () => {
-        setLoading(true);
-        try {
-          let store_slug: string | null = null;
-          const storeRaw = localStorage.getItem("store");
-          if (storeRaw) {
-            try {
-              store_slug = JSON.parse(storeRaw)?.slug ?? null;
-            } catch (e) {
-              console.error("Error parsing store data", e);
-            }
-          }
-
-          if (!store_slug) {
-            const profile = await getVendorProfile(token);
-            if (profile.data?.slug) {
-              store_slug = profile.data.slug;
-              localStorage.setItem("store", JSON.stringify(profile.data));
-            }
-          }
-
-          if (!store_slug) {
-            toast.error("Could not load your store profile. Please sign in again.");
-            setProducts([]);
-            return;
-          }
-
-          const response: any = await getProducts(token, store_slug);
-          if (response?.status && response.status >= 400) {
-            toast.error(
-              response?.data?.detail ||
-                response?.data?.error ||
-                "Unable to load your listings."
-            );
-            setProducts([]);
-            return;
-          }
-
-          setProducts(response.data?.Products || []);
-        } catch (err) {
-          console.error("Error loading vendor products", err);
-          toast.error("Unable to load your listings.");
-          setProducts([]);
-        } finally {
-          setLoading(false);
+    const loadInventory = async () => {
+      setLoading(true);
+      try {
+        let token = getAccessToken();
+        if (!token) {
+          const session = await ensureSession();
+          token = session?.access ?? getAccessToken();
         }
-      };
 
-      loadInventory();
-    }
+        if (!token) {
+          toast.error("Session expired. Please sign in again.");
+          setProducts([]);
+          return;
+        }
+
+        let store_slug: string | null = null;
+        const storeRaw = localStorage.getItem("store");
+        if (storeRaw) {
+          try {
+            store_slug = JSON.parse(storeRaw)?.slug ?? null;
+          } catch (e) {
+            console.error("Error parsing store data", e);
+          }
+        }
+
+        if (!store_slug) {
+          const profile = await getVendorProfile(token);
+          if (profile.data?.slug) {
+            store_slug = profile.data.slug;
+            localStorage.setItem("store", JSON.stringify(profile.data));
+          }
+        }
+
+        const response: any = await getProducts(token, store_slug || "inventory");
+        if (response?.status && response.status >= 400) {
+          toast.error(
+            response?.data?.detail ||
+              response?.data?.error ||
+              response?.data?.Status ||
+              "Unable to load your listings."
+          );
+          setProducts([]);
+          return;
+        }
+
+        setProducts(response.data?.Products || []);
+      } catch (err) {
+        console.error("Error loading vendor products", err);
+        toast.error("Unable to load your listings.");
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadInventory();
   }, []);
 
   // Poll for product state changes while there are pending listings so the UI

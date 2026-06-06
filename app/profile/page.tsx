@@ -53,7 +53,7 @@ const Profile = () => {
         if (!res.ok) {
           if (res.status === 401 || res.status === 403) {
             setIsLoggedIn(false);
-            router.push("/");
+            router.replace("/auth/signin");
           }
           return;
         }

@@ -2,7 +2,8 @@ import axios from "axios";
 import {
   getCookie,
   getAuthCookieDomain,
-  getAccessToken,
+  getStoredAccessToken,
+  isAccessTokenFresh,
   clearAuthStorage as clearVendorAuthStorage,
   clearSsoLoggedOutFlag,
   isSsoLoggedOutGlobally,
@@ -64,16 +65,8 @@ export function getSsoEpoch(): string | null {
 }
 
 export function getCachedAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  const candidates = [
-    localStorage.getItem("access_token"),
-    localStorage.getItem("access"),
-  ].filter(Boolean) as string[];
-  for (const raw of candidates) {
-    const token = raw.replaceAll('"', "");
-    if (isAccessTokenValid(token)) return token;
-  }
-  return null;
+  const stored = getStoredAccessToken();
+  return stored && isAccessTokenValid(stored) ? stored : null;
 }
 
 export function getRefreshToken(): string | null {
@@ -141,9 +134,9 @@ export async function ensureSession(): Promise<{
       return null;
     }
 
-    const cached = getAccessToken();
-    if (cached) {
-      return { access: cached, refresh: getRefreshToken() ?? undefined };
+    const stored = getStoredAccessToken();
+    if (stored && isAccessTokenFresh(stored)) {
+      return { access: stored, refresh: getRefreshToken() ?? undefined };
     }
 
     try {
@@ -177,8 +170,8 @@ export async function reconcileSharedSession(): Promise<{
     return null;
   }
 
-  const token = getAccessToken();
-  if (token) {
+  const token = getStoredAccessToken();
+  if (token && isAccessTokenFresh(token)) {
     const refresh = getRefreshToken() ?? undefined;
     const prevAccess = localStorage.getItem("access_token");
     if (prevAccess !== token) {

@@ -22,26 +22,38 @@ export function getCookie(name: string): string | null {
   return null;
 }
 
-/** Access token with JWT expiry validation. */
-export function getAccessToken(): string | null {
+/** Raw session token from storage/cookies (may be expired — use isAccessTokenFresh to refresh). */
+export function getStoredAccessToken(): string | null {
   if (typeof window === "undefined") return null;
-  const fromStorage =
-    localStorage.getItem("access_token") ?? localStorage.getItem("access");
-  if (fromStorage) {
-    const token = fromStorage.replaceAll('"', "");
-    try {
-      const part = token.split(".")[1];
-      if (part) {
-        const payload = JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/")));
-        if (payload.exp * 1000 > Date.now() + 60_000) return token;
-      }
-    } catch {
-      /* fall through */
+  for (const key of ["access_token", "access"] as const) {
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      const token = raw.replaceAll('"', "");
+      if (token) return token;
     }
   }
   const fromCookie = getCookie("access_token");
-  if (fromCookie) return fromCookie.replaceAll('"', "");
-  return null;
+  return fromCookie ? fromCookie.replaceAll('"', "") : null;
+}
+
+/** True when JWT exp is still in the future (60s skew). */
+export function isAccessTokenFresh(token: string | null): boolean {
+  if (!token) return false;
+  try {
+    const part = token.split(".")[1];
+    if (!part) return false;
+    const payload = JSON.parse(atob(part.replace(/-/g, "+").replace(/_/g, "/")));
+    return (
+      typeof payload.exp === "number" && payload.exp * 1000 > Date.now() + 60_000
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** Token for API calls — returns stored session even if near expiry (server/refresh handles invalid). */
+export function getAccessToken(): string | null {
+  return getStoredAccessToken();
 }
 
 export function getRefreshToken(): string | null {

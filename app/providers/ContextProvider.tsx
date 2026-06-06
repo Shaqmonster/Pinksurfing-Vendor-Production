@@ -19,7 +19,7 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const ssoSyncInflightRef = useRef(false);
 
-  const applyVendorSession = useCallback(async (access: string | null) => {
+  const applyVendorSession = useCallback(async (access: string | null, retried = false) => {
     if (!access) {
       localStorage.removeItem("vendor_id");
       setIsLoggedIn(false);
@@ -28,6 +28,12 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
 
     const vendorSession = await resolveVendorSession(access);
     if (vendorSession.unauthorized) {
+      if (!retried) {
+        const session = await ensureSession();
+        if (session?.access && session.access !== access) {
+          return applyVendorSession(session.access, true);
+        }
+      }
       localStorage.removeItem("vendor_id");
       setIsLoggedIn(false);
       return false;

@@ -14,7 +14,7 @@ import {
 import { HiOutlineSparkles, HiOutlineCube, HiOutlineShoppingCart, HiOutlineCurrencyDollar } from "react-icons/hi";
 import { checkProductLiveStatus, getTopSellingProducts } from "@/api/products";
 import OrderTable from "@/components/Tables/OrderTable";
-import { getCookie } from "@/utils/cookies";
+import { getAccessToken } from "@/utils/cookies";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { removePendingListing, updatePendingListingState } from "@/utils/pendingListings";
@@ -29,7 +29,7 @@ const Dashboard: React.FC = () => {
   
   useMemo(() => {
     if (typeof window !== "undefined") {
-      let token = getCookie("access_token");
+      let token = getAccessToken();
       if (!token) return;
       (async () => {
         const res = await getTopSellingProducts(token);
