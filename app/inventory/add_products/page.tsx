@@ -798,18 +798,32 @@ const AddProducts = () => {
   // Payment is handled from the My Listings page — no pay handler needed here.
 
   // Render input based on data type
+  const resolveAttributeIndex = (attributes: any[], attr: any, fallbackIndex: number) => {
+    if (attr?.key) {
+      const keyIndex = attributes.findIndex((item) => item.key === attr.key);
+      if (keyIndex >= 0) return keyIndex;
+    }
+    return fallbackIndex;
+  };
+
   const renderAttributeInput = (attr: any, isVariant: boolean, index: number) => {
     const updateAttr = (value: any) => {
       if (isVariant) {
         setVariantAttributes(prev => {
           const updated = [...prev];
-          updated[index] = { ...updated[index], value };
+          const attrIndex = resolveAttributeIndex(updated, attr, index);
+          if (attrIndex >= 0) {
+            updated[attrIndex] = { ...updated[attrIndex], value };
+          }
           return updated;
         });
       } else {
         setNonVariantAttributes(prev => {
           const updated = [...prev];
-          updated[index] = { ...updated[index], value };
+          const attrIndex = resolveAttributeIndex(updated, attr, index);
+          if (attrIndex >= 0) {
+            updated[attrIndex] = { ...updated[attrIndex], value };
+          }
           return updated;
         });
       }

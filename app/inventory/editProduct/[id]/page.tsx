@@ -754,12 +754,34 @@ const EditProduct = () => {
   // ============================================================
   // ATTRIBUTE INPUT RENDERER (identical to add_products)
   // ============================================================
+  const resolveAttributeIndex = (attributes: any[], attr: any, fallbackIndex: number) => {
+    if (attr?.key) {
+      const keyIndex = attributes.findIndex((item) => item.key === attr.key);
+      if (keyIndex >= 0) return keyIndex;
+    }
+    return fallbackIndex;
+  };
+
   const renderAttributeInput = (attr: any, isVariant: boolean, index: number) => {
     const updateAttr = (value: any) => {
       if (isVariant) {
-        setVariantAttributes((prev) => { const u = [...prev]; u[index] = { ...u[index], value }; return u; });
+        setVariantAttributes((prev) => {
+          const updated = [...prev];
+          const attrIndex = resolveAttributeIndex(updated, attr, index);
+          if (attrIndex >= 0) {
+            updated[attrIndex] = { ...updated[attrIndex], value };
+          }
+          return updated;
+        });
       } else {
-        setNonVariantAttributes((prev) => { const u = [...prev]; u[index] = { ...u[index], value }; return u; });
+        setNonVariantAttributes((prev) => {
+          const updated = [...prev];
+          const attrIndex = resolveAttributeIndex(updated, attr, index);
+          if (attrIndex >= 0) {
+            updated[attrIndex] = { ...updated[attrIndex], value };
+          }
+          return updated;
+        });
       }
     };
 
