@@ -26,6 +26,7 @@ import {
   upsertPendingListing,
 } from "@/utils/pendingListings";
 import { isBusinessForSaleCategory } from "@/components/inventory/businessForSaleCategory";
+import { filterListingCategories } from "@/constants/listingCategories";
 import {
   BusinessForSaleListingWizard,
   type BusinessForSaleListingWizardHandle,
@@ -297,6 +298,7 @@ const AddProducts = () => {
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
   const [selectedSubcategoryName, setSelectedSubcategoryName] = useState("");
   const [subcategoriesLoading, setSubcategoriesLoading] = useState(false);
+  const [advancedSpecsOpen, setAdvancedSpecsOpen] = useState(false);
 
   // Attribute states
   const [allowedAttributes, setAllowedAttributes] = useState<any[]>([]);
@@ -452,7 +454,7 @@ const AddProducts = () => {
     getSchemaCategories().then((result) => {
       if (!result.error && result.data) {
         console.log("Categories:", result.data);
-        setCategories(result.data);
+        setCategories(filterListingCategories(result.data));
       }
     });
   }, []);
@@ -498,6 +500,7 @@ const AddProducts = () => {
     setSelectedSubcategory(subcat.id);
     setSelectedSubcategoryName(subcat.name);
     setProductData(prev => ({ ...prev, subcategory: subcat.id }));
+    setAdvancedSpecsOpen(false);
 
     // Fetch form schema for dynamic fields
     try {
@@ -537,7 +540,8 @@ const AddProducts = () => {
 
         // Convert schema fields to attribute format
         // All fields from schema are treated as non-variant attributes
-        const schemaAttributes = fields.map((field: any) => {
+        const schemaAttributes = fields
+          .map((field: any) => {
           const fieldKey = (field.key || "").toLowerCase();
           const isLocationField = LOCATION_KEYS.includes(fieldKey);
 
@@ -554,9 +558,18 @@ const AddProducts = () => {
             min: field.min,
             max: field.max,
             step: field.step,
-            additional_price: 0
+            section: field.section || "core",
+            additional_price: 0,
           };
-        });
+        })
+          .sort((a: any, b: any) => {
+            const rank = (attr: any) => {
+              if (attr.key === "product_type") return 0;
+              if (attr.section === "advanced_specs") return 2;
+              return 1;
+            };
+            return rank(a) - rank(b);
+          });
 
         setNonVariantAttributes(schemaAttributes);
         setAllowedAttributes(schemaAttributes);
@@ -1241,8 +1254,37 @@ const AddProducts = () => {
     );
   };
 
-  const renderAttributesStep = () => (
+  const renderAttributesStep = () => {
+    const productTypeAttr = nonVariantAttributes.find((attr) => attr.key === "product_type");
+    const coreAttributes = nonVariantAttributes.filter(
+      (attr) => attr.key !== "product_type" && attr.section !== "advanced_specs"
+    );
+    const advancedAttributes = nonVariantAttributes.filter(
+      (attr) => attr.section === "advanced_specs"
+    );
+
+    return (
     <div className="space-y-8 animate-fadeIn">
+      {productTypeAttr && (
+        <div className="premium-card p-6">
+          <div className="mb-4">
+            <h3 className="font-semibold text-surface-900 dark:text-white">Product Type</h3>
+            <p className="text-sm text-surface-500">Choose the specific type for this listing</p>
+          </div>
+          <div className="max-w-xl">
+            <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+              {productTypeAttr.name}
+              {productTypeAttr.required && <span className="text-red-500 ml-1">*</span>}
+            </label>
+            {renderAttributeInput(
+              productTypeAttr,
+              false,
+              nonVariantAttributes.indexOf(productTypeAttr)
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Variant Attributes */}
       {renderGroupedAttributes(
         variantAttributes,
@@ -1253,14 +1295,48 @@ const AddProducts = () => {
         SparklesIcon
       )}
 
-      {/* Non-Variant Attributes */}
+      {/* Core listing fields from schema */}
       {renderGroupedAttributes(
-        nonVariantAttributes,
+        coreAttributes,
         false,
-        "Specifications",
-        "Additional product details",
+        "Listing Details",
+        "Required and recommended fields for this subcategory",
         "bg-gradient-purple",
         TagIcon
+      )}
+
+      {advancedAttributes.length > 0 && (
+        <div className="premium-card p-6">
+          <button
+            type="button"
+            onClick={() => setAdvancedSpecsOpen((open) => !open)}
+            className="w-full flex items-center justify-between gap-3 text-left"
+          >
+            <div>
+              <h3 className="font-semibold text-surface-900 dark:text-white">
+                Advanced Specs
+              </h3>
+              <p className="text-sm text-surface-500">
+                Optional — improves search visibility
+              </p>
+            </div>
+            <span className="text-sm font-medium text-primary-500">
+              {advancedSpecsOpen ? "Hide" : "Show"}
+            </span>
+          </button>
+          {advancedSpecsOpen && (
+            <div className="mt-6 pt-6 border-t border-surface-200 dark:border-dark-border">
+              {renderGroupedAttributes(
+                advancedAttributes,
+                false,
+                "",
+                "",
+                "bg-gradient-purple",
+                TagIcon
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {/* SEO Fields */}
@@ -1317,7 +1393,8 @@ const AddProducts = () => {
         </div>
       )}
     </div>
-  );
+    );
+  };
 
   // Step 4: Media Upload
   const renderMediaStep = () => (

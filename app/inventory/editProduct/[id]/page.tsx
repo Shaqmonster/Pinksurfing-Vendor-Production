@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { filterListingCategories } from "@/constants/listingCategories";
 import {
   getSchemaCategories,
   getSchemaSubcategories,
@@ -331,7 +332,7 @@ const EditProduct = () => {
 
         // Load categories (needed for Step 1 display)
         const catResult = await getSchemaCategories();
-        if (!catResult.error && catResult.data) setCategories(catResult.data);
+        if (!catResult.error && catResult.data) setCategories(filterListingCategories(catResult.data));
 
         // Pre-select category (schema APIs use filter.json ids = slugs, not DB UUIDs)
         const cat = p.category;
@@ -430,7 +431,8 @@ const EditProduct = () => {
           return "";
         };
 
-        const schemaAttributes = fields.map((field: any) => {
+        const schemaAttributes = fields
+          .map((field: any) => {
           const existingVal = resolveExistingVal(field);
           const mappedType = mapFieldType(field.type);
 
@@ -446,9 +448,18 @@ const EditProduct = () => {
             min: field.min,
             max: field.max,
             step: field.step,
+            section: field.section || "core",
             additional_price: 0,
           };
-        });
+        })
+          .sort((a: any, b: any) => {
+            const rank = (attr: any) => {
+              if (attr.key === "product_type") return 0;
+              if (attr.section === "advanced_specs") return 2;
+              return 1;
+            };
+            return rank(a) - rank(b);
+          });
 
         setNonVariantAttributes(schemaAttributes);
         setAllowedAttributes(schemaAttributes);
@@ -463,7 +474,7 @@ const EditProduct = () => {
   useEffect(() => {
     if (productId) return; // edit handles separately
     getSchemaCategories().then((result) => {
-      if (!result.error && result.data) setCategories(result.data);
+      if (!result.error && result.data) setCategories(filterListingCategories(result.data));
     });
   }, [productId]);
 

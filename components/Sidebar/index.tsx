@@ -15,7 +15,7 @@ import {
   FaUser,
   FaChevronRight,
   FaStore,
-  FaRobot,
+  // FaRobot,
   FaCalendarAlt,
   FaFileContract,
 } from "react-icons/fa";
@@ -124,12 +124,12 @@ const Sidebar = () => {
       icon: FaUser,
       badge: null,
     },
-    {
-      name: "AI Agent",
-      href: "/ai-agent",
-      icon: FaRobot,
-      badge: "New",
-    },
+    // {
+    //   name: "AI Agent",
+    //   href: "/ai-agent",
+    //   icon: FaRobot,
+    //   badge: "New",
+    // },
     {
       name: "Store Settings",
       href: "/settings",
