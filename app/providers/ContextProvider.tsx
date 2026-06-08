@@ -6,6 +6,7 @@ import {
   ensureSession,
   isSsoLoggedOutGlobally,
   reconcileSharedSession,
+  startTokenRefreshScheduler,
 } from "@/utils/ssoSession";
 import { clearAuthStorage } from "@/utils/cookies";
 import { resolveVendorSession } from "@/api/account";
@@ -90,6 +91,14 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
       void syncFromSharedSession();
     });
   }, [authReady, syncFromSharedSession]);
+
+  useEffect(() => {
+    if (!authReady) return undefined;
+
+    return startTokenRefreshScheduler((access) => {
+      void applyVendorSession(access);
+    });
+  }, [authReady, applyVendorSession]);
 
   return (
     <MyContext.Provider

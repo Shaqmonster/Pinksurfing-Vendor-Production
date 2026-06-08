@@ -1,6 +1,9 @@
 import axios from "axios";
-import { getAccessToken } from "@/utils/cookies";
 import { normalizeBearerToken } from "@/utils/vendorAuth";
+import {
+  getOrRefreshAccessToken,
+  refreshAccessToken,
+} from "@/utils/ssoSession";
 
 let installed = false;
 
@@ -8,6 +11,7 @@ function isMarketplaceApiUrl(url: string): boolean {
   const base = process.env.NEXT_PUBLIC_BASE_URL;
   if (base && url.startsWith(base)) return true;
   if (url.includes("ecommerceapi.pinksurfing.com")) return true;
+  if (url.includes("auth.pinksurfing.com")) return true;
   return false;
 }
 
@@ -19,25 +23,51 @@ function resolveRequestUrl(config: { url?: string; baseURL?: string }): string {
   return `${base.replace(/\/$/, "")}/${url.replace(/^\//, "")}`;
 }
 
-/** Attach vendor Bearer token on marketplace API requests when missing. */
+/** Attach vendor Bearer token on marketplace API requests; refresh on expiry / 401. */
 export function setupVendorAxios() {
   if (installed || typeof window === "undefined") return;
   installed = true;
 
-  axios.interceptors.request.use((config) => {
+  axios.interceptors.request.use(async (config) => {
     const url = resolveRequestUrl(config);
     if (!isMarketplaceApiUrl(url)) return config;
 
-    const existing = config.headers?.Authorization ?? config.headers?.authorization;
-    if (existing) return config;
-
-    const token = normalizeBearerToken(getAccessToken());
+    const token = normalizeBearerToken(await getOrRefreshAccessToken());
     if (!token) return config;
 
     config.headers = config.headers ?? {};
     config.headers.Authorization = `Bearer ${token}`;
     return config;
   });
+
+  axios.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+      const originalRequest = error.config as
+        | (typeof error.config & { _retry?: boolean })
+        | undefined;
+      const status = error?.response?.status;
+
+      if (!originalRequest || status !== 401 || originalRequest._retry) {
+        return Promise.reject(error);
+      }
+
+      const url = resolveRequestUrl(originalRequest);
+      if (!isMarketplaceApiUrl(url)) {
+        return Promise.reject(error);
+      }
+
+      originalRequest._retry = true;
+      try {
+        const newAccess = await refreshAccessToken();
+        originalRequest.headers = originalRequest.headers ?? {};
+        originalRequest.headers.Authorization = `Bearer ${newAccess}`;
+        return axios(originalRequest);
+      } catch {
+        return Promise.reject(error);
+      }
+    }
+  );
 }
 
 setupVendorAxios();

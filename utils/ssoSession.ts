@@ -14,9 +14,11 @@ const AUTH_REFRESH_URL = "https://auth.pinksurfing.com/api/token/refresh/";
 const AUTH_LOGOUT_URL = "https://auth.pinksurfing.com/api/logout/";
 const ACCESS_SKEW_SECONDS = 60;
 const SSO_EPOCH_COOKIE = "ps_sso_epoch";
+export const TOKEN_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 
 let ensureSessionInflight: Promise<{ access: string; refresh?: string } | null> | null =
   null;
+let refreshInflight: Promise<string> | null = null;
 
 export function decodeJwt(token: string | null): Record<string, unknown> | null {
   if (!token) return null;
@@ -114,11 +116,46 @@ export function persistAuthSession(
   if (prevAccess !== access) bumpSsoEpoch();
 }
 
-async function refreshFromSsoCookies() {
-  const response = await axios.post(AUTH_REFRESH_URL, {}, { withCredentials: true });
-  const access = response.data?.access;
+export function hasRefreshCapability(): boolean {
+  return Boolean(getRefreshToken() || getCookie("refresh_token"));
+}
+
+/** Cookie-based refresh first, then Bearer body `{ refresh }` fallback. */
+async function requestTokenRefresh(): Promise<{
+  access: string;
+  refresh?: string;
+} | null> {
+  try {
+    const cookieResponse = await axios.post(
+      AUTH_REFRESH_URL,
+      {},
+      { withCredentials: true }
+    );
+    const access = cookieResponse.data?.access;
+    if (access) {
+      return {
+        access: String(access),
+        refresh: cookieResponse.data?.refresh as string | undefined,
+      };
+    }
+  } catch {
+    /* try body refresh */
+  }
+
+  const refresh = getRefreshToken();
+  if (!refresh) return null;
+
+  const bodyResponse = await axios.post(
+    AUTH_REFRESH_URL,
+    { refresh },
+    { withCredentials: true }
+  );
+  const access = bodyResponse.data?.access;
   if (!access) return null;
-  return { access: String(access), refresh: response.data?.refresh as string | undefined };
+  return {
+    access: String(access),
+    refresh: (bodyResponse.data?.refresh as string | undefined) ?? refresh,
+  };
 }
 
 export async function ensureSession(): Promise<{
@@ -139,8 +176,13 @@ export async function ensureSession(): Promise<{
       return { access: stored, refresh: getRefreshToken() ?? undefined };
     }
 
+    if (!hasRefreshCapability()) {
+      clearVendorAuthStorage();
+      return null;
+    }
+
     try {
-      const refreshed = await refreshFromSsoCookies();
+      const refreshed = await requestTokenRefresh();
       if (!refreshed?.access) {
         clearVendorAuthStorage();
         return null;
@@ -211,6 +253,76 @@ export function attachSharedSsoSync(onSync: () => void) {
   return () => {
     if (timer) clearTimeout(timer);
     window.removeEventListener("visibilitychange", onVisible);
+  };
+}
+
+export async function refreshAccessToken(): Promise<string> {
+  if (refreshInflight) return refreshInflight;
+
+  refreshInflight = (async () => {
+    const refreshed = await requestTokenRefresh();
+    if (!refreshed?.access) {
+      throw new Error("No access token in refresh response");
+    }
+    persistAuthSession(refreshed.access, refreshed.refresh);
+    return refreshed.access;
+  })().finally(() => {
+    refreshInflight = null;
+  });
+
+  return refreshInflight;
+}
+
+/** Returns a valid access token, refreshing proactively when near expiry. */
+export async function getOrRefreshAccessToken(): Promise<string | null> {
+  if (isSsoLoggedOutGlobally()) return null;
+
+  const stored = getStoredAccessToken();
+  if (stored && isAccessTokenFresh(stored)) return stored;
+
+  if (!hasRefreshCapability()) return stored || null;
+
+  try {
+    return await refreshAccessToken();
+  } catch (error: unknown) {
+    const status = (error as { response?: { status?: number } })?.response?.status;
+    console.error("Token refresh failed:", status || error);
+    return null;
+  }
+}
+
+/** Proactive refresh while browsing (interval + tab focus). */
+export function startTokenRefreshScheduler(onRefreshed?: (access: string) => void) {
+  if (typeof window === "undefined") return () => {};
+
+  const tick = async () => {
+    if (isSsoLoggedOutGlobally()) return;
+    const stored = getStoredAccessToken();
+    if (stored && isAccessTokenFresh(stored)) return;
+    if (!hasRefreshCapability()) return;
+
+    try {
+      const access = await refreshAccessToken();
+      onRefreshed?.(access);
+    } catch {
+      /* next 401 or interval will retry */
+    }
+  };
+
+  const intervalId = setInterval(() => {
+    void tick();
+  }, TOKEN_REFRESH_INTERVAL_MS);
+
+  const onVisible = () => {
+    if (document.visibilityState === "visible") void tick();
+  };
+
+  document.addEventListener("visibilitychange", onVisible);
+  void tick();
+
+  return () => {
+    clearInterval(intervalId);
+    document.removeEventListener("visibilitychange", onVisible);
   };
 }
 

@@ -1,5 +1,5 @@
 import { getAccessToken } from "@/utils/cookies";
-import { ensureSession } from "@/utils/ssoSession";
+import { getOrRefreshAccessToken } from "@/utils/ssoSession";
 
 /** Strip quotes/whitespace from a bearer token string. */
 export function normalizeBearerToken(
@@ -19,12 +19,9 @@ export function vendorAuthHeaders(
   return { Authorization: `Bearer ${bearer}` };
 }
 
-/** Token for vendor API calls — stored session with SSO refresh fallback. */
+/** Token for vendor API calls — refreshes proactively when near expiry. */
 export async function resolveVendorApiToken(): Promise<string | null> {
-  const stored = normalizeBearerToken(getAccessToken());
-  if (stored) return stored;
-  const session = await ensureSession();
-  return normalizeBearerToken(session?.access ?? getAccessToken());
+  return normalizeBearerToken(await getOrRefreshAccessToken());
 }
 
 export function getVendorId(): string | null {
