@@ -151,7 +151,7 @@ const ForgotPassword = () => {
                     whileTap={{ scale: 0.99 }}
                     className="w-full py-4 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all duration-300 bg-gradient-to-r from-primary-500 to-accent-purple shadow-lg hover:shadow-xl hover:shadow-primary-500/25"
                   >
-                    Send Reset Link
+                    Send OTP
                     <FiArrowRight className="w-5 h-5" />
                   </motion.button>
 
@@ -162,7 +162,7 @@ const ForgotPassword = () => {
                     className="w-full py-3 rounded-xl font-medium text-surface-600 dark:text-surface-400 hover:text-primary-500 dark:hover:text-primary-400 flex items-center justify-center gap-2 transition-colors"
                   >
                     <FiArrowLeft className="w-4 h-4" />
-                    Back to Sign In
+                    Return to Sign In
                   </button>
                 </Form>
               )}
