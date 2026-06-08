@@ -1577,11 +1577,11 @@ const AddProducts = () => {
                 <div className="relative group px-0 py-6 transition-all duration-500">
                   <div className="relative flex flex-col gap-4">
                     <div className="flex items-center justify-between">
-                      <label className="flex items-center gap-2.5 text-sm font-black uppercase tracking-[0.2em] text-primary-500 transition-all duration-500">
+                      <label className="flex items-center gap-2.5 text-lg font-bold uppercase tracking-[0.15em] text-surface-800 dark:text-surface-200 transition-all duration-500">
                         <div className="w-7 h-7 rounded-lg bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
-                          <span className="text-[11px] font-black">T</span>
+                          <span className="text-[11px] font-black text-primary-500">T</span>
                         </div>
-                        Listing Title <span className="text-white/20 ml-1 text-xs">*</span>
+                        Listing Title <span className="text-surface-400 dark:text-surface-500 ml-1 text-sm">*</span>
                       </label>
                       <span className={`text-[10px] font-bold tracking-widest transition-all duration-500 ${productData.name.length > 0 ? "text-primary-400" : "text-surface-600 opacity-0"}`}>
                         {productData.name.length} / 100
@@ -1594,7 +1594,7 @@ const AddProducts = () => {
                         value={productData.name}
                         onChange={(e) => updateProductData("name", e.target.value)}
                         placeholder="What are you listing today?"
-                        className="w-full bg-transparent border-none p-0 text-4xl md:text-5xl font-black text-white placeholder:text-surface-700 placeholder:not-italic focus:ring-0 transition-all selection:bg-primary-500/40 tracking-tight"
+                        className="w-full bg-transparent border-none p-0 text-xl md:text-2xl font-semibold text-surface-900 dark:text-white placeholder:text-sm placeholder:font-normal placeholder:text-surface-400 dark:placeholder:text-surface-500 placeholder:not-italic focus:ring-0 transition-all selection:bg-primary-500/30 selection:text-surface-900 dark:selection:text-white tracking-tight"
                         required
                       />
                       
