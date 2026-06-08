@@ -1395,18 +1395,6 @@ const SignUp: React.FC = () => {
                           )}
                         </span>
                       </div>
-                      <PasswordRequirementsFeedback
-                        password={Payload.password}
-                        userContext={{
-                          email: Payload.email,
-                          username: Payload.email,
-                          first_name: Payload.first_name,
-                          last_name: Payload.last_name,
-                        }}
-                        visible={
-                          passwordFocused || Payload.password.length > 0
-                        }
-                      />
                       {passwordError && (
                         <p className="text-red-500 text-sm mt-1">
                           {passwordError}
@@ -1430,9 +1418,9 @@ const SignUp: React.FC = () => {
                             event: React.ChangeEvent<HTMLInputElement>
                           ) => {
                             setConfirmPassword(event.target.value);
-                            if (event.target.value === Payload.password) {
-                              setPasswordCheck(1);
-                            }
+                            setPasswordCheck(
+                              event.target.value === Payload.password ? 1 : 0
+                            );
                           }}
                           required
                         />
@@ -1450,6 +1438,16 @@ const SignUp: React.FC = () => {
                       </div>
                     </div>
                   </div>
+                  <PasswordRequirementsFeedback
+                    password={Payload.password}
+                    userContext={{
+                      email: Payload.email,
+                      username: Payload.email,
+                      first_name: Payload.first_name,
+                      last_name: Payload.last_name,
+                    }}
+                    visible={passwordFocused || Payload.password.length > 0}
+                  />
                   {PasswordCheck === 1 && !isError ? (
                     <>
                       <span className="inline-flex text-sm text-green-700 mb-4">
@@ -1522,7 +1520,16 @@ const SignUp: React.FC = () => {
                           ? "bg-gray-600 cursor-not-allowed"
                           : "hover:bg-opacity-90"
                       }`}
-                      disabled={loading}
+                      disabled={
+                        loading ||
+                        PasswordCheck !== 1 ||
+                        !isPasswordValid(Payload.password, {
+                          email: Payload.email,
+                          username: Payload.email,
+                          first_name: Payload.first_name,
+                          last_name: Payload.last_name,
+                        })
+                      }
                     />
                   </div>
 
