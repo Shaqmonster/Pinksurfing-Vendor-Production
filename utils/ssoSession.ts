@@ -149,8 +149,22 @@ export function persistAuthSession(
   if (prevAccess !== access) bumpSsoEpoch();
 }
 
+/** Login, refresh, and logout must not run through the auth request interceptor. */
+export function isSsoTokenMaintenanceUrl(url: string): boolean {
+  if (!url) return false;
+  const path = url.split("?")[0];
+  return (
+    path.includes("/api/token/refresh") ||
+    path.includes("/api/logout") ||
+    /\/api\/token\/?$/.test(path)
+  );
+}
+
 export function hasRefreshCapability(): boolean {
-  return Boolean(getRefreshToken() || getCookie("refresh_token"));
+  if (isSsoLoggedOutGlobally()) return false;
+  if (getRefreshToken()) return true;
+  // SSO refresh_token is HttpOnly — not readable here, but sent with credentials:include
+  return Boolean(getStoredAccessToken());
 }
 
 /** Cookie-based refresh first, then Bearer body `{ refresh }` fallback. */
@@ -158,11 +172,12 @@ async function requestTokenRefresh(): Promise<{
   access: string;
   refresh?: string;
 } | null> {
+  const refreshConfig = { withCredentials: true, skipAuthRefresh: true };
   try {
     const cookieResponse = await axios.post(
       AUTH_REFRESH_URL,
       {},
-      { withCredentials: true }
+      refreshConfig
     );
     const access = cookieResponse.data?.access;
     if (access) {
@@ -181,7 +196,7 @@ async function requestTokenRefresh(): Promise<{
   const bodyResponse = await axios.post(
     AUTH_REFRESH_URL,
     { refresh },
-    { withCredentials: true }
+    refreshConfig
   );
   const access = bodyResponse.data?.access;
   if (!access) return null;
@@ -311,9 +326,13 @@ export async function getOrRefreshAccessToken(): Promise<string | null> {
   if (isSsoLoggedOutGlobally()) return null;
 
   const stored = getStoredAccessToken();
-  if (stored && !shouldRefreshAccessToken(stored)) return stored;
+  if (stored && !shouldRefreshAccessToken(stored)) {
+    return isAccessTokenValid(stored) ? stored : null;
+  }
 
-  if (!hasRefreshCapability()) return stored || null;
+  if (!hasRefreshCapability()) {
+    return stored && isAccessTokenValid(stored) ? stored : null;
+  }
 
   try {
     return await refreshAccessToken();
@@ -353,7 +372,6 @@ export function startTokenRefreshScheduler(onRefreshed?: (access: string) => voi
       scheduleNext();
       return;
     }
-    if (!hasRefreshCapability()) return;
 
     try {
       const access = await refreshAccessToken();
@@ -392,6 +410,7 @@ export async function signOut(explicitToken?: string | null) {
       refresh ? { refresh } : {},
       {
         withCredentials: true,
+        skipAuthRefresh: true,
         headers: access
           ? { Authorization: `Bearer ${access.replaceAll('"', "")}` }
           : {},

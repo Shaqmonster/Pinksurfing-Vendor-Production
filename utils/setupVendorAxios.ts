@@ -2,6 +2,7 @@ import axios from "axios";
 import { normalizeBearerToken } from "@/utils/vendorAuth";
 import {
   getOrRefreshAccessToken,
+  isSsoTokenMaintenanceUrl,
   refreshAccessToken,
 } from "@/utils/ssoSession";
 
@@ -29,7 +30,10 @@ export function setupVendorAxios() {
   installed = true;
 
   axios.interceptors.request.use(async (config) => {
+    if ((config as { skipAuthRefresh?: boolean }).skipAuthRefresh) return config;
+
     const url = resolveRequestUrl(config);
+    if (isSsoTokenMaintenanceUrl(url)) return config;
     if (!isMarketplaceApiUrl(url)) return config;
 
     const token = normalizeBearerToken(await getOrRefreshAccessToken());
