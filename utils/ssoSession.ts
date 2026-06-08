@@ -20,6 +20,8 @@ export const SSO_ACCESS_LIFETIME_MINUTES = 15;
 export const REFRESH_BEFORE_EXPIRY_SECONDS = 120;
 /** Safety poll — half of default access lifetime. */
 export const TOKEN_REFRESH_FALLBACK_MS = 5 * 60 * 1000;
+/** Never block app bootstrap on a stuck SSO refresh. */
+export const AUTH_NETWORK_TIMEOUT_MS = 15_000;
 
 let ensureSessionInflight: Promise<{ access: string; refresh?: string } | null> | null =
   null;
@@ -172,7 +174,11 @@ async function requestTokenRefresh(): Promise<{
   access: string;
   refresh?: string;
 } | null> {
-  const refreshConfig = { withCredentials: true, skipAuthRefresh: true };
+  const refreshConfig = {
+    withCredentials: true,
+    skipAuthRefresh: true,
+    timeout: AUTH_NETWORK_TIMEOUT_MS,
+  };
   try {
     const cookieResponse = await axios.post(
       AUTH_REFRESH_URL,
@@ -339,6 +345,9 @@ export async function getOrRefreshAccessToken(): Promise<string | null> {
   } catch (error: unknown) {
     const status = (error as { response?: { status?: number } })?.response?.status;
     console.error("Token refresh failed:", status || error);
+    if (stored && !isAccessTokenValid(stored)) {
+      clearVendorAuthStorage();
+    }
     return stored && isAccessTokenValid(stored) ? stored : null;
   }
 }

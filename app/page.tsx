@@ -44,8 +44,12 @@ export default function Home() {
     }
   }, [authPage]);
 
-  if (!authReady || loggedIn) {
+  if (!authReady) {
     return <Loader />;
+  }
+
+  if (loggedIn) {
+    return null;
   }
 
   return <>{authPageState}</>;

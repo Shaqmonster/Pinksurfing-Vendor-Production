@@ -55,8 +55,28 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const refreshAuth = useCallback(async () => {
+    if (isSsoLoggedOutGlobally()) {
+      clearAuthStorage();
+      setIsLoggedIn(false);
+      return false;
+    }
     const session = await ensureSession();
     return applyVendorSession(session?.access ?? null);
+  }, [applyVendorSession]);
+
+  const bootstrapAuth = useCallback(async () => {
+    if (isSsoLoggedOutGlobally()) {
+      clearAuthStorage();
+      setIsLoggedIn(false);
+      return;
+    }
+    const session = await ensureSession();
+    if (!session?.access) {
+      setIsLoggedIn(false);
+      return;
+    }
+    // Vendor profile API can be slow — validate session in the background.
+    void applyVendorSession(session.access);
   }, [applyVendorSession]);
 
   const syncFromSharedSession = useCallback(async () => {
@@ -79,11 +99,23 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
   }, [applyVendorSession, loggedIn]);
 
   useEffect(() => {
+    let cancelled = false;
+
     void (async () => {
-      await refreshAuth();
-      setAuthReady(true);
+      try {
+        await bootstrapAuth();
+      } catch (error) {
+        console.error("Vendor auth bootstrap failed:", error);
+        if (!cancelled) setIsLoggedIn(false);
+      } finally {
+        if (!cancelled) setAuthReady(true);
+      }
     })();
-  }, [refreshAuth]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [bootstrapAuth]);
 
   useEffect(() => {
     if (!authReady) return undefined;
