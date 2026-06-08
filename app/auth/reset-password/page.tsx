@@ -16,6 +16,8 @@ import { MyContext } from "@/app/providers/context";
 import { emailResetOtp, verifyOtp } from "@/api/auth";
 import { Formik, Form, Field, FormikHelpers } from "formik";
 import * as Yup from "yup";
+import PasswordRequirementsFeedback from "@/components/auth/PasswordRequirementsFeedback";
+import { isPasswordValid } from "@/utils/djangoPasswordValidation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loader, { Loader2 } from "@/components/common/Loader";
@@ -26,12 +28,23 @@ const ResetPassword = () => {
   const { resetEmail, setAuthpage } = useContext(MyContext);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
   const validationSchema = Yup.object({
     otp: Yup.string().required("OTP is required"),
     password: Yup.string()
       .required("Password is required")
-      .min(6, "Password must be at least 6 characters"),
+      .test(
+        "django-password",
+        "Password does not meet requirements",
+        function (value) {
+          if (!value) return false;
+          return isPasswordValid(value, {
+            email: resetEmail,
+            username: resetEmail,
+          });
+        }
+      ),
     confirmPassword: Yup.string()
       .oneOf([Yup.ref("password"), ""], "Passwords must match")
       .required("Confirm Password is required"),
@@ -275,9 +288,23 @@ const ResetPassword = () => {
                         placeholder="Enter new password"
                         name="password"
                         onChange={handleChange}
-                        onBlur={handleBlur}
+                        onFocus={() => setPasswordFocused(true)}
+                        onBlur={(event) => {
+                          setPasswordFocused(false);
+                          handleBlur(event);
+                        }}
                         value={values.password}
                         className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                      />
+                      <PasswordRequirementsFeedback
+                        password={values.password}
+                        userContext={{
+                          email: resetEmail,
+                          username: resetEmail,
+                        }}
+                        visible={
+                          passwordFocused || values.password.length > 0
+                        }
                       />
                       {touched.password && errors.password && (
                         <div className="text-danger text-red-700 mb-4">
@@ -313,8 +340,16 @@ const ResetPassword = () => {
                     <div className="mb-5">
                       <button
                         type="submit"
-                        disabled={loading}
-                        className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
+                        disabled={
+                          loading ||
+                          !values.otp ||
+                          !isPasswordValid(values.password, {
+                            email: resetEmail,
+                            username: resetEmail,
+                          }) ||
+                          values.password !== values.confirmPassword
+                        }
+                        className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         Submit
                       </button>

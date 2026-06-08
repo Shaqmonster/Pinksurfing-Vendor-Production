@@ -38,6 +38,8 @@ import { Country, State, City } from "country-state-city";
 import { getVendorProfile } from "@/api/products";
 import { handleError, handleSuccess } from "@/utils/toast";
 import { identityVerifyPath } from "@/api/identity";
+import PasswordRequirementsFeedback from "@/components/auth/PasswordRequirementsFeedback";
+import { isPasswordValid } from "@/utils/djangoPasswordValidation";
 
 type SignUpProps = {
   setIsLoggedIn: Dispatch<SetStateAction<boolean>>;
@@ -60,6 +62,7 @@ const SignUp: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [passwordFocused, setPasswordFocused] = useState(false);
   const [visible, setVisible] = useState(false);
   const [visible2, setVisible2] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -93,8 +96,6 @@ const SignUp: React.FC = () => {
   const router = useRouter();
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const passwordRegex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
   const updatePayload = (key: string, value: string) => {
     setPayload((prevPayload: any) => {
@@ -270,6 +271,18 @@ const SignUp: React.FC = () => {
 
     if (Payload.password !== confirmPassword) {
       setPasswordCheck(0);
+      return;
+    }
+
+    if (
+      !isPasswordValid(Payload.password, {
+        email: Payload.email,
+        username: Payload.email,
+        first_name: Payload.first_name,
+        last_name: Payload.last_name,
+      })
+    ) {
+      setPasswordError("Please meet all password requirements.");
       return;
     }
 
@@ -1364,14 +1377,10 @@ const SignUp: React.FC = () => {
                             event: React.ChangeEvent<HTMLInputElement>
                           ) => {
                             updatePayload("password", event.target.value);
-                            if (!passwordRegex.test(event.target.value)) {
-                              setPasswordError(
-                                "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
-                              );
-                            } else {
-                              setPasswordError("");
-                            }
+                            setPasswordError("");
                           }}
+                          onFocus={() => setPasswordFocused(true)}
+                          onBlur={() => setPasswordFocused(false)}
                           required
                         />
 
@@ -1386,6 +1395,18 @@ const SignUp: React.FC = () => {
                           )}
                         </span>
                       </div>
+                      <PasswordRequirementsFeedback
+                        password={Payload.password}
+                        userContext={{
+                          email: Payload.email,
+                          username: Payload.email,
+                          first_name: Payload.first_name,
+                          last_name: Payload.last_name,
+                        }}
+                        visible={
+                          passwordFocused || Payload.password.length > 0
+                        }
+                      />
                       {passwordError && (
                         <p className="text-red-500 text-sm mt-1">
                           {passwordError}
