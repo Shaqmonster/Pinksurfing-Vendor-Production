@@ -14,6 +14,7 @@ import { Loader2 } from "@/components/common/Loader";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { handleError } from "@/utils/toast";
+import { parseApiErrorMessage } from "@/utils/parseApiError";
 import { getAccessToken } from "@/utils/cookies";
 import { resolveVendorApiToken } from "@/utils/vendorAuth";
 import {
@@ -27,6 +28,7 @@ import {
 } from "@/utils/pendingListings";
 import { isBusinessForSaleCategory } from "@/components/inventory/businessForSaleCategory";
 import { filterListingCategories } from "@/constants/listingCategories";
+import { filterVisibleAdvancedAttributes } from "@/constants/electronicsAdvancedFields";
 import {
   BusinessForSaleListingWizard,
   type BusinessForSaleListingWizardHandle,
@@ -785,10 +787,12 @@ const AddProducts = () => {
             router.push("/inventory/products");
           }
         } else {
-          handleError(res.data?.data?.Status || "Error adding product");
+          handleError(
+            parseApiErrorMessage(res.data, "Error adding product")
+          );
         }
       } catch (error: any) {
-        toast.error(error.response?.data?.message || "Unexpected error occurred");
+        toast.error(parseApiErrorMessage(error.response?.data, "Unexpected error occurred"));
       } finally {
         setLoading(false);
       }
@@ -1273,8 +1277,9 @@ const AddProducts = () => {
     const coreAttributes = nonVariantAttributes.filter(
       (attr) => attr.key !== "product_type" && attr.section !== "advanced_specs"
     );
-    const advancedAttributes = nonVariantAttributes.filter(
-      (attr) => attr.section === "advanced_specs"
+    const advancedAttributes = filterVisibleAdvancedAttributes(
+      selectedSubcategory,
+      nonVariantAttributes.filter((attr) => attr.section === "advanced_specs")
     );
 
     return (
@@ -1331,7 +1336,7 @@ const AddProducts = () => {
                 Advanced Specs
               </h3>
               <p className="text-sm text-surface-500">
-                Optional — improves search visibility
+                Optional — capacity, speed, warranty, and other details (Product Type already covers DDR/NVMe)
               </p>
             </div>
             <span className="text-sm font-medium text-primary-500">

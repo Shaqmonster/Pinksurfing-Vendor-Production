@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { filterListingCategories } from "@/constants/listingCategories";
+import { filterVisibleAdvancedAttributes } from "@/constants/electronicsAdvancedFields";
 import {
   getSchemaCategories,
   getSchemaSubcategories,
@@ -974,11 +975,16 @@ const EditProduct = () => {
     </div>
   );
 
+  const visibleNonVariantAttributes = useMemo(
+    () => filterVisibleAdvancedAttributes(selectedSubcategory, nonVariantAttributes),
+    [selectedSubcategory, nonVariantAttributes]
+  );
+
   // Attributes step content
   const renderAttributesStep = () => (
     <div className="space-y-8 animate-fadeIn">
       {renderGroupedAttributes(variantAttributes, true, "Product Variants", "Configure variant-specific details", "bg-gradient-pink", SparklesIcon)}
-      {renderGroupedAttributes(nonVariantAttributes, false, "Specifications", "Additional product details", "bg-gradient-purple", TagIcon)}
+      {renderGroupedAttributes(visibleNonVariantAttributes, false, "Specifications", "Additional product details", "bg-gradient-purple", TagIcon)}
       <div className="premium-card p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-gradient-blue flex items-center justify-center text-white"><TagIcon /></div>
