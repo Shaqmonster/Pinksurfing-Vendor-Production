@@ -21,6 +21,7 @@ import { isPasswordValid } from "@/utils/djangoPasswordValidation";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loader, { Loader2 } from "@/components/common/Loader";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import dynamic from "next/dynamic";
 // react toasters added for intimation
 const OtpInput = dynamic(() => import("react-otp-input"), { ssr: false });
@@ -29,6 +30,8 @@ const ResetPassword = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [visible2, setVisible2] = useState(false);
 
   const validationSchema = Yup.object({
     otp: Yup.string().required("OTP is required"),
@@ -282,20 +285,32 @@ const ResetPassword = () => {
                       >
                         Create Password
                       </label>
-                      <input
-                        type="password"
-                        id="password"
-                        placeholder="Enter new password"
-                        name="password"
-                        onChange={handleChange}
-                        onFocus={() => setPasswordFocused(true)}
-                        onBlur={(event) => {
-                          setPasswordFocused(false);
-                          handleBlur(event);
-                        }}
-                        value={values.password}
-                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      />
+                      <div className="relative">
+                        <input
+                          type={visible ? "text" : "password"}
+                          id="password"
+                          placeholder="Enter new password"
+                          name="password"
+                          onChange={handleChange}
+                          onFocus={() => setPasswordFocused(true)}
+                          onBlur={(event) => {
+                            setPasswordFocused(false);
+                            handleBlur(event);
+                          }}
+                          value={values.password}
+                          className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        />
+                        <span
+                          className="absolute right-4 top-4 cursor-pointer"
+                          onClick={() => setVisible(!visible)}
+                        >
+                          {!visible ? (
+                            <FaEyeSlash size={22} />
+                          ) : (
+                            <FaEye size={22} />
+                          )}
+                        </span>
+                      </div>
                       <PasswordRequirementsFeedback
                         password={values.password}
                         userContext={{
@@ -320,16 +335,28 @@ const ResetPassword = () => {
                       >
                         Confirm Password
                       </label>
-                      <input
-                        type="password"
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        placeholder="Confirm password"
-                        value={values.confirmPassword}
-                        className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
-                      />
+                      <div className="relative">
+                        <input
+                          type={visible2 ? "text" : "password"}
+                          id="confirmPassword"
+                          name="confirmPassword"
+                          onChange={handleChange}
+                          onBlur={handleBlur}
+                          placeholder="Confirm password"
+                          value={values.confirmPassword}
+                          className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
+                        />
+                        <span
+                          className="absolute right-4 top-4 cursor-pointer"
+                          onClick={() => setVisible2(!visible2)}
+                        >
+                          {!visible2 ? (
+                            <FaEyeSlash size={22} />
+                          ) : (
+                            <FaEye size={22} />
+                          )}
+                        </span>
+                      </div>
                       {touched.confirmPassword && errors.confirmPassword && (
                         <div className="text-danger text-red-700 mb-4">
                           {errors.confirmPassword}
