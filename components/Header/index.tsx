@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { FiMenu } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { getAccessToken, getRefreshToken } from "@/utils/cookies";
+import { getStorefrontUrl } from "@/utils/storefrontUrl";
 
 const Header = (props: { loggedIn: boolean | undefined }) => {
   const pathname = usePathname();
@@ -141,7 +142,11 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
                   <FiMenu className="w-5 h-5 text-surface-700 dark:text-surface-300" />
                 </motion.button>
 
-                <Link href="/dashboard" className="flex lg:hidden items-center gap-2">
+                <a
+                  href={getStorefrontUrl()}
+                  className="flex lg:hidden items-center gap-2"
+                  title="Back to PinkSurfing marketplace"
+                >
                   <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden">
                     <Image
                       src="/logo.jpg"
@@ -151,7 +156,7 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
                       className="w-full h-full object-contain p-0.5"
                     />
                   </div>
-                </Link>
+                </a>
 
                 <div className="hidden md:block">
                   <h1 className="text-xl font-bold text-surface-900 dark:text-white">

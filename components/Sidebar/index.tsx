@@ -22,6 +22,7 @@ import {
 import { HiOutlineSparkles } from "react-icons/hi";
 import { getPropertyVisitCount } from "@/api/propertyVisits";
 import { getNdaCount } from "@/api/ndaSignatures";
+import { getStorefrontUrl } from "@/utils/storefrontUrl";
 
 const Sidebar = () => {
   const pathname = usePathname();
@@ -163,9 +164,10 @@ const Sidebar = () => {
       
       {/* Sidebar Header */}
       <div className="flex items-center justify-between gap-2 px-6 py-6">
-        <Link
-          href="/dashboard"
+        <a
+          href={getStorefrontUrl()}
           className="flex items-center gap-3 group"
+          title="Back to PinkSurfing marketplace"
         >
             <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/10 overflow-hidden">
               <Image 
@@ -184,7 +186,7 @@ const Sidebar = () => {
               Vendor Portal
             </span>
           </div>
-        </Link>
+        </a>
 
         {/* Toggle button only for small screens */}
         <button
