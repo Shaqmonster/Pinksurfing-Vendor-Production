@@ -57,13 +57,13 @@
 .bfs-wizard-root .form-panel.active{display:flex;flex-direction:column;gap:20px;}
 
 /* ── CARDS ── */
-.bfs-wizard-root .card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:24px;}
+.bfs-wizard-root .card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);padding:24px;overflow:visible;}
 .bfs-wizard-root .card-title{font-size:15px;font-weight:700;margin-bottom:4px;color:var(--text);}
 .bfs-wizard-root .card-sub{font-size:12px;color:var(--text-3);margin-bottom:20px;line-height:1.5;}
 .bfs-wizard-root .card-divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
 
 /* ── FIELDS ── */
-.bfs-wizard-root .field{display:flex;flex-direction:column;gap:5px;margin-bottom:16px;}
+.bfs-wizard-root .field{display:flex;flex-direction:column;gap:5px;margin-bottom:16px;overflow:visible;}
 .bfs-wizard-root .field:last-child{margin-bottom:0;}
 .bfs-wizard-root .field label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-2);display:flex;align-items:center;gap:6px;}
 .bfs-wizard-root .req{color:var(--pink);}
@@ -371,10 +371,14 @@
 /* Bottom bar sits in page flow (not a second full-width app dock) */
 .bfs-wizard-root.bfs-wizard--embedded .form-bottom-nav{
   position:relative;
-  margin-top:8px;
+  margin-top:16px;
   border-radius:12px;
   border:1px solid var(--border);
   box-shadow:var(--shadow-sm);
+  z-index:1;
+}
+.bfs-wizard-root.bfs-wizard--embedded .form-panel.active{
+  padding-bottom:8px;
 }
 .dark .bfs-wizard-root.bfs-wizard--embedded .form-bottom-nav{
   background:var(--surface);

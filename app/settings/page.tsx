@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import Image from "next/image";
@@ -17,8 +17,6 @@ import {
   FiX,
   FiHome,
   FiMap,
-  FiChevronDown,
-  FiSearch,
   FiCreditCard,
   FiHash,
 } from "react-icons/fi";
@@ -26,96 +24,14 @@ import { FaStore } from "react-icons/fa";
 import Link from "next/link";
 import { Country, State, City } from "country-state-city";
 import { getAccessToken } from "@/utils/cookies";
+import SearchableSelect from "@/components/SearchableSelect";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface CountryOption { name: string; code: string; }
 interface StateOption  { name: string; code: string; }
 
-// ─── Searchable dropdown ──────────────────────────────────────────────────────
-function SearchableSelect({
-  label,
-  value,
-  options,
-  loading,
-  placeholder,
-  disabled,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  options: { label: string; value: string }[];
-  loading?: boolean;
-  placeholder?: string;
-  disabled?: boolean;
-  onChange: (value: string, label: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
-
-  const filtered = options.filter(o => {
-    const label = typeof o?.label === "string" ? o.label : String(o?.label ?? "");
-    return label.toLowerCase().includes(search.toLowerCase());
-  });
-  const selected = options.find(o => o.value === value);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => { setOpen(o => !o); setSearch(""); }}
-        className="input-premium w-full flex items-center justify-between text-left disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <span className={selected ? "text-surface-900 dark:text-white" : "text-surface-400 dark:text-surface-500"}>
-          {loading ? "Loading…" : (selected?.label ?? placeholder ?? `Select ${label}`)}
-        </span>
-        <FiChevronDown className={`w-4 h-4 text-surface-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-
-      {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white dark:bg-dark-card rounded-xl border border-light-border dark:border-dark-border shadow-premium-lg max-h-60 flex flex-col overflow-hidden">
-          <div className="p-2 border-b border-light-border dark:border-dark-border flex-shrink-0">
-            <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-surface-400" />
-              <input
-                autoFocus
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder={`Search ${label}…`}
-                className="w-full pl-8 pr-3 py-1.5 text-sm rounded-lg bg-surface-50 dark:bg-dark-input border border-surface-200 dark:border-dark-border focus:outline-none focus:border-primary-500 text-surface-900 dark:text-white"
-              />
-            </div>
-          </div>
-          <ul className="overflow-y-auto flex-1">
-            {filtered.length === 0 ? (
-              <li className="px-4 py-3 text-sm text-surface-400 text-center">No results</li>
-            ) : filtered.map(opt => (
-              <li key={opt.value}>
-                <button
-                  type="button"
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-surface-50 dark:hover:bg-dark-hover transition-colors ${opt.value === value ? "text-primary-500 font-medium bg-primary-50 dark:bg-primary-500/10" : "text-surface-900 dark:text-white"}`}
-                  onClick={() => { onChange(opt.value, opt.label); setOpen(false); }}
-                >
-                  {opt.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
+const SETTINGS_SELECT_TRIGGER =
+  "input-premium w-full flex items-center justify-between text-left disabled:opacity-50 disabled:cursor-not-allowed";
 
 const Settings = () => {
   const [token, setToken] = useState<string | null>(null);
@@ -560,6 +476,7 @@ const Settings = () => {
                   value={country}
                   options={allCountries.map(c => ({ label: c.name, value: c.code }))}
                   placeholder="Select country"
+                  triggerClassName={SETTINGS_SELECT_TRIGGER}
                   onChange={(code, name) => {
                     setCountry(code);           // send ISO code to backend
                     setSelectedCountryName(name);
@@ -584,6 +501,7 @@ const Settings = () => {
                     loading={loadingStates}
                     placeholder="Select state"
                     disabled={!country}
+                    triggerClassName={SETTINGS_SELECT_TRIGGER}
                     onChange={(code, name) => {
                       setState(code);           // send state code to backend
                       setSelectedStateName(name);
@@ -616,6 +534,7 @@ const Settings = () => {
                     loading={loadingCities}
                     placeholder="Select city"
                     disabled={!state}
+                    triggerClassName={SETTINGS_SELECT_TRIGGER}
                     onChange={(val) => setCity(val)}
                   />
                 ) : (
