@@ -11,6 +11,16 @@ import {
 } from "@/utils/googleAuth";
 import { handleError, handleSuccess } from "@/utils/toast";
 
+type VendorLoginResult = {
+  status?: number;
+  message?: string;
+  token?: string;
+  refresh?: string;
+  detail?: string;
+  error?: boolean;
+  id?: number;
+};
+
 function parseJwt(token: string) {
   try {
     const base64Url = token.split(".")[1];
@@ -44,11 +54,14 @@ export default function GoogleAuthCompletePage() {
         }
 
         const session = await completeGoogleSignIn();
-        const data = await signInWithSsoTokens(session.access, session.refresh);
+        const data = (await signInWithSsoTokens(
+          session.access,
+          session.refresh
+        )) as VendorLoginResult;
 
         if (cancelled) return;
 
-        if (data && "status" in data && data.status === 409) {
+        if (data?.status === 409 && data.token) {
           handleError(data.message || "Complete vendor registration to continue");
           localStorage.setItem(
             "customer",
@@ -59,7 +72,7 @@ export default function GoogleAuthCompletePage() {
           return;
         }
 
-        if (data && "token" in data && data.token) {
+        if (data?.token) {
           localStorage.setItem("store", JSON.stringify(data));
           setVendor(data);
           setIsLoggedIn(true);
@@ -69,9 +82,7 @@ export default function GoogleAuthCompletePage() {
         }
 
         handleError(
-          ("message" in data && data.message) ||
-            ("detail" in data && data.detail) ||
-            "Google sign-in failed"
+          data?.message || data?.detail || "Google sign-in failed"
         );
         setMessage("Redirecting to sign in...");
         router.replace("/auth/signin");

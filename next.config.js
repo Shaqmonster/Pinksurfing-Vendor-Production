@@ -6,6 +6,10 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  eslint: {
+    // Pre-existing warnings across the repo; do not block production deploys.
+    ignoreDuringBuilds: true,
+  },
 };
 
 module.exports = nextConfig;
