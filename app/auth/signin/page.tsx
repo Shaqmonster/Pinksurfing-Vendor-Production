@@ -1,23 +1,27 @@
 "use client";
 import React, { useState, useContext } from "react";
-import Link from "next/link";
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { persistAuthTokens, signIn } from "@/api/account";
 import { useRouter } from "next/navigation";
 import { MyContext } from "@/app/providers/context";
 import Loader from "@/components/common/Loader";
-import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight } from "react-icons/fi";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import { handleError, handleSuccess } from "@/utils/toast";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import AuthDivider from "@/components/auth/AuthDivider";
+import AuthLayout from "@/components/auth/AuthLayout";
+import {
+  authBtnPrimary,
+  authInputClass,
+  authLabelClass,
+  authLinkClass,
+} from "@/components/auth/authTheme";
 
 const SignIn: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { setIsLoggedIn, setVendor, setAuthpage } = useContext(MyContext);
   const [loading, setLoading] = useState(false);
@@ -25,7 +29,7 @@ const SignIn: React.FC = () => {
   const router = useRouter();
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  const handleChange = (event: any) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
 
     if (name === "email") {
@@ -39,7 +43,6 @@ const SignIn: React.FC = () => {
 
     if (name === "password") {
       setPassword(value);
-      if (passwordError) setPasswordError("");
     }
   };
 
@@ -65,29 +68,28 @@ const SignIn: React.FC = () => {
     }
   }
 
-  const login = async () => {
+  const login = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError("");
+
+    if (!email || !password) {
+      setError(!email ? "Email is required" : "Password is required");
+      return;
+    }
+
     setLoading(true);
 
-    if (email && password) {
-      let data = await signIn({ email, password })
-        .then((res) => res)
-        .catch((e) => {
-          console.log(e);
-          if (e.response?.status == 401) {
-            handleError("Invalid email or password");
-          } else {
-            handleError("Invalid email or password");
-          }
-        });
-      setLoading(false);
-      setError("");
-      console.log(data);
+    try {
+      const data = await signIn({ email, password });
+
       if (data && data.status === 409) {
         handleError(data?.message);
         localStorage.setItem("customer", JSON.stringify(parseJwt(data.token)));
         setAuthpage("signup");
-      } else if (data && "token" in data) {
+        return;
+      }
+
+      if (data && "token" in data && data.token) {
         const { token, refresh } = data;
         const vendorId = data.id ?? data.pk;
         if (typeof window !== "undefined") {
@@ -98,196 +100,127 @@ const SignIn: React.FC = () => {
         setIsLoggedIn(true);
         handleSuccess("Welcome back! Login successful");
         router.replace("/dashboard");
-      } else if (data?.error) {
+        return;
+      }
+
+      if (data?.error) {
         handleError(data.message || data.detail || "Sign in failed");
       } else {
         handleError(data?.message || "Invalid email or password");
       }
-    } else {
-      !email ? setError("Email is required") : setError("Password is required");
+    } catch (e) {
+      handleError("Invalid email or password");
+    } finally {
+      setLoading(false);
     }
-
-    return false;
   };
 
-  const isButtonDisabled = () => {
-    return email.length === 0 || password.length === 0 || !!emailError || !!passwordError;
-  };
+  const isButtonDisabled =
+    email.length === 0 || password.length === 0 || !!emailError || loading;
 
   return (
     <>
-      {loading ? (
-        <Loader />
-      ) : (
-        <div className="min-h-screen flex items-center justify-center bg-surface-50 dark:bg-dark-bg p-4">
-          {/* Background decoration */}
-          <div className="fixed inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-500/10 rounded-full blur-3xl" />
-            <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent-purple/10 rounded-full blur-3xl" />
+      <AuthLayout
+        title="Welcome back"
+        subtitle="Sign in to your vendor dashboard"
+        footer={
+          <>
+            Don&apos;t have a vendor account?{" "}
+            <button
+              type="button"
+              onClick={() => setAuthpage("signup")}
+              className={authLinkClass}
+            >
+              Create vendor account
+            </button>
+          </>
+        }
+      >
+        <form onSubmit={login} className="space-y-5">
+          <GoogleSignInButton disabled={loading} />
+          <AuthDivider label="or sign in with email" />
+
+          <div>
+            <label htmlFor="email" className={authLabelClass}>
+              Email
+            </label>
+            <input
+              name="email"
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={handleChange}
+              className={authInputClass}
+              required
+            />
+            {emailError && (
+              <p className="text-red-500 text-sm mt-2">{emailError}</p>
+            )}
           </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="relative w-full max-w-md"
-          >
-            {/* Card */}
-            <div className="bg-white dark:bg-dark-card rounded-3xl shadow-premium-lg border border-surface-100 dark:border-dark-border p-8 md:p-10">
-              {/* Logo & Header */}
-              <div className="text-center mb-8">
-                <Link href="/" className="inline-flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-xl overflow-hidden">
-                    <Image
-                      src="/logo.jpg"
-                      alt="PinkSurfing"
-                      width={48}
-                      height={48}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <span className="text-xl font-bold text-surface-900 dark:text-white">
-                    PinkSurfing
-                  </span>
-                </Link>
-                <h1 className="text-2xl md:text-3xl font-bold text-surface-900 dark:text-white mb-2">
-                  Welcome back
-                </h1>
-                <p className="text-surface-500 dark:text-surface-400">
-                  Sign in to your vendor account
-                </p>
-              </div>
-
-              {/* Form */}
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  await login();
-                }}
-                className="space-y-5"
+          <div>
+            <label htmlFor="password" className={authLabelClass}>
+              Password
+            </label>
+            <div className="relative">
+              <input
+                name="password"
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                value={password}
+                onChange={handleChange}
+                className={`${authInputClass} pr-11`}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                <GoogleSignInButton disabled={loading} />
-                <AuthDivider label="or sign in with email" />
-
-                {/* Email Input */}
-                <div>
-                  <label className="block text-sm font-semibold text-surface-700 dark:text-surface-300 mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-400">
-                      <FiMail className="w-5 h-5" />
-                    </div>
-                    <input
-                      name="email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={handleChange}
-                      className={`w-full pl-12 pr-4 py-3.5 rounded-xl bg-surface-50 dark:bg-dark-input border-2 text-surface-900 dark:text-white placeholder:text-surface-400 transition-all duration-200 focus:outline-none ${
-                        emailError
-                          ? "border-danger focus:border-danger"
-                          : "border-surface-200 dark:border-dark-border focus:border-primary-500 dark:focus:border-primary-500"
-                      }`}
-                      required
-                    />
-                  </div>
-                  {emailError && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-sm text-danger mt-2"
-                    >
-                      {emailError}
-                    </motion.p>
-                  )}
-                </div>
-
-                {/* Password Input */}
-                <div>
-                  <label className="block text-sm font-semibold text-surface-700 dark:text-surface-300 mb-2">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-surface-400">
-                      <FiLock className="w-5 h-5" />
-                    </div>
-                    <input
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                      value={password}
-                      onChange={handleChange}
-                      className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-surface-50 dark:bg-dark-input border-2 border-surface-200 dark:border-dark-border text-surface-900 dark:text-white placeholder:text-surface-400 transition-all duration-200 focus:outline-none focus:border-primary-500 dark:focus:border-primary-500"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 transition-colors"
-                    >
-                      {showPassword ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Forgot Password */}
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setAuthpage("forgot")}
-                    className="text-sm font-medium text-primary-500 hover:text-primary-600 transition-colors"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
-
-                {/* Error Message */}
-                {error && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-4 rounded-xl bg-danger/10 text-danger text-sm font-medium"
-                  >
-                    {error}
-                  </motion.div>
+                {showPassword ? (
+                  <FiEyeOff size={20} />
+                ) : (
+                  <FiEye size={20} />
                 )}
-
-                {/* Submit Button */}
-                <motion.button
-                  type="submit"
-                  disabled={isButtonDisabled()}
-                  whileHover={{ scale: isButtonDisabled() ? 1 : 1.01 }}
-                  whileTap={{ scale: isButtonDisabled() ? 1 : 0.99 }}
-                  className={`w-full py-4 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition-all duration-300 ${
-                    isButtonDisabled()
-                      ? "bg-surface-300 dark:bg-dark-border cursor-not-allowed"
-                      : "bg-gradient-to-r from-primary-500 to-accent-purple shadow-lg hover:shadow-xl hover:shadow-primary-500/25"
-                  }`}
-                >
-                  Sign In
-                  <FiArrowRight className="w-5 h-5" />
-                </motion.button>
-
-                {/* Sign Up Link */}
-                <p className="text-center text-surface-500 dark:text-surface-400 pt-2">
-                  Don&apos;t have an account?{" "}
-                  <button
-                    type="button"
-                    onClick={() => setAuthpage("signup")}
-                    className="text-primary-500 hover:text-primary-600 font-semibold transition-colors"
-                  >
-                    Create account
-                  </button>
-                </p>
-              </form>
+              </button>
             </div>
+            <div className="flex justify-end mt-2">
+              <button
+                type="button"
+                onClick={() => setAuthpage("forgot")}
+                className={`text-sm ${authLinkClass}`}
+              >
+                Forgot password?
+              </button>
+            </div>
+          </div>
 
-            {/* Footer */}
-            <p className="text-center text-surface-400 dark:text-surface-500 text-sm mt-6">
-              © 2024 PinkSurfing. All rights reserved.
-            </p>
-          </motion.div>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 rounded-xl bg-red-50 text-red-600 text-sm font-medium dark:bg-red-500/10 dark:text-red-400"
+            >
+              {error}
+            </motion.div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isButtonDisabled}
+            className={authBtnPrimary}
+          >
+            {loading ? "Signing in..." : "Sign in to vendor dashboard"}
+          </button>
+        </form>
+      </AuthLayout>
+
+      {loading && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <Loader />
         </div>
       )}
     </>

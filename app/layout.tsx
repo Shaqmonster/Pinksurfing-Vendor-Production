@@ -18,6 +18,10 @@ function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { loggedIn, sidebarOpen, setSidebarOpen, authReady } = useContext(MyContext);
   const isGoogleComplete = pathname === "/auth/google/complete";
+  const isAuthRoute =
+    isGoogleComplete ||
+    pathname.startsWith("/auth") ||
+    (pathname === "/" && !loggedIn);
 
   useEffect(() => {
     if (loggedIn && pathname.includes("/auth/signup")) {
@@ -30,6 +34,10 @@ function AppShell({ children }: { children: React.ReactNode }) {
   }, [setSidebarOpen]);
 
   if (!authReady) return <Loader />;
+
+  if (isAuthRoute) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-screen bg-light-bg dark:bg-dark-bg transition-colors duration-300">

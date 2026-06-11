@@ -1,6 +1,7 @@
 "use client";
 
 import { startGoogleSignIn } from "@/utils/googleAuth";
+import { authBtnGoogle } from "@/components/auth/authTheme";
 
 const GoogleIcon = () => (
   <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
@@ -40,7 +41,7 @@ const GoogleSignInButton = ({
     type="button"
     disabled={disabled}
     onClick={() => startGoogleSignIn(nextUrl)}
-    className={`w-full flex items-center justify-center gap-3 rounded-xl border-2 border-surface-200 dark:border-dark-border bg-white dark:bg-dark-card px-4 py-3.5 text-sm font-semibold text-surface-700 dark:text-surface-200 transition-colors hover:bg-surface-50 dark:hover:bg-dark-hover disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+    className={`${authBtnGoogle} ${className}`}
   >
     <GoogleIcon />
     {label}
