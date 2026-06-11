@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { toast } from "react-toastify";
 import { getAccessToken } from "@/utils/cookies";
 import {
@@ -188,7 +188,10 @@ export async function createVendorFromSSO(payload: any) {
     return result;
   } catch (err) {
     console.error("Error during vendor creation from SSO:", err);
-    return err.response ? err.response.data : { error: "An error occurred" };
+    if (axios.isAxiosError(err)) {
+      return err.response?.data ?? { error: "An error occurred" };
+    }
+    return { error: "An error occurred" };
   }
 }
 
