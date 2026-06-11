@@ -213,6 +213,60 @@ export async function sendOtp(email: any) {
   }
 }
 
+async function resolveVendorLoginAfterSso(access: string, refresh?: string) {
+  const headers = { Authorization: `Bearer ${access}` };
+
+  try {
+    const checkVendorResponse = await axios.post(
+      `${BASE_URL}/vendor/check-vendor/`,
+      {},
+      { headers }
+    );
+    if (checkVendorResponse.status === 409) {
+      return { status: 409, message: "Vendor needs to register", token: access, refresh };
+    }
+  } catch (checkVendorError: any) {
+    if (checkVendorError?.response?.status === 409) {
+      return {
+        status: 409,
+        message: "Vendor needs to register",
+        token: access,
+        refresh,
+      };
+    }
+    if (checkVendorError?.response?.status === 401 || checkVendorError?.response?.status === 403) {
+      const detail =
+        checkVendorError?.response?.data?.detail ||
+        "Marketplace API rejected your login token.";
+      return { error: true, message: detail, detail };
+    }
+    throw checkVendorError;
+  }
+
+  const vendorProfile = await axios.get(`${BASE_URL}/vendor/profile/`, { headers });
+  const profile = vendorProfile.data;
+  const vendorId = profile?.id ?? profile?.pk;
+
+  if (!vendorId) {
+    return {
+      error: true,
+      message: "Vendor profile could not be loaded. Please try again or contact support.",
+    };
+  }
+
+  persistAuthTokens(access, refresh, vendorId);
+  return { ...profile, id: vendorId, token: access, refresh };
+}
+
+export async function signInWithSsoTokens(access: string, refresh?: string) {
+  try {
+    return await resolveVendorLoginAfterSso(access, refresh);
+  } catch (err: any) {
+    console.error("signInWithSsoTokens failed:", err?.response?.data || err);
+    return err?.response?.data ?? { error: "An error occurred" };
+  }
+}
+
 export async function signIn(payload: { email: string; password: string }) {
   try {
     const response = await axios.post(
@@ -226,45 +280,7 @@ export async function signIn(payload: { email: string; password: string }) {
     }
 
     const { access, refresh } = response.data;
-    const headers = { Authorization: `Bearer ${access}` };
-
-    try {
-      const checkVendorResponse = await axios.post(
-        `${BASE_URL}/vendor/check-vendor/`,
-        {},
-        { headers }
-      );
-      if (checkVendorResponse.status === 409) {
-        return { status: 409, message: "Vendor needs to register", token: access };
-      }
-    } catch (checkVendorError: any) {
-      if (checkVendorError?.response?.status === 409) {
-        return {
-          status: 409,
-          message: "Vendor needs to register",
-          token: access,
-        };
-      }
-      if (checkVendorError?.response?.status === 401 || checkVendorError?.response?.status === 403) {
-        const detail = checkVendorError?.response?.data?.detail || "Marketplace API rejected your login token.";
-        return { error: true, message: detail, detail };
-      }
-      throw checkVendorError;
-    }
-
-    const vendorProfile = await axios.get(`${BASE_URL}/vendor/profile/`, { headers });
-    const profile = vendorProfile.data;
-    const vendorId = profile?.id ?? profile?.pk;
-
-    if (!vendorId) {
-      return {
-        error: true,
-        message: "Vendor profile could not be loaded. Please try again or contact support.",
-      };
-    }
-
-    persistAuthTokens(access, refresh, vendorId);
-    return { ...profile, id: vendorId, token: access, refresh };
+    return await resolveVendorLoginAfterSso(access, refresh);
   } catch (err: any) {
     console.error("signIn failed:", err?.response?.data || err);
     if (err?.response?.status === 401) {

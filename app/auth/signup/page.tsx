@@ -39,6 +39,8 @@ import { getVendorProfile } from "@/api/products";
 import { handleError, handleSuccess } from "@/utils/toast";
 import { identityVerifyPath } from "@/api/identity";
 import PasswordRequirementsFeedback from "@/components/auth/PasswordRequirementsFeedback";
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import AuthDivider from "@/components/auth/AuthDivider";
 import { isPasswordValid } from "@/utils/djangoPasswordValidation";
 
 type SignUpProps = {
@@ -526,6 +528,12 @@ const SignUp: React.FC = () => {
                   {/* Step 1: Email Input */}
                   {step === 1 && (
                     <>
+                      <GoogleSignInButton
+                        disabled={loading}
+                        label="Sign up with Google"
+                      />
+                      <AuthDivider label="or sign up with email" />
+
                       <div className="mb-4">
                         <label className="mb-2.5 block font-medium text-black dark:text-white">
                           Email

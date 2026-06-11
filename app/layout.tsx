@@ -17,6 +17,7 @@ import "react-toastify/dist/ReactToastify.css";
 function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { loggedIn, sidebarOpen, setSidebarOpen, authReady } = useContext(MyContext);
+  const isGoogleComplete = pathname === "/auth/google/complete";
 
   useEffect(() => {
     if (loggedIn && pathname.includes("/auth/signup")) {
@@ -54,12 +55,16 @@ function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         )}
         <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
-          <Header loggedIn={loggedIn} />
-          <main className="flex-1">
-            <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-8">
-              <div className="animate-fadeIn">{children}</div>
-            </div>
-          </main>
+          {!isGoogleComplete && <Header loggedIn={loggedIn} />}
+          {isGoogleComplete ? (
+            children
+          ) : (
+            <main className="flex-1">
+              <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-8">
+                <div className="animate-fadeIn">{children}</div>
+              </div>
+            </main>
+          )}
         </div>
       </div>
     </div>

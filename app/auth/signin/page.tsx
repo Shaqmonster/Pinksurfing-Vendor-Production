@@ -9,6 +9,8 @@ import { MyContext } from "@/app/providers/context";
 import Loader from "@/components/common/Loader";
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight } from "react-icons/fi";
 import { handleError, handleSuccess } from "@/utils/toast";
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import AuthDivider from "@/components/auth/AuthDivider";
 
 const SignIn: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -164,6 +166,9 @@ const SignIn: React.FC = () => {
                 }}
                 className="space-y-5"
               >
+                <GoogleSignInButton disabled={loading} />
+                <AuthDivider label="or sign in with email" />
+
                 {/* Email Input */}
                 <div>
                   <label className="block text-sm font-semibold text-surface-700 dark:text-surface-300 mb-2">
