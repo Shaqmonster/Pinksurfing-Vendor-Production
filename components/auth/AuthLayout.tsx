@@ -10,7 +10,7 @@ const features = [
   {
     icon: FiShoppingBag,
     title: "Your storefront",
-    description: "List products, gigs, and business listings in one dashboard.",
+    description: "List products and business listings in one dashboard.",
   },
   {
     icon: FiPackage,

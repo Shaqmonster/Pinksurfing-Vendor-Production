@@ -6,6 +6,7 @@ import { MyContext } from "@/app/providers/context";
 import { authBtnPrimary, authLinkClass } from "@/components/auth/authTheme";
 import { getStoredAccessToken } from "@/utils/cookies";
 import { decodeJwt } from "@/utils/ssoSession";
+import { getStorefrontUrl } from "@/utils/storefrontUrl";
 
 export default function VendorOnboardingWelcome() {
   const { setAuthpage } = useContext(MyContext);
@@ -41,13 +42,9 @@ export default function VendorOnboardingWelcome() {
 
         <p className="text-center text-sm text-slate-500 dark:text-surface-400">
           Not ready yet?{" "}
-          <button
-            type="button"
-            onClick={() => setAuthpage("signin")}
-            className={authLinkClass}
-          >
-            Back to sign in
-          </button>
+          <a href={getStorefrontUrl()} className={authLinkClass}>
+            Back to pinksurfing.com
+          </a>
         </p>
       </div>
     </AuthLayout>
