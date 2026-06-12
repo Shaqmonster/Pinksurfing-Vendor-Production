@@ -1,6 +1,8 @@
 // next.config.js
 const nextConfig = {
+  output: "export",
   images: {
+    unoptimized: true,
     domains: ['pinksurfing.s3.eu-central-1.amazonaws.com','pinksurfing-ecom.s3.us-east-2.amazonaws.com'],
   },
   typescript: {

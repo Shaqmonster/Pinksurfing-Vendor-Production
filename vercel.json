@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/orders/:id",
+      "destination": "/orders/_.html"
+    },
+    {
+      "source": "/buyer-requests/:id",
+      "destination": "/buyer-requests/_.html"
+    },
+    {
+      "source": "/inventory/editProduct/:id",
+      "destination": "/inventory/editProduct/_.html"
+    }
+  ]
+}
