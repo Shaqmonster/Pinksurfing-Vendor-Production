@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiUpload } from "react-icons/fi";
+import { Country, State } from "country-state-city";
 import AuthLayout from "@/components/auth/AuthLayout";
-import CountryCodeSelector from "@/components/CountryCodeSelector/countrycode";
 import Loader from "@/components/common/Loader";
 import { MyContext } from "@/app/providers/context";
 import { createVendorFromSSO } from "@/api/account";
@@ -16,6 +16,7 @@ import {
   authLabelClass,
   authLinkClass,
 } from "@/components/auth/authTheme";
+import { toast } from "react-toastify";
 import { handleError, handleSuccess } from "@/utils/toast";
 import {
   clearVendorOnboardDraft,
@@ -45,6 +46,23 @@ export default function RegisterAsVendor() {
   const [draft, setDraft] = useState<VendorOnboardDraft>(emptyVendorOnboardDraft());
   const [profilePic, setProfilePic] = useState<File | null>(null);
   const [shopImage, setShopImage] = useState<File | null>(null);
+  const [countries, setCountries] = useState<ReturnType<typeof Country.getAllCountries>>([]);
+  const [states, setStates] = useState<ReturnType<typeof State.getStatesOfCountry>>([]);
+
+  useEffect(() => {
+    setCountries(Country.getAllCountries());
+  }, []);
+
+  useEffect(() => {
+    if (!draft.country) {
+      setStates([]);
+      return;
+    }
+    setStates(State.getStatesOfCountry(draft.country));
+  }, [draft.country]);
+
+  const postalHint = useMemo(() => getPostalHint(draft.country), [draft.country]);
+  const phoneHint = useMemo(() => getPhoneHint(draft.country), [draft.country]);
 
   useEffect(() => {
     const saved = loadVendorOnboardDraft();
@@ -168,6 +186,9 @@ export default function RegisterAsVendor() {
     if (response?.token) {
       clearVendorOnboardDraft();
       handleSuccess("Your vendor store is ready!");
+      if (response.address_warning) {
+        toast.warn(response.address_warning, { position: "top-right", autoClose: 6000 });
+      }
       localStorage.setItem("access", response.token);
       localStorage.setItem("vendor_id", response.vendor_id);
       setIsLoggedIn(true);
@@ -277,7 +298,7 @@ export default function RegisterAsVendor() {
               <input
                 type="tel"
                 className={authInputClass}
-                placeholder="Your contact number"
+                placeholder={phoneHint}
                 value={draft.phone_number ?? ""}
                 onChange={(e) => updateDraft({ phone_number: e.target.value })}
                 autoComplete="tel"
@@ -337,26 +358,56 @@ export default function RegisterAsVendor() {
 
         {step === 5 && (
           <div className="space-y-4">
-            <Field label="State" required>
-              <input
-                className={authInputClass}
-                placeholder="State / province"
-                value={draft.state}
-                onChange={(e) => updateDraft({ state: e.target.value })}
-              />
-            </Field>
             <Field label="Country" required>
-              <CountryCodeSelector
-                onSelect={(code: string) => updateDraft({ country: code })}
-              />
-              {draft.country ? (
-                <p className="mt-1 text-xs text-slate-500">Selected: {draft.country}</p>
+              <select
+                className={authInputClass}
+                value={draft.country}
+                onChange={(e) => {
+                  const countryCode = e.target.value;
+                  updateDraft({ country: countryCode, state: "" });
+                }}
+              >
+                <option value="">Select your country</option>
+                {countries.map((country) => (
+                  <option key={country.isoCode} value={country.isoCode}>
+                    {country.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="State / province" required>
+              <select
+                className={authInputClass}
+                value={draft.state}
+                disabled={!draft.country || states.length === 0}
+                onChange={(e) => updateDraft({ state: e.target.value })}
+              >
+                <option value="">
+                  {!draft.country
+                    ? "Select country first"
+                    : states.length
+                      ? "Select your state / province"
+                      : "Enter state code manually below"}
+                </option>
+                {states.map((state) => (
+                  <option key={state.isoCode} value={state.isoCode}>
+                    {state.name}
+                  </option>
+                ))}
+              </select>
+              {draft.country && states.length === 0 ? (
+                <input
+                  className={`${authInputClass} mt-2`}
+                  placeholder="State / province code"
+                  value={draft.state}
+                  onChange={(e) => updateDraft({ state: e.target.value })}
+                />
               ) : null}
             </Field>
-            <Field label="Zip code" required>
+            <Field label="Postal code" required>
               <input
                 className={authInputClass}
-                placeholder="Postal / zip code"
+                placeholder={postalHint}
                 value={draft.zip_code}
                 onChange={(e) => updateDraft({ zip_code: e.target.value })}
               />
@@ -441,6 +492,36 @@ function Field({
 function normalizePhone(value: unknown): string {
   if (value == null || value === "null" || value === "undefined") return "";
   return String(value).trim();
+}
+
+function getPostalHint(country: string): string {
+  switch (country) {
+    case "IN":
+      return "6-digit PIN code (e.g. 400001)";
+    case "TR":
+      return "5-digit postal code";
+    case "BD":
+      return "4-digit postal code";
+    case "US":
+      return "ZIP code (e.g. 94102)";
+    default:
+      return "Postal / zip code";
+  }
+}
+
+function getPhoneHint(country: string): string {
+  switch (country) {
+    case "IN":
+      return "+91 98765 43210";
+    case "TR":
+      return "+90 532 123 4567";
+    case "BD":
+      return "+880 1712 345678";
+    case "US":
+      return "+1 415 555 1234";
+    default:
+      return "Include country code, e.g. +91...";
+  }
 }
 
 function UploadBox({

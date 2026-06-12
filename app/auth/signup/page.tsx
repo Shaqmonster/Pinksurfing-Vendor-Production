@@ -261,6 +261,9 @@ const SignUp: React.FC = () => {
 
     if (response.success && response.data && response.data.vendor_id) {
       handleSuccess("Vendor registration successful!");
+      if (response.data.address_warning) {
+        toast.warn(response.data.address_warning, { position: "top-right", autoClose: 6000 });
+      }
       localStorage.setItem("vendor_id", response.data.vendor_id);
       setIsLoggedIn(true);
       if (response.data.kyc_required) {
@@ -302,6 +305,9 @@ const SignUp: React.FC = () => {
 
     if (response.access) {
       handleSuccess("Registration Successful!");
+      if (response.address_warning) {
+        toast.warn(response.address_warning, { position: "top-right", autoClose: 6000 });
+      }
       if (typeof window !== "undefined") {
         localStorage.setItem("access", response.access);
         localStorage.setItem("vendor_id", response.vendor_id);

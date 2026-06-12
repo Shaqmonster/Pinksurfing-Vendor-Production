@@ -190,6 +190,7 @@ export async function signUp(payload: any) {
           vendor_id: response.data.vendor_id,
           kyc_required: response.data.kyc_required,
           kyc: response.data.kyc,
+          address_warning: response.data.address_warning,
         };
         console.log("Token fetched after sign up:", data);
       } else {
