@@ -7,6 +7,7 @@ import SignUp from "./auth/signup/page";
 import ForgotPassword from "./auth/forgot-password/page";
 import ResetPassword from "./auth/reset-password/page";
 import RegisterAsVendor from "./auth/register-as-vendor.tsx/page";
+import VendorOnboardingWelcome from "@/components/auth/VendorOnboardingWelcome";
 import Loader from "@/components/common/Loader";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -34,6 +35,9 @@ export default function Home() {
         break;
       case "reset":
         setAuthPageState(<ResetPassword />);
+        break;
+      case "vendor-welcome":
+        setAuthPageState(<VendorOnboardingWelcome />);
         break;
       case "register-as-vendor":
         setAuthPageState(<RegisterAsVendor />);

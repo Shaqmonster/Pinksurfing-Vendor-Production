@@ -209,7 +209,9 @@ export async function signUp(payload: any) {
 export async function createVendorFromSSO(payload: any) {
   const formData = new FormData();
   Object.keys(payload).forEach((key) => {
-    formData.append(key, payload[key]);
+    const value = payload[key];
+    if (value == null || value === "") return;
+    formData.append(key, value);
   });
 
   try {

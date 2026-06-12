@@ -46,7 +46,7 @@ export default function GoogleAuthCompletePage() {
         if (cancelled) return;
 
         if (data?.status === 409 && data.token) {
-          setAuthpage("register-as-vendor");
+          setAuthpage("vendor-welcome");
           router.replace("/");
           return;
         }

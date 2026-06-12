@@ -61,7 +61,7 @@ const SignIn: React.FC = () => {
       const data = await signIn({ email, password });
 
       if (data && data.status === 409) {
-        setAuthpage("register-as-vendor");
+        setAuthpage("vendor-welcome");
         return;
       }
 

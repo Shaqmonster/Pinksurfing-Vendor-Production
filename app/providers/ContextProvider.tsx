@@ -92,7 +92,7 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (vendorStatus.needsOnboarding) {
       storeVendorOnboardingFromJwt(session.access);
-      setAuthpage("register-as-vendor");
+      setAuthpage("vendor-welcome");
       setIsLoggedIn(false);
       return;
     }
@@ -126,7 +126,7 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
       const vendorStatus = await checkVendorStatus(session.access);
       if (vendorStatus.needsOnboarding) {
         storeVendorOnboardingFromJwt(session.access);
-        setAuthpage("register-as-vendor");
+        setAuthpage("vendor-welcome");
         setIsLoggedIn(false);
         return;
       }

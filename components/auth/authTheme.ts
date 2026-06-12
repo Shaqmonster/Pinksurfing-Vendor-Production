@@ -9,6 +9,9 @@ export const authRequiredMark = "text-violet-500 font-bold ml-0.5";
 export const authBtnPrimary =
   "w-full rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 py-3.5 font-semibold text-white shadow-lg shadow-violet-500/20 transition-all duration-200 hover:shadow-violet-500/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none";
 
+export const authBtnSecondary =
+  "w-full rounded-xl border-2 border-slate-200 bg-white py-3.5 font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-dark-border dark:bg-dark-card dark:text-surface-200 dark:hover:bg-dark-hover";
+
 export const authBtnGoogle =
   "w-full flex items-center justify-center gap-3 rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-dark-border dark:bg-dark-card dark:text-surface-200 dark:hover:bg-dark-hover";
 
