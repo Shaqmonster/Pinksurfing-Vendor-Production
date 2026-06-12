@@ -62,6 +62,9 @@ export default function RegisterAsVendor() {
       ...fromCustomer,
       ...saved,
       token: fromCustomer.token || saved?.token || "",
+      phone_number: normalizePhone(
+        saved?.phone_number ?? fromCustomer.phone_number
+      ),
     };
     setDraft(merged);
     setStep(Math.min(Math.max(merged.step || 1, 1), TOTAL_STEPS));
@@ -88,6 +91,7 @@ export default function RegisterAsVendor() {
       case 2:
         if (!draft.company_name.trim()) return "Store name is required.";
         if (!draft.bio.trim()) return "Please add a short bio for your store.";
+        if (!draft.phone_number.trim()) return "Phone number is required.";
         return null;
       case 3:
         return null;
@@ -269,18 +273,14 @@ export default function RegisterAsVendor() {
                 onChange={(e) => updateDraft({ bio: e.target.value })}
               />
             </Field>
-            <Field label="Phone number">
+            <Field label="Phone number" required>
               <input
                 type="tel"
-                className={
-                  draft.phone_number
-                    ? `${authInputClass} bg-slate-100 dark:bg-dark-surface`
-                    : authInputClass
-                }
+                className={authInputClass}
                 placeholder="Your contact number"
-                value={draft.phone_number}
-                readOnly={Boolean(draft.phone_number)}
+                value={draft.phone_number ?? ""}
                 onChange={(e) => updateDraft({ phone_number: e.target.value })}
+                autoComplete="tel"
               />
             </Field>
           </div>
@@ -436,6 +436,11 @@ function Field({
       {children}
     </div>
   );
+}
+
+function normalizePhone(value: unknown): string {
+  if (value == null || value === "null" || value === "undefined") return "";
+  return String(value).trim();
 }
 
 function UploadBox({
