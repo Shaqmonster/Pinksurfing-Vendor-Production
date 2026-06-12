@@ -165,8 +165,9 @@ export function isSsoTokenMaintenanceUrl(url: string): boolean {
 export function hasRefreshCapability(): boolean {
   if (isSsoLoggedOutGlobally()) return false;
   if (getRefreshToken()) return true;
-  // SSO refresh_token is HttpOnly — not readable here, but sent with credentials:include
-  return Boolean(getStoredAccessToken());
+  if (getStoredAccessToken()) return true;
+  // HttpOnly SSO refresh cookie on .pinksurfing.com is sent with credentials:include
+  return Boolean(getAuthCookieDomain());
 }
 
 /** Cookie-based refresh first, then Bearer body `{ refresh }` fallback. */

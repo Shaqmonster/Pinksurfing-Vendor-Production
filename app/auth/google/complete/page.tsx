@@ -21,22 +21,6 @@ type VendorLoginResult = {
   id?: number;
 };
 
-function parseJwt(token: string) {
-  try {
-    const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
-    );
-    return { ...JSON.parse(jsonPayload), token };
-  } catch {
-    return { token };
-  }
-}
-
 export default function GoogleAuthCompletePage() {
   const router = useRouter();
   const { setIsLoggedIn, setVendor, setAuthpage } = useContext(MyContext);
@@ -62,12 +46,7 @@ export default function GoogleAuthCompletePage() {
         if (cancelled) return;
 
         if (data?.status === 409 && data.token) {
-          handleError(data.message || "Complete vendor registration to continue");
-          localStorage.setItem(
-            "customer",
-            JSON.stringify(parseJwt(data.token))
-          );
-          setAuthpage("signup");
+          setAuthpage("register-as-vendor");
           router.replace("/");
           return;
         }

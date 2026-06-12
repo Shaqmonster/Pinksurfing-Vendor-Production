@@ -9,7 +9,12 @@ import {
   startTokenRefreshScheduler,
 } from "@/utils/ssoSession";
 import { clearAuthStorage } from "@/utils/cookies";
-import { resolveVendorSession } from "@/api/account";
+import {
+  checkVendorStatus,
+  resolveVendorSession,
+  storeVendorOnboardingFromJwt,
+} from "@/api/account";
+import { persistAuthSession } from "@/utils/ssoSession";
 
 const MyProvider = ({ children }: { children: React.ReactNode }) => {
   const [loggedIn, setIsLoggedIn] = useState(false);
@@ -75,8 +80,29 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoggedIn(false);
       return;
     }
-    // Vendor profile API can be slow — validate session in the background.
-    void applyVendorSession(session.access);
+
+    persistAuthSession(session.access, session.refresh);
+    const vendorStatus = await checkVendorStatus(session.access);
+
+    if (vendorStatus.unauthorized) {
+      clearAuthStorage();
+      setIsLoggedIn(false);
+      return;
+    }
+
+    if (vendorStatus.needsOnboarding) {
+      storeVendorOnboardingFromJwt(session.access);
+      setAuthpage("register-as-vendor");
+      setIsLoggedIn(false);
+      return;
+    }
+
+    if (vendorStatus.isVendor) {
+      await applyVendorSession(session.access);
+      return;
+    }
+
+    setIsLoggedIn(false);
   }, [applyVendorSession]);
 
   const syncFromSharedSession = useCallback(async () => {
@@ -92,7 +118,19 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       const session = await reconcileSharedSession();
-      await applyVendorSession(session?.access ?? null);
+      if (!session?.access) {
+        setIsLoggedIn(false);
+        return;
+      }
+      persistAuthSession(session.access, session.refresh);
+      const vendorStatus = await checkVendorStatus(session.access);
+      if (vendorStatus.needsOnboarding) {
+        storeVendorOnboardingFromJwt(session.access);
+        setAuthpage("register-as-vendor");
+        setIsLoggedIn(false);
+        return;
+      }
+      await applyVendorSession(session.access);
     } finally {
       ssoSyncInflightRef.current = false;
     }

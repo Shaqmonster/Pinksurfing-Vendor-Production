@@ -46,28 +46,6 @@ const SignIn: React.FC = () => {
     }
   };
 
-  function parseJwt(token: string) {
-    try {
-      const base64Url = token.split(".")[1];
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split("")
-          .map(function (c) {
-            return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
-          })
-          .join("")
-      );
-
-      const payload = JSON.parse(jsonPayload);
-      payload.token = token;
-      return payload;
-    } catch (e) {
-      console.error("Error parsing JWT:", e);
-      return { token: token, payload: null };
-    }
-  }
-
   const login = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -83,9 +61,7 @@ const SignIn: React.FC = () => {
       const data = await signIn({ email, password });
 
       if (data && data.status === 409) {
-        handleError(data?.message);
-        localStorage.setItem("customer", JSON.stringify(parseJwt(data.token)));
-        setAuthpage("signup");
+        setAuthpage("register-as-vendor");
         return;
       }
 

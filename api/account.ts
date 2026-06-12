@@ -2,6 +2,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { getAccessToken } from "@/utils/cookies";
 import {
+  decodeJwt,
   ensureSession,
   persistAuthSession,
   signOut,
@@ -21,6 +22,48 @@ export {
 };
 /** @deprecated Use ensureSession() */
 export const resolveSharedSession = ensureSession;
+
+/** Save JWT claims for register-as-vendor (create-vendor-from-sso). */
+export function storeVendorOnboardingFromJwt(access: string) {
+  if (typeof window === "undefined" || !access) return;
+  const claims = decodeJwt(access) ?? {};
+  localStorage.setItem(
+    "customer",
+    JSON.stringify({
+      ...claims,
+      token: access,
+      email: claims.email ?? "",
+      first_name: claims.first_name ?? "",
+      last_name: claims.last_name ?? "",
+      phone_number: claims.phone_number ?? "",
+    })
+  );
+}
+
+/** POST /vendor/check-vendor/ — vendor exists or needs onboarding. */
+export async function checkVendorStatus(access: string | null) {
+  if (!access) {
+    return { isVendor: false, needsOnboarding: false, unauthorized: false };
+  }
+  const bearer = access.replaceAll('"', "");
+  try {
+    await axios.post(
+      `${BASE_URL}/vendor/check-vendor/`,
+      {},
+      { headers: { Authorization: `Bearer ${bearer}` } }
+    );
+    return { isVendor: true, needsOnboarding: false, unauthorized: false };
+  } catch (error: any) {
+    const status = error?.response?.status;
+    if (status === 409) {
+      return { isVendor: false, needsOnboarding: true, unauthorized: false };
+    }
+    if (status === 401 || status === 403) {
+      return { isVendor: false, needsOnboarding: false, unauthorized: true };
+    }
+    return { isVendor: false, needsOnboarding: false, unauthorized: false };
+  }
+}
 
 export async function isCustomer(email: string) {
   try {
@@ -226,10 +269,14 @@ async function resolveVendorLoginAfterSso(access: string, refresh?: string) {
       { headers }
     );
     if (checkVendorResponse.status === 409) {
+      persistAuthTokens(access, refresh);
+      storeVendorOnboardingFromJwt(access);
       return { status: 409, message: "Vendor needs to register", token: access, refresh };
     }
   } catch (checkVendorError: any) {
     if (checkVendorError?.response?.status === 409) {
+      persistAuthTokens(access, refresh);
+      storeVendorOnboardingFromJwt(access);
       return {
         status: 409,
         message: "Vendor needs to register",
