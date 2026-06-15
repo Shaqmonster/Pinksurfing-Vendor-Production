@@ -1,10 +1,10 @@
-import EditProductClient from "./edit-product-client";
+import LegacyEditProductRedirect from "./legacy-edit-redirect";
 
-/** Static export shell — real product id comes from useParams() on the client. */
+/** Legacy /inventory/editProduct/:id URLs redirect to /inventory/edit-product?id= */
 export function generateStaticParams() {
   return [{ id: "_" }];
 }
 
-export default function EditProductPage() {
-  return <EditProductClient />;
+export default function LegacyEditProductPage() {
+  return <LegacyEditProductRedirect />;
 }

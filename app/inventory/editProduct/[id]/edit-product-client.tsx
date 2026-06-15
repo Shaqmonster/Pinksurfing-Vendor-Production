@@ -218,12 +218,22 @@ const EditProduct = () => {
   // Total image count (existing + new uploads)
   const totalImages = existingImages.length + files.length;
 
+  useEffect(() => {
+    if (!productId) {
+      setInitialLoading(false);
+    }
+  }, [productId]);
+
+  useEffect(() => {
+    if (initialLoading || productId) return;
+    router.replace("/inventory/products");
+  }, [initialLoading, productId, router]);
+
   // ============================================================
   // LOAD EXISTING PRODUCT AND PRE-POPULATE
   // ============================================================
   useEffect(() => {
     if (!productId) {
-      setInitialLoading(false);
       return;
     }
     (async () => {

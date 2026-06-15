@@ -22,7 +22,7 @@ import {
   FiCopy,
   FiExternalLink
 } from "react-icons/fi";
-import { staticDetailHref } from "@/utils/staticRouteId";
+import { editProductHref } from "@/utils/staticRouteId";
 import { toast } from "react-toastify";
 import { getAccessToken } from "@/utils/cookies";
 import { resolveVendorApiToken } from "@/utils/vendorAuth";
@@ -480,13 +480,13 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                               {listingFeePayButtonLabel(product.id, payingListingId)}
                             </button>
                           )}
-                          <Link
-                            href={staticDetailHref("/inventory/editProduct", product.id)}
+                          <a
+                            href={editProductHref(product.id)}
                             className="p-2 rounded-lg bg-accent-blue/10 dark:bg-accent-blue/20 text-accent-blue hover:bg-accent-blue/20 transition-colors"
                             title="Edit"
                           >
                             <FiEdit2 className="w-4 h-4" />
-                          </Link>
+                          </a>
                           <button
                             type="button"
                             onClick={() => openDeleteModal(product.id)}
@@ -630,13 +630,13 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                           {/* Actions */}
                           <td className="px-5 xl:px-6 py-4">
                             <div className="flex items-center justify-end gap-2">
-                              <Link
-                                href={staticDetailHref("/inventory/editProduct", product.id)}
+                              <a
+                                href={editProductHref(product.id)}
                                 className="p-2 rounded-lg bg-accent-blue/10 dark:bg-accent-blue/20 text-accent-blue hover:bg-accent-blue/20 dark:hover:bg-accent-blue/30 transition-colors"
                                 title="Edit listing"
                               >
                                 <FiEdit2 className="w-4 h-4" />
-                              </Link>
+                              </a>
                               <button
                                 onClick={() => openDeleteModal(product.id)}
                                 className="p-2 rounded-lg bg-danger-light dark:bg-danger/20 text-danger hover:bg-danger/20 dark:hover:bg-danger/30 transition-colors"

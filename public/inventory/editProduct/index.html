@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting…</title>
+    <script>
+      (function () {
+        var path = window.location.pathname || "";
+        var segments = path.split("/").filter(Boolean);
+        var last = segments[segments.length - 1] || "";
+        var params = new URLSearchParams(window.location.search);
+        var id = params.get("id") || "";
+
+        if (!id && last && last !== "_" && last !== "editProduct") {
+          id = decodeURIComponent(last);
+        }
+
+        if (id) {
+          window.location.replace(
+            "/inventory/edit-product?id=" + encodeURIComponent(id)
+          );
+          return;
+        }
+
+        window.location.replace("/inventory/products");
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>

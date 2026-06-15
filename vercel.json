@@ -1,16 +1,20 @@
 {
   "rewrites": [
     {
+      "source": "/inventory/editProduct/:id",
+      "destination": "/inventory/edit-product?id=:id"
+    },
+    {
+      "source": "/inventory/editProduct/_",
+      "destination": "/inventory/edit-product"
+    },
+    {
       "source": "/orders/:id",
-      "destination": "/orders/_"
+      "destination": "/orders/_?id=:id"
     },
     {
       "source": "/buyer-requests/:id",
-      "destination": "/buyer-requests/_"
-    },
-    {
-      "source": "/inventory/editProduct/:id",
-      "destination": "/inventory/editProduct/_"
+      "destination": "/buyer-requests/_?id=:id"
     }
   ]
 }

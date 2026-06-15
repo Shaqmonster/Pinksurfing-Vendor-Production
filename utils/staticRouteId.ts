@@ -1,10 +1,20 @@
 /**
- * Static export builds one shell page per dynamic route (id = "_").
- * Real entity ids live in the browser URL path or ?id= query param.
+ * Static export cannot emit one HTML file per product/order id.
+ * Use flat pages + ?id= query (e.g. /inventory/edit-product?id=...).
  */
+
+export function editProductHref(productId: string): string {
+  return `/inventory/edit-product?id=${encodeURIComponent(productId)}`;
+}
 
 export function staticDetailHref(basePath: string, id: string): string {
   const normalized = basePath.replace(/\/$/, "");
+  if (
+    normalized === "/inventory/editProduct" ||
+    normalized === "/inventory/edit-product"
+  ) {
+    return editProductHref(id);
+  }
   return `${normalized}/_?id=${encodeURIComponent(id)}`;
 }
 
@@ -18,7 +28,7 @@ export function resolveStaticRouteId(routeParam?: string | null): string | undef
 
     const segments = window.location.pathname.split("/").filter(Boolean);
     const last = segments[segments.length - 1];
-    if (last && last !== "_") {
+    if (last && last !== "_" && last !== "edit-product" && last !== "editProduct") {
       return decodeURIComponent(last);
     }
   }
