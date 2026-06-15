@@ -244,6 +244,24 @@ const ProductsTable = (props: { Products?: Product[] }) => {
     return text.length >= maxLength ? text + "..." : text;
   }
 
+  function formatProductCategory(product: any): string {
+    const categoryName =
+      typeof product?.category === "string"
+        ? product.category
+        : product?.category?.name;
+    const subcategoryName =
+      typeof product?.subcategory === "string"
+        ? product.subcategory
+        : product?.subcategory?.name;
+
+    if (categoryName && subcategoryName) {
+      return `${categoryName} · ${subcategoryName}`;
+    }
+    if (categoryName) return categoryName;
+    if (subcategoryName) return subcategoryName;
+    return "—";
+  }
+
   const openDeleteModal = (productId: any) => {
     setProductIdToDelete(productId);
     setIsModalOpen(true);
@@ -439,8 +457,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                             )}
                           </div>
                           <p className="text-xs text-surface-400 dark:text-surface-500 mt-1">
-                            {product?.category?.name || "—"}
-                            {product?.subcategory?.name ? ` · ${product.subcategory.name}` : ""}
+                            {formatProductCategory(product)}
                           </p>
                         </div>
                       </div>
@@ -560,8 +577,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                                   {product.name}
                                 </p>
                                 <p className="text-xs text-surface-400 dark:text-surface-500 mt-0.5 truncate">
-                                  {product?.category?.name || "—"}
-                                  {product?.subcategory?.name ? ` · ${product.subcategory.name}` : ""}
+                                  {formatProductCategory(product)}
                                 </p>
                                 {product.is_active && (
                                   <span className="inline-flex items-center gap-1 text-xs text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
@@ -576,7 +592,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                           {/* Category */}
                           <td className="px-5 xl:px-6 py-4">
                             <p className="text-sm text-surface-600 dark:text-surface-400 line-clamp-2">
-                              {truncateAndConvertToText(product.short_description) || "—"}
+                              {formatProductCategory(product)}
                             </p>
                           </td>
 
