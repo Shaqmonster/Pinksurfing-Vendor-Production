@@ -10,6 +10,7 @@ import {
   disputeReturn,
 } from "@/api/orders";
 import { Package } from "@/types/package";
+import Link from "next/link";
 import { staticDetailHref } from "@/utils/staticRouteId";
 import Loader from "../common/Loader";
 import Parcel from "../Order/Parcel/page";

@@ -35,6 +35,7 @@ import {
   listingFeePayButtonLabel,
 } from "@/utils/pendingListings";
 import { prepareListingFeePayment } from "@/utils/listingPayment";
+import ConfirmationModal from "../Modals/ConfirmDelete";
 
 const ProductsTable = (props: { Products?: Product[] }) => {
   const rowRef = useRef<any>(null);
