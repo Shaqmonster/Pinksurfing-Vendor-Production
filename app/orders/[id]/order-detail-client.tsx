@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { resolveStaticRouteId } from "@/utils/staticRouteId";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -100,7 +101,16 @@ const NEXT_STATUSES: Record<string, string[]> = {
 export default function OrderDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const orderId = params?.id as string;
+  const [orderId, setOrderId] = useState<string | undefined>(() =>
+    resolveStaticRouteId(params?.id as string)
+  );
+
+  useEffect(() => {
+    const resolved = resolveStaticRouteId(params?.id as string);
+    if (resolved) {
+      setOrderId(resolved);
+    }
+  }, [params?.id]);
 
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [loading, setLoading] = useState(true);

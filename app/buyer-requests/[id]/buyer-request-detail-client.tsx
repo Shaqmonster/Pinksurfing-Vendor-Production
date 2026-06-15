@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { resolveStaticRouteId } from "@/utils/staticRouteId";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
@@ -1457,7 +1458,16 @@ const ExistingBidView = ({
 export default function RequestDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const requestId = params?.id as string;
+  const [requestId, setRequestId] = useState<string | undefined>(() =>
+    resolveStaticRouteId(params?.id as string)
+  );
+
+  useEffect(() => {
+    const resolved = resolveStaticRouteId(params?.id as string);
+    if (resolved) {
+      setRequestId(resolved);
+    }
+  }, [params?.id]);
 
   const [token, setToken] = useState("");
 

@@ -22,7 +22,7 @@ import {
   FiCopy,
   FiExternalLink
 } from "react-icons/fi";
-import ConfirmationModal from "../Modals/ConfirmDelete";
+import { staticDetailHref } from "@/utils/staticRouteId";
 import { toast } from "react-toastify";
 import { getAccessToken } from "@/utils/cookies";
 import { resolveVendorApiToken } from "@/utils/vendorAuth";
@@ -481,7 +481,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                             </button>
                           )}
                           <Link
-                            href={`/inventory/editProduct/${product.id}`}
+                            href={staticDetailHref("/inventory/editProduct", product.id)}
                             className="p-2 rounded-lg bg-accent-blue/10 dark:bg-accent-blue/20 text-accent-blue hover:bg-accent-blue/20 transition-colors"
                             title="Edit"
                           >
@@ -631,7 +631,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                           <td className="px-5 xl:px-6 py-4">
                             <div className="flex items-center justify-end gap-2">
                               <Link
-                                href={`/inventory/editProduct/${product.id}`}
+                                href={staticDetailHref("/inventory/editProduct", product.id)}
                                 className="p-2 rounded-lg bg-accent-blue/10 dark:bg-accent-blue/20 text-accent-blue hover:bg-accent-blue/20 dark:hover:bg-accent-blue/30 transition-colors"
                                 title="Edit listing"
                               >

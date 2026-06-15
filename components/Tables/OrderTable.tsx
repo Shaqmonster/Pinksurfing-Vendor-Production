@@ -10,7 +10,7 @@ import {
   disputeReturn,
 } from "@/api/orders";
 import { Package } from "@/types/package";
-import Link from "next/link";
+import { staticDetailHref } from "@/utils/staticRouteId";
 import Loader from "../common/Loader";
 import Parcel from "../Order/Parcel/page";
 import { toast } from "react-toastify";
@@ -332,7 +332,7 @@ const OrderTable = ({ recentOrders }: any) => {
                         transition={{ delay: index * 0.05 }}
                         className="p-4 space-y-3 bg-white dark:bg-dark-card"
                       >
-                        <Link href={`/orders/${order.id}`} className="block group">
+                        <Link href={staticDetailHref("/orders", order.id)} className="block group">
                           <p className="font-medium text-surface-900 dark:text-white group-hover:text-primary-500 line-clamp-2">
                             {order.product.name}
                           </p>
@@ -385,7 +385,7 @@ const OrderTable = ({ recentOrders }: any) => {
                             </button>
                           )}
                           <Link
-                            href={`/orders/${order.id}`}
+                            href={staticDetailHref("/orders", order.id)}
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-100 dark:bg-dark-surface text-sm font-medium text-surface-700 dark:text-surface-200"
                           >
                             View
@@ -438,7 +438,7 @@ const OrderTable = ({ recentOrders }: any) => {
                           className="hover:bg-surface-50 dark:hover:bg-dark-hover transition-colors"
                         >
                           <td className="px-4 xl:px-6 py-4 align-top">
-                            <Link href={`/orders/${order.id}`} className="group block min-w-0">
+                            <Link href={staticDetailHref("/orders", order.id)} className="group block min-w-0">
                               <p className="font-medium text-surface-900 dark:text-white group-hover:text-primary-500 transition-colors line-clamp-2 break-words">
                                 {order.product.name}
                               </p>
@@ -507,7 +507,7 @@ const OrderTable = ({ recentOrders }: any) => {
                                   </button>
                                 )}
                                 <Link
-                                  href={`/orders/${order.id}`}
+                                  href={staticDetailHref("/orders", order.id)}
                                   className="p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-dark-hover text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200 transition-colors"
                                   title="View Details"
                                 >

@@ -2,15 +2,15 @@
   "rewrites": [
     {
       "source": "/orders/:id",
-      "destination": "/orders/_.html"
+      "destination": "/orders/_"
     },
     {
       "source": "/buyer-requests/:id",
-      "destination": "/buyer-requests/_.html"
+      "destination": "/buyer-requests/_"
     },
     {
       "source": "/inventory/editProduct/:id",
-      "destination": "/inventory/editProduct/_.html"
+      "destination": "/inventory/editProduct/_"
     }
   ]
 }

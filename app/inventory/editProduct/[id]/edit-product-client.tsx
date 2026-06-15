@@ -12,6 +12,7 @@ import {
 } from "@/api/products";
 import { Product } from "@/types/product";
 import { useParams, useRouter } from "next/navigation";
+import { resolveStaticRouteId } from "@/utils/staticRouteId";
 import { ToastContainer, toast } from "react-toastify";
 // @ts-ignore
 import "react-toastify/dist/ReactToastify.css";
@@ -127,8 +128,17 @@ function bfsSchemaAttrSupersededByWizard(attr: any): boolean {
 // ============ MAIN COMPONENT ============
 const EditProduct = () => {
   const params = useParams();
-  const productId = params?.id as string;
+  const [productId, setProductId] = useState<string | undefined>(() =>
+    resolveStaticRouteId(params?.id as string)
+  );
   const router = useRouter();
+
+  useEffect(() => {
+    const resolved = resolveStaticRouteId(params?.id as string);
+    if (resolved) {
+      setProductId(resolved);
+    }
+  }, [params?.id]);
 
   // Step management
   const [currentStep, setCurrentStep] = useState(1);

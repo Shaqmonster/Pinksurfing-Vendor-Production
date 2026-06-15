@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { staticDetailHref } from "@/utils/staticRouteId";
 import {
   Tag,
   DollarSign,
@@ -321,7 +322,7 @@ function RequestCard({ request, index }: { request: BuyerRequest; index: number 
                 {bidCount} bid{bidCount !== 1 ? "s" : ""}
               </span>
               <Link
-                href={`/buyer-requests/${request.id}`}
+                href={staticDetailHref("/buyer-requests", request.id)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-pink text-white text-sm font-semibold hover:opacity-90 transition-opacity shadow-glow-pink"
               >
                 Send Offer
