@@ -10,7 +10,6 @@ import {
   disputeReturn,
 } from "@/api/orders";
 import { Package } from "@/types/package";
-import Link from "next/link";
 import { staticDetailHref } from "@/utils/staticRouteId";
 import Loader from "../common/Loader";
 import Parcel from "../Order/Parcel/page";
@@ -304,13 +303,13 @@ const OrderTable = ({ recentOrders }: any) => {
                 </p>
               </div>
               {recentOrders && orders.length > 0 && (
-                <Link
+                <a
                   href="/orders"
                   className="inline-flex items-center gap-2 text-sm font-medium text-primary-500 hover:text-primary-600 transition-colors"
                 >
                   View all orders
                   <FiArrowRight className="w-4 h-4" />
-                </Link>
+                </a>
               )}
             </div>
           </div>
@@ -333,14 +332,14 @@ const OrderTable = ({ recentOrders }: any) => {
                         transition={{ delay: index * 0.05 }}
                         className="p-4 space-y-3 bg-white dark:bg-dark-card"
                       >
-                        <Link href={staticDetailHref("/orders", order.id)} className="block group">
+                        <a href={staticDetailHref("/orders", order.id)} className="block group">
                           <p className="font-medium text-surface-900 dark:text-white group-hover:text-primary-500 line-clamp-2">
                             {order.product.name}
                           </p>
                           <p className="text-xs text-surface-500 dark:text-surface-400 mt-1 font-mono">
                             Order #{order.order_number || order.id.slice(0, 8)}
                           </p>
-                        </Link>
+                        </a>
                         <div className="flex flex-wrap items-center gap-3">
                           <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${statusConfig.bgColor}`}>
                             <StatusIcon className={`w-4 h-4 ${statusConfig.textColor}`} />
@@ -385,13 +384,13 @@ const OrderTable = ({ recentOrders }: any) => {
                               Dispute Return
                             </button>
                           )}
-                          <Link
+                          <a
                             href={staticDetailHref("/orders", order.id)}
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-100 dark:bg-dark-surface text-sm font-medium text-surface-700 dark:text-surface-200"
                           >
                             View
                             <FiExternalLink className="w-4 h-4" />
-                          </Link>
+                          </a>
                         </div>
                       </motion.div>
                     );
@@ -439,14 +438,14 @@ const OrderTable = ({ recentOrders }: any) => {
                           className="hover:bg-surface-50 dark:hover:bg-dark-hover transition-colors"
                         >
                           <td className="px-4 xl:px-6 py-4 align-top">
-                            <Link href={staticDetailHref("/orders", order.id)} className="group block min-w-0">
+                            <a href={staticDetailHref("/orders", order.id)} className="group block min-w-0">
                               <p className="font-medium text-surface-900 dark:text-white group-hover:text-primary-500 transition-colors line-clamp-2 break-words">
                                 {order.product.name}
                               </p>
                               <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
                                 Order #{order.order_number || order.id.slice(0, 8)}
                               </p>
-                            </Link>
+                            </a>
                           </td>
                           <td className="px-4 xl:px-6 py-4 align-top">
                             <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-surface-100 dark:bg-dark-surface text-sm font-semibold text-surface-700 dark:text-surface-300">
@@ -507,13 +506,13 @@ const OrderTable = ({ recentOrders }: any) => {
                                     Dispute
                                   </button>
                                 )}
-                                <Link
+                                <a
                                   href={staticDetailHref("/orders", order.id)}
                                   className="p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-dark-hover text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-200 transition-colors"
                                   title="View Details"
                                 >
                                   <FiExternalLink className="w-4 h-4" />
-                                </Link>
+                                </a>
                               </div>
                             </div>
                           </td>
@@ -537,13 +536,13 @@ const OrderTable = ({ recentOrders }: any) => {
               <p className="text-surface-500 dark:text-surface-400 mb-6 max-w-sm mx-auto">
                 When customers place orders for your products, they&apos;ll appear here.
               </p>
-              <Link
+              <a
                 href="/inventory/products"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-pink text-white font-semibold shadow-premium-sm hover:shadow-premium-md transition-all"
               >
                 View Your Products
                 <FiArrowRight className="w-4 h-4" />
-              </Link>
+              </a>
             </div>
           )}
         </div>

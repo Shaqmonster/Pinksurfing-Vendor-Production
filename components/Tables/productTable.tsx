@@ -12,7 +12,6 @@ import { Product } from "@/types/product";
 import { deleteProduct } from "@/api/products";
 import React from "react";
 import Loader from "../common/Loader";
-import Link from "next/link";
 import { 
   FiEdit2, 
   FiTrash2, 
@@ -385,13 +384,13 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                   />
                 </div>
                 
-                <Link
+                <a
                   href="/inventory/add_products"
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-pink text-white font-medium shadow-premium-sm hover:shadow-premium-md transition-all"
                 >
                   <FiPlus className="w-4 h-4" />
                   <span className="hidden sm:inline">Add Listing</span>
-                </Link>
+                </a>
               </div>
             </div>
           </div>
@@ -669,13 +668,13 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                   : "Start by adding your first product to your inventory."}
               </p>
               {!searchQuery && (
-                <Link
+                <a
                   href="/inventory/add_products"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-pink text-white font-semibold shadow-premium-sm hover:shadow-premium-md transition-all"
                 >
                   <FiPlus className="w-5 h-5" />
                   Add Your First Product
-                </Link>
+                </a>
               )}
             </div>
           )}
