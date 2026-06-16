@@ -247,7 +247,7 @@ const Sidebar = () => {
                   }`}
               >
                 <FaFileContract className="w-5 h-5" />
-                <span className="flex-1">NDA requests</span>
+                <span className="flex-1">Signed NDAs & Leads</span>
                 {ndaRequestCount > 0 ? (
                   <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-white/20 text-white">
                     {ndaRequestCount}

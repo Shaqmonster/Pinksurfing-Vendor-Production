@@ -223,7 +223,7 @@ export default function NdaRequestsPage() {
     setLoading(true);
     setError(null);
     const { error: err, data } = await getNdaList();
-    if (err) setError("Could not load NDA requests.");
+    if (err) setError("Could not load signed NDAs and leads.");
     else setRows(data);
     setLoading(false);
   }, []);
@@ -244,7 +244,7 @@ export default function NdaRequestsPage() {
 
   async function onReject(row: NdaRow) {
     const reason = rejectDraft[row.id] || "";
-    if (!confirm("Reject this NDA request? The buyer will be refunded $1.00.")) return;
+    if (!confirm("Decline this buyer's financials request? They will be refunded $1.00.")) return;
     setBusyId(row.id);
     try {
       const updated = await vendorRejectNda(row.id, reason);
@@ -268,11 +268,11 @@ export default function NdaRequestsPage() {
     >
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-surface-900 dark:text-white">
-          NDA Requests
+          Signed NDAs and Leads List
         </h1>
         <p className="mt-2 text-surface-600 dark:text-surface-400">
-          Buyers who have signed and paid for NDA access to your business listings.
-          Accept to share documents, or reject to refund.
+          Buyers who signed your NDA and paid to request business financials. Review signed
+          agreements, share documents, and track interested leads.
         </p>
       </div>
 
@@ -287,8 +287,8 @@ export default function NdaRequestsPage() {
       ) : rows.length === 0 ? (
         <div className="rounded-2xl border border-light-border bg-white p-10 text-center dark:border-dark-border dark:bg-dark-card">
           <p className="text-2xl">📄</p>
-          <p className="mt-2 font-medium text-surface-700 dark:text-surface-300">No NDA requests yet.</p>
-          <p className="mt-1 text-sm text-surface-500">When buyers sign and pay for NDA access, they will appear here.</p>
+          <p className="mt-2 font-medium text-surface-700 dark:text-surface-300">No signed NDAs or leads yet.</p>
+          <p className="mt-1 text-sm text-surface-500">When buyers sign your NDA and request financials, they will appear here.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-6">
