@@ -8,7 +8,7 @@ import AuthLayout from "@/components/auth/AuthLayout";
 import Loader from "@/components/common/Loader";
 import { MyContext } from "@/app/providers/context";
 import { createVendorFromSSO } from "@/api/account";
-import { identityVerifyPath } from "@/api/identity";
+import { identityVerifyPath } from "@/api/kyc";
 import {
   authBtnPrimary,
   authBtnSecondary,
@@ -193,7 +193,7 @@ export default function RegisterAsVendor() {
       localStorage.setItem("vendor_id", response.vendor_id);
       setIsLoggedIn(true);
       if (response.kyc_required) {
-        router.push(identityVerifyPath("vendor", "/dashboard"));
+        router.push(identityVerifyPath("/dashboard"));
       } else {
         router.push("/dashboard");
       }

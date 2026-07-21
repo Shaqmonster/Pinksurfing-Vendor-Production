@@ -37,6 +37,13 @@ import type { PendingNdaListingDoc } from "@/components/inventory/ProductNdaDocu
 import { uploadPendingProductNdaDocuments } from "@/api/productNdaDocuments";
 import { prepareListingFeePayment } from "@/utils/listingPayment";
 import SearchableSelect from "@/components/SearchableSelect";
+import {
+  OffMarketDealSection,
+  buildOffMarketPayload,
+  defaultOffMarketDealForm,
+  type OffMarketDealFormState,
+} from "@/components/inventory/OffMarketDealSection";
+import { upsertOffMarketDealProfile } from "@/api/offMarketDeals";
 
 // ============ ICONS ============
 const CheckIcon = () => (
@@ -301,6 +308,9 @@ const AddProducts = () => {
   const [loading, setLoading] = useState(false);
   const [showDimensions, setShowDimensions] = useState(false);
   const [createdListing, setCreatedListing] = useState<PendingListing | null>(null);
+  const [offMarketDeal, setOffMarketDeal] = useState<OffMarketDealFormState>(
+    defaultOffMarketDealForm()
+  );
 
   const router = useRouter();
 
@@ -354,6 +364,10 @@ const AddProducts = () => {
   const bfsWizardRef = useRef<BusinessForSaleListingWizardHandle>(null);
   const isBusinessForSale = useMemo(
     () => isBusinessForSaleCategory(selectedCategoryName),
+    [selectedCategoryName]
+  );
+  const isRealEstate = useMemo(
+    () => selectedCategoryName.trim().toLowerCase().includes("real estate"),
     [selectedCategoryName]
   );
   const businessForSaleSchemaRows = useMemo(() => {
@@ -662,6 +676,28 @@ const AddProducts = () => {
               );
             }
             setPendingNdaDocs([]);
+          }
+
+          if (
+            createdProductId &&
+            isRealEstate &&
+            offMarketDeal.is_off_market &&
+            offMarketDeal.arv &&
+            offMarketDeal.asking_price &&
+            offMarketDeal.city &&
+            offMarketDeal.state
+          ) {
+            const omPayload = buildOffMarketPayload(
+              createdProductId,
+              offMarketDeal,
+              cleanedProductData.deal_active_until
+            );
+            const omRes = await upsertOffMarketDealProfile(token, omPayload);
+            if (!omRes.error) {
+              toast.success("Off-market deal profile saved — visible on Deals Home.");
+            } else {
+              toast.warn("Product saved but off-market profile failed. Edit listing to retry.");
+            }
           }
 
           if (listingStatus === "PENDING_PAYMENT" && createdProductId) {
@@ -1787,6 +1823,10 @@ const AddProducts = () => {
                   <p className="text-xs text-surface-500 mt-2">After this date, the deal will be automatically closed.</p>
                 </div>
               </div>
+            )}
+
+            {isRealEstate && (
+              <OffMarketDealSection value={offMarketDeal} onChange={setOffMarketDeal} />
             )}
 
             {/* Description Section - Enhanced */}

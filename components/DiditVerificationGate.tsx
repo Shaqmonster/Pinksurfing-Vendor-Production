@@ -1,14 +1,12 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { DiditSdk } from "@didit-protocol/sdk-web";
-import { createIdentitySession, getIdentityStatus } from "@/api/identity";
+import { getKycStatus, launchKyc } from "@/api/kyc";
 import { handleError } from "@/utils/toast";
 
 const POLL_MS = 4000;
 
 type Props = {
-  context?: "vendor" | "gig_seller";
   accessToken: string;
   onVerified: () => void;
   children?: React.ReactNode;
@@ -16,8 +14,10 @@ type Props = {
   description?: string;
 };
 
+/**
+ * Blocks until SSO Didit KYC is approved. Redirects to auth.pinksurfing.com/kyc/.
+ */
 export default function DiditVerificationGate({
-  context = "vendor",
   accessToken,
   onVerified,
   children,
@@ -29,13 +29,8 @@ export default function DiditVerificationGate({
   const [status, setStatus] = useState("not_started");
   const [starting, setStarting] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const callbackUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/identity/verify?context=${context}&returnUrl=${encodeURIComponent(
-          "/dashboard"
-        )}`
-      : "/identity/verify";
+  const onVerifiedRef = useRef(onVerified);
+  onVerifiedRef.current = onVerified;
 
   const checkStatus = useCallback(async () => {
     if (!accessToken) {
@@ -43,22 +38,22 @@ export default function DiditVerificationGate({
       return false;
     }
     try {
-      const res = await getIdentityStatus(accessToken, context);
+      const res = await getKycStatus(accessToken);
       const data = res.data || {};
-      setStatus(data.status || "not_started");
-      if (data.verified) {
+      setStatus(data.kyc_status || data.status || "not_started");
+      if (data.kyc_verified || data.verified) {
         setVerified(true);
-        onVerified();
+        onVerifiedRef.current();
         return true;
       }
       return false;
     } catch (err) {
-      console.error("Identity status failed", err);
+      console.error("KYC status failed", err);
       return false;
     } finally {
       setLoading(false);
     }
-  }, [accessToken, context, onVerified]);
+  }, [accessToken]);
 
   const stopPolling = () => {
     if (pollRef.current) {
@@ -67,37 +62,55 @@ export default function DiditVerificationGate({
     }
   };
 
+  const startPolling = useCallback(() => {
+    stopPolling();
+    pollRef.current = setInterval(async () => {
+      const ok = await checkStatus();
+      if (ok) stopPolling();
+    }, POLL_MS);
+  }, [checkStatus]);
+
   useEffect(() => {
     checkStatus();
     return () => stopPolling();
   }, [checkStatus]);
 
+  useEffect(() => {
+    if (!accessToken || verified || loading) return;
+    if (status === "not_started") return;
+    startPolling();
+    return () => stopPolling();
+  }, [accessToken, verified, loading, status, startPolling]);
+
   const startVerification = async () => {
     if (!accessToken) return;
     setStarting(true);
     try {
-      const res = await createIdentitySession(accessToken, context, callbackUrl);
+      const isVerifyPage = window.location.pathname.includes("/identity/verify");
+      const returnUrl = isVerifyPage
+        ? window.location.href.split("#")[0]
+        : `${window.location.origin}/identity/verify?returnUrl=${encodeURIComponent("/dashboard")}`;
+
+      const res = await launchKyc(accessToken, returnUrl);
       const data = res.data || {};
-      if (data.verified) {
+      if (data.kyc_verified || data.verified) {
         setVerified(true);
-        onVerified();
+        onVerifiedRef.current();
         return;
       }
-      const url = data.verification_url || data.url;
-      if (!url) {
+      const kycUrl = data.kyc_url;
+      if (!kycUrl) {
         handleError(
           data.detail || "Could not start verification. Please try again later."
         );
         return;
       }
-      pollRef.current = setInterval(async () => {
-        const ok = await checkStatus();
-        if (ok) stopPolling();
-      }, POLL_MS);
-      DiditSdk.shared.startVerification({ url });
+      window.location.href = kycUrl;
     } catch (err: any) {
       handleError(
-        err?.response?.data?.detail || "Could not start identity verification."
+        err?.response?.data?.detail ||
+          err?.response?.data?.return_url?.[0] ||
+          "Could not start identity verification."
       );
     } finally {
       setStarting(false);

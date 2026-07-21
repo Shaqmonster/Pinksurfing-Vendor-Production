@@ -37,7 +37,7 @@ import Loader from "@/components/common/Loader";
 import { Country, State, City } from "country-state-city";
 import { getVendorProfile } from "@/api/products";
 import { handleError, handleSuccess } from "@/utils/toast";
-import { identityVerifyPath } from "@/api/identity";
+import { identityVerifyPath } from "@/api/kyc";
 import PasswordRequirementsFeedback from "@/components/auth/PasswordRequirementsFeedback";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import AuthDivider from "@/components/auth/AuthDivider";
@@ -267,7 +267,7 @@ const SignUp: React.FC = () => {
       localStorage.setItem("vendor_id", response.data.vendor_id);
       setIsLoggedIn(true);
       if (response.data.kyc_required) {
-        router.push(identityVerifyPath("vendor", "/dashboard"));
+        router.push(identityVerifyPath("/dashboard"));
       } else {
         router.push("/dashboard");
       }
@@ -322,7 +322,7 @@ const SignUp: React.FC = () => {
         }
         setIsLoggedIn(true);
         if (response.kyc_required) {
-          router.push(identityVerifyPath("vendor", "/dashboard"));
+          router.push(identityVerifyPath("/dashboard"));
         } else {
           router.push("/dashboard");
         }

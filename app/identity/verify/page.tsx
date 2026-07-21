@@ -13,8 +13,6 @@ export default function IdentityVerifyPage() {
   const [token, setToken] = useState("");
 
   const returnUrl = searchParams.get("returnUrl") || "/dashboard";
-  const context =
-    searchParams.get("context") === "gig_seller" ? "gig_seller" : "vendor";
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -35,7 +33,6 @@ export default function IdentityVerifyPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <DiditVerificationGate
-        context={context}
         accessToken={token}
         onVerified={() => router.replace(returnUrl)}
         title="Identity verification"
