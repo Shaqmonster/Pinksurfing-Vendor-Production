@@ -122,19 +122,22 @@ const Settings = () => {
     }
     setSaving(true);
     try {
-      const { mintSquareConnectSession, pollSquareConnected } = await import("@/api/square");
-      const { url } = await mintSquareConnectSession(token, "vendor");
-      const popup = window.open(url, "ps-square-connect", "width=560,height=720");
+      const { openSquareConnectPage, pollSquareConnected } = await import("@/api/square");
+      const popup = openSquareConnectPage(token, "vendor");
+      if (!popup) {
+        toast.error("Popup blocked — allow popups to connect Square");
+        return;
+      }
       const hub = await pollSquareConnected(token);
       setSquareConnected(Boolean(hub.connected));
       try {
-        popup?.close();
+        popup.close();
       } catch {
         /* ignore */
       }
       toast.success("Square connected");
     } catch (error: any) {
-      console.error("Failed to get Square connect link", error);
+      console.error("Failed to connect Square", error);
       toast.error(error.response?.data?.error || error.message || "Failed to connect Square");
     } finally {
       setSaving(false);

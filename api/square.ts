@@ -1,6 +1,11 @@
 import axios from "axios";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "");
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, "") || "";
+
+/** Hosted page origin (strip trailing /api). */
+function ecommerceOrigin(): string {
+  return BASE_URL.replace(/\/api\/?$/, "") || "https://ecommerceapi.pinksurfing.com";
+}
 
 export type SquareHubStatus = {
   connected: boolean;
@@ -10,7 +15,30 @@ export type SquareHubStatus = {
   oauthEnv?: string | null;
 };
 
-/** GET /api/integrations/square/status/ */
+/** KYC-style: open hosted Connect page — no connect-session API from the browser. */
+export function buildSquareConnectPageUrl(
+  token: string,
+  product: "vendor" | "paychat" | "gighub" = "vendor"
+): string {
+  const qs = new URLSearchParams({
+    product,
+    access_token: token.replaceAll('"', ""),
+  });
+  return `${ecommerceOrigin()}/integrations/square/connect/?${qs.toString()}`;
+}
+
+export function openSquareConnectPage(
+  token: string,
+  product: "vendor" | "paychat" | "gighub" = "vendor"
+): Window | null {
+  return window.open(
+    buildSquareConnectPageUrl(token, product),
+    "ps-square-connect",
+    "width=560,height=720"
+  );
+}
+
+/** GET status via ecommerce API (Vendor dashboard already uses this origin). */
 export async function getSquareStatus(token: string): Promise<SquareHubStatus> {
   const response = await axios.get(`${BASE_URL}/integrations/square/status/`, {
     headers: {
@@ -20,32 +48,17 @@ export async function getSquareStatus(token: string): Promise<SquareHubStatus> {
   return response.data;
 }
 
-/** POST /api/integrations/square/connect-session/ → one-time connect URL */
+/** @deprecated Prefer openSquareConnectPage */
 export async function mintSquareConnectSession(
   token: string,
   product: "vendor" | "paychat" | "gighub" = "vendor"
 ): Promise<{ url: string; expiresAt?: string }> {
-  const response = await axios.post(
-    `${BASE_URL}/integrations/square/connect-session/`,
-    { product },
-    {
-      headers: {
-        Authorization: `Bearer ${token.replaceAll('"', "")}`,
-      },
-    }
-  );
-  return response.data;
+  return { url: buildSquareConnectPageUrl(token, product), expiresAt: "" };
 }
 
-/** @deprecated Use mintSquareConnectSession + popup */
+/** @deprecated */
 export async function getSquareOnboardingUrl(token: string, _vendorId?: string) {
-  try {
-    const data = await mintSquareConnectSession(token, "vendor");
-    return { action_url: data.url, url: data.url };
-  } catch (error) {
-    console.error("Error fetching Square onboarding URL:", error);
-    throw error;
-  }
+  return { action_url: buildSquareConnectPageUrl(token, "vendor") };
 }
 
 export async function pollSquareConnected(
