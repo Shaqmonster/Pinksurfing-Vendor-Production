@@ -75,9 +75,9 @@ const Settings = () => {
     setLoading(true);
     try {
       const { data, error } = await getVendorProfile(token);
-      if (!error) {
+      const legacyConnected = Boolean(data?.square_access_token);
+      if (!error && data) {
         setVendorId(data.id || "");
-        setSquareConnected(Boolean(data.square_access_token));
         setStoreName(data.store_name || "");
         setContactPersonName(data.contact_person_name || "");
         setEmail(data.email || "");
@@ -96,6 +96,18 @@ const Settings = () => {
       } else {
         console.error("Error fetching profile:", error);
       }
+      // Person-level Hub status (shared across PayChat / Vendor / GigHub)
+      if (token) {
+        try {
+          const { getSquareStatus } = await import("@/api/square");
+          const hub = await getSquareStatus(token);
+          setSquareConnected(Boolean(hub.connected || legacyConnected));
+        } catch {
+          setSquareConnected(legacyConnected);
+        }
+      } else {
+        setSquareConnected(legacyConnected);
+      }
     } catch (error) {
       console.error("Unexpected error:", error);
     } finally {
@@ -104,25 +116,26 @@ const Settings = () => {
   };
 
   const handleSquareOnboarding = async () => {
-    if (!token || !vendorId) {
+    if (!token) {
       toast.error("Vendor information not found.");
       return;
     }
     setSaving(true);
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/payments/square/onboarding-link/${vendorId}/`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token.replaceAll('"', "")}`,
-          },
-        }
-      );
-      window.location.href = response.data.action_url;
+      const { mintSquareConnectSession, pollSquareConnected } = await import("@/api/square");
+      const { url } = await mintSquareConnectSession(token, "vendor");
+      const popup = window.open(url, "ps-square-connect", "width=560,height=720");
+      const hub = await pollSquareConnected(token);
+      setSquareConnected(Boolean(hub.connected));
+      try {
+        popup?.close();
+      } catch {
+        /* ignore */
+      }
+      toast.success("Square connected");
     } catch (error: any) {
-      console.error("Failed to get Square onboarding link", error);
-      toast.error(error.response?.data?.error || "Failed to get Square onboarding link");
+      console.error("Failed to get Square connect link", error);
+      toast.error(error.response?.data?.error || error.message || "Failed to connect Square");
     } finally {
       setSaving(false);
     }
