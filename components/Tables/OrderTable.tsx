@@ -8,6 +8,7 @@ import {
   buyShipmentLabel,
   getShippingDetails,
   disputeReturn,
+  approveReturn,
 } from "@/api/orders";
 import { Package } from "@/types/package";
 import { staticDetailHref } from "@/utils/staticRouteId";
@@ -235,6 +236,22 @@ const OrderTable = ({ recentOrders }: any) => {
     }
   };
 
+  const handleApproveReturn = async (order: Order) => {
+    const token = apiToken ?? getAccessToken();
+    if (!token) return;
+    const result = await approveReturn(order.id, token);
+    if (!result.error) {
+      toast.success("Return approved. Buyer refund will process.");
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.id === order.id ? { ...o, order_status: "RETURNED" } : o
+        )
+      );
+    } else {
+      toast.error(result.message || "Failed to approve return.");
+    }
+  };
+
   const handleParcelSubmit = (details: Package) => {
     const token = apiToken ?? getAccessToken();
     if (currentOrder && token) {
@@ -376,13 +393,22 @@ const OrderTable = ({ recentOrders }: any) => {
                             </a>
                           )}
                           {order.order_status === "RETURN-DELIVERED" && (
-                            <button
-                              type="button"
-                              onClick={() => handleDisputeReturn(order)}
-                              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-danger/10 text-danger border border-danger/30"
-                            >
-                              Dispute Return
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleApproveReturn(order)}
+                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-success/10 text-success border border-success/30"
+                              >
+                                Approve Return
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDisputeReturn(order)}
+                                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-danger/10 text-danger border border-danger/30"
+                              >
+                                Dispute Return
+                              </button>
+                            </>
                           )}
                           <a
                             href={staticDetailHref("/orders", order.id)}
@@ -497,14 +523,24 @@ const OrderTable = ({ recentOrders }: any) => {
                                   </a>
                                 )}
                                 {order.order_status === "RETURN-DELIVERED" && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDisputeReturn(order)}
-                                    className="px-2 xl:px-3 py-1.5 text-[10px] xl:text-xs font-semibold rounded-lg bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20 transition-colors"
-                                    title="Dispute this return — freezes the 48-hour auto-refund clock"
-                                  >
-                                    Dispute
-                                  </button>
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleApproveReturn(order)}
+                                      className="px-2 xl:px-3 py-1.5 text-[10px] xl:text-xs font-semibold rounded-lg bg-success/10 text-success border border-success/30 hover:bg-success/20 transition-colors"
+                                      title="Approve return and refund the buyer now"
+                                    >
+                                      Approve
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDisputeReturn(order)}
+                                      className="px-2 xl:px-3 py-1.5 text-[10px] xl:text-xs font-semibold rounded-lg bg-danger/10 text-danger border border-danger/30 hover:bg-danger/20 transition-colors"
+                                      title="Dispute this return — freezes the 48-hour auto-refund clock"
+                                    >
+                                      Dispute
+                                    </button>
+                                  </>
                                 )}
                                 <a
                                   href={staticDetailHref("/orders", order.id)}

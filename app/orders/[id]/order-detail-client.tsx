@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import { resolveVendorApiToken } from "@/utils/vendorAuth";
 import { getSingleOrder } from "@/api/products";
-import { changeStatus } from "@/api/orders";
+import { changeStatus, disputeReturn, approveReturn } from "@/api/orders";
 import {
   FiArrowLeft,
   FiPackage,
@@ -82,6 +82,8 @@ const STATUS_CONFIG: Record<
   DELIVERED: { label: "Delivered", bg: "bg-success/10", text: "text-success", icon: FiCheckCircle },
   CANCELED: { label: "Canceled", bg: "bg-danger/10", text: "text-danger", icon: FiAlertCircle },
   "RETURN-REQUESTED": { label: "Return Requested", bg: "bg-warning/10", text: "text-warning", icon: FiAlertCircle },
+  "RETURN-DELIVERED": { label: "Return Delivered", bg: "bg-warning/10", text: "text-warning", icon: FiTruck },
+  "RETURN-DISPUTED": { label: "Return Disputed", bg: "bg-danger/10", text: "text-danger", icon: FiAlertCircle },
   RETURNED: { label: "Returned", bg: "bg-surface-200", text: "text-surface-500", icon: FiPackage },
   ERROR: { label: "Error", bg: "bg-danger/10", text: "text-danger", icon: FiAlertCircle },
 };
@@ -139,6 +141,13 @@ export default function OrderDetailPage() {
     })();
   }, [orderId]);
 
+  const refreshOrder = async (token: string) => {
+    const updated = await getSingleOrder(token, orderId);
+    if (updated?.data?.["Order Details"]) {
+      setOrder(updated.data["Order Details"]);
+    }
+  };
+
   const handleStatusChange = async (itemId: string, newStatus: string) => {
     const token = await resolveVendorApiToken();
     if (!token) return;
@@ -148,13 +157,47 @@ export default function OrderDetailPage() {
       const res = await changeStatus(token, itemId, newStatus);
       if (res?.data) {
         toast.success(`Status updated to ${newStatus}`);
-        // Refresh
-        const updated = await getSingleOrder(token, orderId);
-        if (updated?.data?.["Order Details"]) {
-          setOrder(updated.data["Order Details"]);
-        }
+        await refreshOrder(token);
       } else {
         toast.error("Failed to update status.");
+      }
+    } catch {
+      toast.error("An error occurred.");
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
+  const handleApproveReturn = async (itemId: string) => {
+    const token = await resolveVendorApiToken();
+    if (!token) return;
+    setUpdatingStatus(itemId);
+    try {
+      const res = await approveReturn(itemId, token);
+      if (!res.error) {
+        toast.success("Return approved. Buyer refund will process.");
+        await refreshOrder(token);
+      } else {
+        toast.error(res.message || "Failed to approve return.");
+      }
+    } catch {
+      toast.error("An error occurred.");
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
+  const handleDisputeReturn = async (itemId: string) => {
+    const token = await resolveVendorApiToken();
+    if (!token) return;
+    setUpdatingStatus(itemId);
+    try {
+      const res = await disputeReturn(itemId, token);
+      if (!res.error) {
+        toast.success("Dispute filed. Admin has been notified.");
+        await refreshOrder(token);
+      } else {
+        toast.error(res.message || "Failed to file dispute.");
       }
     } catch {
       toast.error("An error occurred.");
@@ -435,6 +478,32 @@ export default function OrderDetailPage() {
                             </button>
                           );
                         })}
+                      </div>
+                    )}
+
+                    {item.order_status === "RETURN-DELIVERED" && (
+                      <div className="mt-4 space-y-2">
+                        <p className="text-xs text-warning">
+                          Return package delivered. Approve refund now, or dispute within 48 hours.
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={updatingStatus === item.id}
+                            onClick={() => handleApproveReturn(item.id)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-success/10 text-success border border-success/20 hover:opacity-80 disabled:opacity-50"
+                          >
+                            Approve return
+                          </button>
+                          <button
+                            type="button"
+                            disabled={updatingStatus === item.id}
+                            onClick={() => handleDisputeReturn(item.id)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-danger/10 text-danger border border-danger/20 hover:opacity-80 disabled:opacity-50"
+                          >
+                            Dispute return
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>

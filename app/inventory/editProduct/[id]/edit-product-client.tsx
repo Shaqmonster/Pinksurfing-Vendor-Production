@@ -162,7 +162,8 @@ const EditProduct = () => {
   const [productData, setProductData] = useState({
     name: "", unit_price: "", mrp: "", category: "", subcategory: "",
     brand_name: "", tags: "", meta_title: "", length: "", width: "",
-    height: "", weight: "", quantity: "", short_description: "", description: "",
+    height: "", weight: "", hs_tariff_number: "", country_of_origin: "",
+    customs_description: "", quantity: "", short_description: "", description: "",
     image: "", id: productId || "",
     nda_lock_ebitda: false,
     nda_lock_full_financials: false,
@@ -269,6 +270,9 @@ const EditProduct = () => {
           width: p.width ? String(p.width) : "",
           height: p.height ? String(p.height) : "",
           weight: p.weight ? String(p.weight) : "",
+          hs_tariff_number: p.hs_tariff_number || "",
+          country_of_origin: p.country_of_origin || "",
+          customs_description: p.customs_description || "",
           quantity: p.quantity !== undefined && p.quantity !== null ? String(p.quantity) : "",
           short_description: p.short_description || "",
           description: p.description || "",
@@ -289,7 +293,7 @@ const EditProduct = () => {
         }
 
         // Show dimensions if any are set
-        if (p.length || p.width || p.height || p.weight) setShowDimensions(true);
+        if (p.length || p.width || p.height || p.weight || p.hs_tariff_number) setShowDimensions(true);
 
         // Existing images: image1..image4
         const BASE_URL_ROOT = process.env.NEXT_PUBLIC_BASE_URL?.replace("/api", "") ?? "";
@@ -1382,6 +1386,46 @@ const EditProduct = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+              <div className="mt-5 pt-4 border-t border-surface-100 dark:border-dark-border">
+                <p className="text-xs font-medium text-surface-500 mb-3">
+                  International customs (required for cross-border shipping)
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-surface-500 mb-2 block">HS tariff code</label>
+                    <input
+                      type="text"
+                      value={productData.hs_tariff_number}
+                      onChange={(e) => updateProductData("hs_tariff_number", e.target.value)}
+                      placeholder="e.g. 610910"
+                      maxLength={16}
+                      className="input-premium"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-surface-500 mb-2 block">Country of origin</label>
+                    <input
+                      type="text"
+                      value={productData.country_of_origin}
+                      onChange={(e) => updateProductData("country_of_origin", e.target.value.toUpperCase())}
+                      placeholder="US"
+                      maxLength={2}
+                      className="input-premium"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-surface-500 mb-2 block">Customs description</label>
+                    <input
+                      type="text"
+                      value={productData.customs_description}
+                      onChange={(e) => updateProductData("customs_description", e.target.value)}
+                      placeholder="Short commodity name"
+                      maxLength={50}
+                      className="input-premium"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}
