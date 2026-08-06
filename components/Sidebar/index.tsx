@@ -18,6 +18,7 @@ import {
   // FaRobot,
   FaCalendarAlt,
   FaFileContract,
+  FaHandshake,
 } from "react-icons/fa";
 import { HiOutlineSparkles } from "react-icons/hi";
 import { getPropertyVisitCount } from "@/api/propertyVisits";
@@ -112,6 +113,12 @@ const Sidebar = () => {
       href: "/inventory/add_products",
       icon: FaPlus,
       badge:null,
+    },
+    {
+      name: "Deal Supply",
+      href: "/inventory/deal-supply",
+      icon: FaHandshake,
+      badge: null,
     },
     {
       name: "Orders",

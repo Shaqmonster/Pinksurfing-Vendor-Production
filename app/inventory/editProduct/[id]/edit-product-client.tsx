@@ -37,6 +37,16 @@ import {
 } from "@/components/inventory/BusinessForSaleListingWizard";
 import { ProductNdaDocumentsSection } from "@/components/inventory/ProductNdaDocumentsSection";
 import { prepareListingFeePayment } from "@/utils/listingPayment";
+import {
+  OffMarketDealSection,
+  buildOffMarketPayload,
+  defaultOffMarketDealForm,
+  type OffMarketDealFormState,
+} from "@/components/inventory/OffMarketDealSection";
+import {
+  fetchOffMarketProfile,
+  upsertOffMarketDealProfile,
+} from "@/api/offMarketDeals";
 
 // ============ ICONS (identical to add_products) ============
 const CheckIcon = () => (
@@ -178,6 +188,9 @@ const EditProduct = () => {
   // UI states
   const [hasDiscount, setHasDiscount] = useState(false);
   const [shortDescPlainLen, setShortDescPlainLen] = useState(0);
+  const [offMarketDeal, setOffMarketDeal] = useState<OffMarketDealFormState>(
+    defaultOffMarketDealForm()
+  );
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [productActive, setProductActive] = useState<boolean | null>(null);
@@ -335,6 +348,38 @@ const EditProduct = () => {
               subcategorySchemaId,
               p.attributes || []
             );
+          }
+        }
+
+        // Hydrate off-market profile when present (Real Estate)
+        const catName = (cat?.name || "").toLowerCase();
+        if (catName.includes("real estate") && productId) {
+          const omRes = await fetchOffMarketProfile(token, productId);
+          if (!omRes.error && omRes.data) {
+            const d = omRes.data;
+            const deadlineDate = d.deadline_at
+              ? String(d.deadline_at).split("T")[0]
+              : "";
+            setOffMarketDeal({
+              is_off_market: Boolean(d.is_off_market),
+              property_class: d.property_class || "residential",
+              listing_intent: d.listing_intent || "for_sale",
+              arv: d.arv != null ? String(d.arv) : "",
+              asking_price: d.asking_price != null ? String(d.asking_price) : "",
+              city: d.city || "",
+              state: d.state || "",
+              beds: d.beds != null ? String(d.beds) : "",
+              verification_score:
+                d.verification_score != null ? String(d.verification_score) : "85",
+              teaser_summary: d.teaser_summary || "",
+              popular_tags: Array.isArray(d.popular_tags) ? d.popular_tags : [],
+              unlock_fee: d.unlock_fee != null ? String(d.unlock_fee) : "50",
+              max_unlock_slots:
+                d.max_unlock_slots != null ? String(d.max_unlock_slots) : "20",
+              deadline_type: d.deadline_type || "close_of_escrow",
+              deadline_at: deadlineDate,
+              full_address: d.full_address || "",
+            });
           }
         }
 
@@ -684,6 +729,37 @@ const EditProduct = () => {
       if (!res || res.error) {
         handleError(res?.data?.data?.Status || res?.message || "Error updating product");
       } else {
+        if (
+          productId &&
+          isRealEstate &&
+          offMarketDeal.is_off_market &&
+          offMarketDeal.arv &&
+          offMarketDeal.asking_price &&
+          offMarketDeal.city &&
+          offMarketDeal.state
+        ) {
+          const omPayload = buildOffMarketPayload(productId, offMarketDeal);
+          const omRes = await upsertOffMarketDealProfile(token, omPayload);
+          if (!omRes.error) {
+            toast.success("Off-market deal profile saved.");
+          } else {
+            toast.warn("Product updated but off-market profile failed. Retry from this page.");
+          }
+        } else if (productId && isRealEstate && !offMarketDeal.is_off_market) {
+          const existing = await fetchOffMarketProfile(token, productId);
+          if (!existing.error && existing.data) {
+            const omPayload = buildOffMarketPayload(productId, {
+              ...offMarketDeal,
+              is_off_market: false,
+              arv: offMarketDeal.arv || String(existing.data.arv),
+              asking_price:
+                offMarketDeal.asking_price || String(existing.data.asking_price),
+              city: offMarketDeal.city || existing.data.city || "TBD",
+              state: offMarketDeal.state || existing.data.state || "NA",
+            });
+            await upsertOffMarketDealProfile(token, omPayload);
+          }
+        }
         toast.success(res.data?.Status || "Product updated successfully!");
         router.push("/inventory/products");
       }
@@ -1292,6 +1368,10 @@ const EditProduct = () => {
           </div>
         </div>
       </div>
+
+      {isRealEstate && (
+        <OffMarketDealSection value={offMarketDeal} onChange={setOffMarketDeal} />
+      )}
 
       {/* NDA Financial Privacy — shown for Business for Sale and Real Estate only */}
       {showNdaSection && (

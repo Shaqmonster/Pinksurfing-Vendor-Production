@@ -70,3 +70,106 @@ export async function sendOutreachCampaign(token: string | null, campaignId: str
     return { error: true };
   }
 }
+
+function authHeader(token: string) {
+  return { Authorization: `Bearer ${token.replaceAll('"', "")}` };
+}
+
+export async function fetchOffMarketProfile(
+  token: string | null,
+  productId: string
+) {
+  if (!token) return { error: true, data: null };
+  try {
+    const response = await axios.get(`${BASE_URL}/off-market-deals/profile/`, {
+      params: { product_id: productId },
+      headers: authHeader(token),
+    });
+    return { error: false, data: response.data };
+  } catch (error: any) {
+    return { error: true, data: error?.response?.data };
+  }
+}
+
+export async function listSupplyInvites(token: string | null) {
+  if (!token) return { error: true, data: [] };
+  try {
+    const response = await axios.get(`${BASE_URL}/off-market-deals/supply/invites/`, {
+      headers: authHeader(token),
+    });
+    return { error: false, data: response.data?.results || [] };
+  } catch {
+    return { error: true, data: [] };
+  }
+}
+
+export async function createSupplyInvite(
+  token: string | null,
+  payload: { label?: string; max_uses?: number } = {}
+) {
+  if (!token) return { error: true, data: null };
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/off-market-deals/supply/invites/`,
+      payload,
+      { headers: authHeader(token) }
+    );
+    return { error: false, data: response.data };
+  } catch (error: any) {
+    return { error: true, data: error?.response?.data };
+  }
+}
+
+export async function listSupplySubmissions(
+  token: string | null,
+  status: string = "pending"
+) {
+  if (!token) return { error: true, data: [] };
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/off-market-deals/supply/submissions/`,
+      {
+        params: { status },
+        headers: authHeader(token),
+      }
+    );
+    return { error: false, data: response.data?.results || [] };
+  } catch {
+    return { error: true, data: [] };
+  }
+}
+
+export async function approveSupplySubmission(
+  token: string | null,
+  submissionId: string
+) {
+  if (!token) return { error: true, data: null };
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/off-market-deals/supply/submissions/${submissionId}/approve/`,
+      {},
+      { headers: authHeader(token) }
+    );
+    return { error: false, data: response.data };
+  } catch (error: any) {
+    return { error: true, data: error?.response?.data };
+  }
+}
+
+export async function rejectSupplySubmission(
+  token: string | null,
+  submissionId: string,
+  reason: string = ""
+) {
+  if (!token) return { error: true, data: null };
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/off-market-deals/supply/submissions/${submissionId}/reject/`,
+      { reason },
+      { headers: authHeader(token) }
+    );
+    return { error: false, data: response.data };
+  } catch (error: any) {
+    return { error: true, data: error?.response?.data };
+  }
+}
