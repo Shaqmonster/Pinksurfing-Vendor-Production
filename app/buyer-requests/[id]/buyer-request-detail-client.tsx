@@ -110,7 +110,7 @@ interface OfferData {
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 const STEPS = [
-  { label: "Job Overview", shortLabel: "Overview" },
+  { label: "Request Overview", shortLabel: "Overview" },
   { label: "Offer Basics", shortLabel: "Basics" },
   { label: "Price & Payment", shortLabel: "Price" },
   { label: "Timeline", shortLabel: "Timeline" },
@@ -292,7 +292,7 @@ const JobSidebar = ({ request }: { request: BuyerRequest }) => {
   return (
     <div className="sticky top-6 premium-card space-y-4">
       <p className="text-xs font-mono text-primary-500 font-semibold tracking-wider uppercase">
-        Job Request
+        Buyer Request
       </p>
       {request.category_name && (
         <span className="inline-flex items-center gap-1 text-xs font-medium text-primary-500 bg-primary-500/10 px-2.5 py-0.5 rounded-full">
@@ -385,7 +385,7 @@ const JobOverviewStep = ({
       {/* Mobile-only job card */}
       <div className="md:hidden premium-card space-y-4">
         <span className="text-xs font-mono text-primary-500 font-semibold tracking-wider uppercase">
-          Job Request
+          Buyer Request
         </span>
         <h2 className="text-xl font-bold text-surface-900 dark:text-white">
           {request.title}
@@ -460,7 +460,7 @@ const JobOverviewStep = ({
           Ready to Submit Your Offer?
         </h2>
         <p className="text-surface-500 dark:text-surface-400">
-          Review the job details on the left, then create a professional offer in just a few steps.
+          Review the request details on the left, then create a professional offer in just a few steps.
         </p>
       </div>
 

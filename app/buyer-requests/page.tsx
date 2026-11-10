@@ -127,10 +127,10 @@ export default function BuyerRequestsPage() {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
-            Job <span className="gradient-text">Marketplace</span>
+            Buyer <span className="gradient-text">Requests</span>
           </h1>
           <p className="text-surface-500 dark:text-surface-400 text-sm mt-0.5">
-            Browse open requests and send your offer
+            Browse open buyer requests and submit your offer
           </p>
         </div>
         <button
