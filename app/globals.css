@@ -145,9 +145,14 @@
 /* ===== COMPONENTS ===== */
 @layer components {
   .glass-card {
-    @apply bg-white/70 backdrop-blur-xl border border-white/20;
-    @apply dark:bg-dark-card/80 dark:border-dark-border;
-    @apply shadow-premium-sm;
+    @apply backdrop-blur-xl shadow-premium-sm;
+    background-color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .dark .glass-card {
+    background-color: color-mix(in srgb, var(--ps-card) 80%, transparent);
+    border-color: var(--ps-brd);
   }
 
   .premium-card {
@@ -159,8 +164,8 @@
     transition-timing-function: var(--ps-ease-standard);
   }
 
-  .premium-card-hover {
-    @apply hover:border-primary-500/40;
+  .premium-card-hover:hover {
+    border-color: color-mix(in srgb, var(--ps-primary) 40%, transparent);
   }
 
   .gradient-text {
@@ -201,9 +206,13 @@
   .btn-ghost {
     @apply px-4 py-2 rounded-lg font-medium min-h-[44px];
     @apply text-surface-600 hover:text-primary-500 hover:bg-primary-50;
-    @apply dark:text-surface-400 dark:hover:text-primary-400 dark:hover:bg-primary-500/10;
+    @apply dark:text-surface-400 dark:hover:text-primary-400;
     @apply transition-all;
     transition-duration: var(--ps-motion-fast);
+  }
+
+  .dark .btn-ghost:hover {
+    background-color: color-mix(in srgb, var(--ps-primary) 10%, transparent);
   }
 
   .input-premium {
@@ -224,39 +233,74 @@
 
   .badge-primary {
     @apply bg-primary-100 text-primary-700;
-    @apply dark:bg-primary-500/20 dark:text-primary-300;
+  }
+
+  .dark .badge-primary {
+    background-color: color-mix(in srgb, var(--ps-primary) 20%, transparent);
+    color: #b882ff;
   }
 
   .badge-success {
     @apply bg-success-light text-success-dark;
-    @apply dark:bg-success/20 dark:text-success;
+  }
+
+  .dark .badge-success {
+    background-color: color-mix(in srgb, var(--ps-green) 20%, transparent);
+    color: var(--ps-green);
   }
 
   .badge-warning {
     @apply bg-warning-light text-warning-dark;
-    @apply dark:bg-warning/20 dark:text-warning;
+  }
+
+  .dark .badge-warning {
+    background-color: color-mix(in srgb, var(--ps-amber) 20%, transparent);
+    color: var(--ps-amber);
   }
 
   .badge-danger {
     @apply bg-danger-light text-danger-dark;
-    @apply dark:bg-danger/20 dark:text-danger;
+  }
+
+  .dark .badge-danger {
+    background-color: color-mix(in srgb, var(--ps-red) 20%, transparent);
+    color: var(--ps-red);
   }
 
   .sidebar-item {
     @apply flex items-center gap-3 px-4 py-3 rounded-xl min-h-[44px];
     @apply text-surface-600 font-medium;
     @apply hover:bg-primary-50 hover:text-primary-600;
-    @apply dark:text-surface-400 dark:hover:bg-primary-500/10 dark:hover:text-primary-300;
+    @apply dark:text-surface-400 dark:hover:text-primary-300;
     @apply transition-all;
     transition-duration: var(--ps-motion-fast);
   }
 
+  .dark .sidebar-item:hover {
+    background-color: color-mix(in srgb, var(--ps-primary) 10%, transparent);
+  }
+
   .sidebar-item-active {
-    @apply bg-primary-500/15 text-primary-600 border border-primary-500/30;
-    @apply dark:bg-primary-500/15 dark:text-primary-300 dark:border-primary-500/40;
-    @apply hover:bg-primary-500/20 hover:text-primary-600;
-    @apply dark:hover:bg-primary-500/20 dark:hover:text-primary-300;
+    @apply text-primary-600;
+    background-color: color-mix(in srgb, var(--ps-primary) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ps-primary) 30%, transparent);
     box-shadow: none;
+  }
+
+  .sidebar-item-active:hover {
+    background-color: color-mix(in srgb, var(--ps-primary) 20%, transparent);
+    @apply text-primary-600;
+  }
+
+  .dark .sidebar-item-active {
+    color: #b882ff;
+    background-color: color-mix(in srgb, var(--ps-primary) 15%, transparent);
+    border-color: color-mix(in srgb, var(--ps-primary) 40%, transparent);
+  }
+
+  .dark .sidebar-item-active:hover {
+    background-color: color-mix(in srgb, var(--ps-primary) 20%, transparent);
+    color: #b882ff;
   }
 
   .stats-card {
@@ -266,9 +310,13 @@
 
   .stats-card::before {
     content: "";
-    @apply absolute top-0 right-0 w-24 h-24;
-    @apply bg-gradient-to-br from-primary-500/10 to-transparent;
-    @apply rounded-full transform translate-x-8 -translate-y-8;
+    @apply absolute top-0 right-0 w-24 h-24 rounded-full;
+    transform: translate(2rem, -2rem);
+    background: linear-gradient(
+      to bottom right,
+      color-mix(in srgb, var(--ps-primary) 10%, transparent),
+      transparent
+    );
   }
 
   .table-premium {
@@ -331,9 +379,13 @@
 
   .skeleton::after {
     content: "";
-    @apply absolute inset-0;
-    @apply bg-gradient-to-r from-transparent via-white/20 to-transparent;
-    @apply animate-shimmer;
+    @apply absolute inset-0 animate-shimmer;
+    background-image: linear-gradient(
+      to right,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
   }
 
   .hit-target {
