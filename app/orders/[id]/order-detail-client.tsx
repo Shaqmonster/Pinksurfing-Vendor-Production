@@ -360,7 +360,9 @@ export default function OrderDetailPage() {
               const StatusIcon = statusCfg.icon;
               const nextStatuses = NEXT_STATUSES[item.order_status] ?? [];
               const productHref = item.product_slug
-                ? `${STOREFRONT_URL}/product/productDetail/${item.product_slug}`
+                ? item.product_id
+                  ? `${STOREFRONT_URL}/product/productDetail/${item.product_slug}?productId=${item.product_id}`
+                  : `${STOREFRONT_URL}/product/productDetail/${item.product_slug}`
                 : null;
 
               return (
