@@ -620,7 +620,7 @@ const Settings = () => {
                 <button
                   type="button"
                   onClick={handleSquareOnboarding}
-                  className="w-full md:w-auto px-8 py-3 bg-[#3E3E3E] text-white font-bold rounded-xl hover:bg-black transition-all shadow-lg flex items-center justify-center gap-2 text-sm"
+                  className="w-full md:w-auto min-h-[44px] px-8 py-3 btn-gradient flex items-center justify-center gap-2 text-sm"
                 >
                   <FiCreditCard className="w-4 h-4" />
                   {squareConnected ? "Reconnect Square" : "Connect Square"}

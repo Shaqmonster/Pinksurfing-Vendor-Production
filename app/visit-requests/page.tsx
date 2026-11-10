@@ -2,12 +2,16 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { FiCalendar } from "react-icons/fi";
 import {
   getPropertyVisitList,
   vendorAcceptVisit,
   vendorRejectVisit,
   vendorRescheduleVisit,
 } from "@/api/propertyVisits";
+import EmptyState from "@/components/ui/EmptyState";
+import PageHeader from "@/components/ui/PageHeader";
+import { CardSkeleton } from "@/components/common/Loader";
 
 type VisitRow = {
   id: string;
@@ -118,27 +122,32 @@ export default function VisitRequestsPage() {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mx-auto max-w-5xl px-4 py-8"
+      className="mx-auto max-w-5xl"
     >
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-surface-900 dark:text-white">
-            Visit requests
-          </h1>
-          <p className="mt-2 text-surface-600 dark:text-surface-400">
-            Paid scheduling from buyers on your real-estate and business listings.
-          </p>
-        </div>
+        <PageHeader
+          title="Visit requests"
+          description="Paid scheduling from buyers on your real-estate and business listings."
+        />
 
         {error && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-200">
+          <div className="mb-6 rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
             {error}
           </div>
         )}
 
         {loading ? (
-          <p className="text-surface-500">Loading…</p>
+          <div className="space-y-4" aria-busy="true">
+            <CardSkeleton />
+            <CardSkeleton />
+          </div>
         ) : rows.length === 0 ? (
-          <p className="text-surface-500">No visit requests yet.</p>
+          <div className="premium-card">
+            <EmptyState
+              icon={FiCalendar}
+              title="No visit requests yet"
+              description="When buyers book a paid visit on your listings, they will show up here."
+            />
+          </div>
         ) : (
           <div className="flex flex-col gap-6">
             {rows.map((v) => (
