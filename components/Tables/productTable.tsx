@@ -35,6 +35,7 @@ import {
 } from "@/utils/pendingListings";
 import { prepareListingFeePayment } from "@/utils/listingPayment";
 import ConfirmationModal from "../Modals/ConfirmDelete";
+import EmptyState from "@/components/ui/EmptyState";
 
 const ProductsTable = (props: { Products?: Product[] }) => {
   const rowRef = useRef<any>(null);
@@ -648,14 +649,14 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                             <div className="flex items-center justify-end gap-2">
                               <a
                                 href={editProductHref(product.id)}
-                                className="p-2 rounded-lg bg-accent-blue/10 dark:bg-accent-blue/20 text-accent-blue hover:bg-accent-blue/20 dark:hover:bg-accent-blue/30 transition-colors"
+                                className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] p-2 rounded-lg bg-accent-blue/10 dark:bg-accent-blue/20 text-accent-blue hover:bg-accent-blue/20 dark:hover:bg-accent-blue/30 transition-colors"
                                 title="Edit listing"
                               >
                                 <FiEdit2 className="w-4 h-4" />
                               </a>
                               <button
                                 onClick={() => openDeleteModal(product.id)}
-                                className="p-2 rounded-lg bg-danger-light dark:bg-danger/20 text-danger hover:bg-danger/20 dark:hover:bg-danger/30 transition-colors"
+                                className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] p-2 rounded-lg bg-danger-light dark:bg-danger/20 text-danger hover:bg-danger/20 dark:hover:bg-danger/30 transition-colors"
                                 title="Delete listing"
                               >
                                 <FiTrash2 className="w-4 h-4" />
@@ -670,29 +671,17 @@ const ProductsTable = (props: { Products?: Product[] }) => {
               </div>
             </>
           ) : (
-            /* Empty State */
-            <div className="p-12 text-center">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-surface-100 dark:bg-dark-surface flex items-center justify-center">
-                <FiPackage className="w-10 h-10 text-surface-400 dark:text-surface-500" />
-              </div>
-              <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
-                {searchQuery ? "No products found" : "No products yet"}
-              </h3>
-              <p className="text-surface-500 dark:text-surface-400 mb-6 max-w-sm mx-auto">
-                {searchQuery
+            <EmptyState
+              icon={FiPackage}
+              title={searchQuery ? "No products found" : "No products yet"}
+              description={
+                searchQuery
                   ? "Try adjusting your search to find what you're looking for."
-                  : "Start by adding your first product to your inventory."}
-              </p>
-              {!searchQuery && (
-                <a
-                  href="/inventory/add_products"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-pink text-white font-semibold shadow-premium-sm hover:shadow-premium-md transition-all"
-                >
-                  <FiPlus className="w-5 h-5" />
-                  Add Your First Product
-                </a>
-              )}
-            </div>
+                  : "Start by adding your first product to your inventory."
+              }
+              actionLabel={searchQuery ? undefined : "Add your first product"}
+              actionHref={searchQuery ? undefined : "/inventory/add_products"}
+            />
           )}
 
           <ConfirmationModal

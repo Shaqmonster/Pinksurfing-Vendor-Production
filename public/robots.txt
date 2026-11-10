@@ -1,0 +1,21 @@
+# PinkSurfing Vendor Portal
+# Public auth / marketing surfaces may be indexed.
+# Authenticated vendor app routes should not be crawled.
+
+User-agent: *
+Allow: /
+Allow: /auth/
+Disallow: /dashboard
+Disallow: /inventory/
+Disallow: /orders
+Disallow: /profile
+Disallow: /settings
+Disallow: /visit-requests
+Disallow: /nda-requests
+Disallow: /buyer-requests
+Disallow: /identity/
+Disallow: /Stripe
+Disallow: /square-callback
+Disallow: /ai-agent
+Disallow: /ui/
+Disallow: /forms/

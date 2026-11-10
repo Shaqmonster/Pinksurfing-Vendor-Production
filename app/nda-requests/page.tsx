@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { FiFileText } from "react-icons/fi";
 import {
   getNdaList,
   vendorAcceptNda,
@@ -11,6 +12,9 @@ import {
   type NdaDocument,
   type NdaRow,
 } from "@/api/ndaSignatures";
+import EmptyState from "@/components/ui/EmptyState";
+import PageHeader from "@/components/ui/PageHeader";
+import { CardSkeleton } from "@/components/common/Loader";
 
 const DOCUMENT_TYPE_OPTIONS = [
   { value: "pl_statement",        label: "P&L Statement" },
@@ -264,31 +268,31 @@ export default function NdaRequestsPage() {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mx-auto max-w-5xl px-4 py-8"
+      className="mx-auto max-w-5xl"
     >
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-surface-900 dark:text-white">
-          Signed NDAs and Leads List
-        </h1>
-        <p className="mt-2 text-surface-600 dark:text-surface-400">
-          Buyers who signed your NDA and paid to request business financials. Review signed
-          agreements, share documents, and track interested leads.
-        </p>
-      </div>
+      <PageHeader
+        title="Signed NDAs & leads"
+        description="Buyers who signed your NDA and paid to request business financials. Review agreements, share documents, and track leads."
+      />
 
       {error && (
-        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-200">
+        <div className="mb-6 rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
           {error}
         </div>
       )}
 
       {loading ? (
-        <p className="text-surface-500">Loading…</p>
+        <div className="space-y-4" aria-busy="true">
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
       ) : rows.length === 0 ? (
-        <div className="rounded-2xl border border-light-border bg-white p-10 text-center dark:border-dark-border dark:bg-dark-card">
-          <p className="text-2xl">📄</p>
-          <p className="mt-2 font-medium text-surface-700 dark:text-surface-300">No signed NDAs or leads yet.</p>
-          <p className="mt-1 text-sm text-surface-500">When buyers sign your NDA and request financials, they will appear here.</p>
+        <div className="premium-card">
+          <EmptyState
+            icon={FiFileText}
+            title="No signed NDAs or leads yet"
+            description="When buyers sign your NDA and request financials, they will appear here."
+          />
         </div>
       ) : (
         <div className="flex flex-col gap-6">

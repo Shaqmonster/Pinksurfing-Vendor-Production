@@ -28,6 +28,7 @@ import {
   FiDownload,
   FiExternalLink
 } from "react-icons/fi";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface Order {
   id: string;
@@ -561,25 +562,13 @@ const OrderTable = ({ recentOrders }: any) => {
             </div>
             </>
           ) : (
-            /* Empty State */
-            <div className="p-12 text-center">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-surface-100 dark:bg-dark-surface flex items-center justify-center">
-                <FiPackage className="w-10 h-10 text-surface-400 dark:text-surface-500" />
-              </div>
-              <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
-                No orders yet
-              </h3>
-              <p className="text-surface-500 dark:text-surface-400 mb-6 max-w-sm mx-auto">
-                When customers place orders for your products, they&apos;ll appear here.
-              </p>
-              <a
-                href="/inventory/products"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-pink text-white font-semibold shadow-premium-sm hover:shadow-premium-md transition-all"
-              >
-                View Your Products
-                <FiArrowRight className="w-4 h-4" />
-              </a>
-            </div>
+            <EmptyState
+              icon={FiPackage}
+              title="No orders yet"
+              description="When customers place orders for your products, they'll appear here."
+              actionLabel="View your products"
+              actionHref="/inventory/products"
+            />
           )}
         </div>
       )}

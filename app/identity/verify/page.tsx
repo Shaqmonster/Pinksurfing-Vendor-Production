@@ -5,11 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import DiditVerificationGate from "@/components/DiditVerificationGate";
 import { MyContext } from "@/app/providers/context";
 import { getAccessToken } from "@/utils/cookies";
+import { CardSkeleton } from "@/components/common/Loader";
 
 export default function IdentityVerifyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { isLoggedIn } = useContext(MyContext);
+  const { loggedIn } = useContext(MyContext);
   const [token, setToken] = useState("");
 
   const returnUrl = searchParams.get("returnUrl") || "/dashboard";
@@ -21,17 +22,23 @@ export default function IdentityVerifyPage() {
   }, []);
 
   useEffect(() => {
-    if (!isLoggedIn && !token) {
+    if (!loggedIn && !token) {
       router.replace("/auth/signin");
     }
-  }, [isLoggedIn, token, router]);
+  }, [loggedIn, token, router]);
 
   if (!token) {
-    return null;
+    return (
+      <div className="min-h-screen bg-light-bg dark:bg-dark-bg p-6">
+        <div className="max-w-lg mx-auto">
+          <CardSkeleton />
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-light-bg dark:bg-dark-bg">
       <DiditVerificationGate
         accessToken={token}
         onVerified={() => router.replace(returnUrl)}

@@ -11,8 +11,11 @@ module.exports = {
   important: true,
   theme: {
     fontFamily: {
-      satoshi: ["Satoshi", "sans-serif"],
-      inter: ["Inter", "sans-serif"],
+      sans: ["Plus Jakarta Sans", "ui-sans-serif", "system-ui", "sans-serif"],
+      jakarta: ["Plus Jakarta Sans", "ui-sans-serif", "system-ui", "sans-serif"],
+      inter: ["Plus Jakarta Sans", "ui-sans-serif", "system-ui", "sans-serif"],
+      satoshi: ["Plus Jakarta Sans", "ui-sans-serif", "system-ui", "sans-serif"],
+      mono: ["JetBrains Mono", "ui-monospace", "monospace"],
     },
     extend: {
       colors: {
@@ -20,58 +23,55 @@ module.exports = {
         current: "currentColor",
         transparent: "transparent",
 
-        // Modern Electric Brand Colors
+        // CORE brand — #9747ff → #6f00ff
         primary: {
-          DEFAULT: "#D946EF", // Electric Fuchsia
-          50: "#FDF4FF",
-          100: "#FAE8FF",
-          200: "#F5D0FE",
-          300: "#F0ABFC",
-          400: "#E879F9",
-          500: "#D946EF", // Main Vivid Color
-          600: "#C026D3",
-          700: "#A21CAF",
-          800: "#86198F",
-          900: "#701A75",
+          DEFAULT: "#9747ff",
+          50: "#F5EEFF",
+          100: "#EAD9FF",
+          200: "#D4B3FF",
+          300: "#B882FF",
+          400: "#A35FFF",
+          500: "#9747ff",
+          600: "#6f00ff",
+          700: "#5A00D4",
+          800: "#4700A8",
+          900: "#33007A",
         },
 
-        // Accent Colors - Hyper-Modern
         accent: {
-          purple: "#8B5CF6", // Violet
-          blue: "#3B82F6", // Royal Blue
-          cyan: "#06B6D4",
+          purple: "#9747ff",
+          blue: "#00b8ff",
+          cyan: "#00b8ff",
           teal: "#14B8A6",
-          emerald: "#10B981",
-          amber: "#F59E0B",
+          emerald: "#2ecc71",
+          amber: "#ef9f27",
           orange: "#F97316",
-          rose: "#F43F5E",
+          rose: "#e24b4a",
         },
 
-        // Updated Neutral Colors - Cool Slate
         surface: {
           50: "#F8FAFC",
           100: "#F1F5F9",
           200: "#E2E8F0",
           300: "#CBD5E1",
-          400: "#94A3B8",
-          500: "#64748B",
-          600: "#475569",
+          400: "#b4b4b4",
+          500: "#8a8a8a",
+          600: "#64748B",
           700: "#334155",
-          800: "#1E293B",
-          900: "#0F172A",
+          800: "#1b1b27",
+          900: "#0e0f13",
         },
 
-        // Dark Theme Colors - Midnight Slate (Premium)
+        // CORE dark surfaces
         dark: {
-          bg: "#0B0F19", // Deep Midnight
-          card: "#111827", // Rich Slate
-          surface: "#1F2937",
-          border: "#374151",
-          hover: "#374151",
-          input: "#111827",
+          bg: "#0e0f13",
+          card: "#191924",
+          surface: "#1b1b27",
+          border: "rgba(255,255,255,0.08)",
+          hover: "#1e1c25",
+          input: "#191924",
         },
 
-        // Light Theme Enhanced
         light: {
           bg: "#F8FAFC",
           card: "#FFFFFF",
@@ -80,26 +80,25 @@ module.exports = {
           hover: "#EDF2F7",
         },
 
-        // Status Colors
         success: {
           light: "#D1FAE5",
-          DEFAULT: "#10B981",
+          DEFAULT: "#2ecc71",
           dark: "#059669",
         },
         warning: {
           light: "#FEF3C7",
-          DEFAULT: "#F59E0B",
+          DEFAULT: "#ef9f27",
           dark: "#D97706",
         },
         danger: {
           light: "#FEE2E2",
-          DEFAULT: "#EF4444",
+          DEFAULT: "#e24b4a",
           dark: "#DC2626",
         },
         info: {
           light: "#DBEAFE",
-          DEFAULT: "#3B82F6",
-          dark: "#2563EB",
+          DEFAULT: "#00b8ff",
+          dark: "#0090CC",
         },
 
         // Legacy compatibility
@@ -294,22 +293,18 @@ module.exports = {
         65: ".65",
       },
       backgroundImage: {
-        // Premium Gradients
-        // Electric Premium Gradients
-        "gradient-pink": "linear-gradient(135deg, #D946EF 0%, #7C3AED 100%)", // Fuchsia -> Violet
-        "gradient-purple": "linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%)", // Violet -> Royal Blue
-        "gradient-blue": "linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%)", // Royal Blue -> Cyan
-        "gradient-emerald": "linear-gradient(135deg, #10B981 0%, #14B8A6 100%)",
-        "gradient-amber": "linear-gradient(135deg, #F59E0B 0%, #EA580C 100%)",
-        "gradient-dark": "linear-gradient(180deg, #0F0F12 0%, #18181B 100%)",
+        "gradient-pink": "linear-gradient(90deg, #9747ff 0%, #6f00ff 100%)",
+        "gradient-primary": "linear-gradient(90deg, #9747ff 0%, #6f00ff 100%)",
+        "gradient-purple": "linear-gradient(135deg, #9747ff 0%, #00b8ff 100%)",
+        "gradient-blue": "linear-gradient(135deg, #00b8ff 0%, #9747ff 100%)",
+        "gradient-emerald": "linear-gradient(135deg, #2ecc71 0%, #14B8A6 100%)",
+        "gradient-amber": "linear-gradient(135deg, #ef9f27 0%, #EA580C 100%)",
+        "gradient-dark": "linear-gradient(180deg, #0e0f13 0%, #1b1b27 100%)",
         "gradient-light": "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
         "gradient-radial": "radial-gradient(ellipse at center, var(--tw-gradient-stops))",
         "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-
-        // Glass Morphism
         "glass-light": "linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 100%)",
-        "glass-dark": "linear-gradient(135deg, rgba(24,24,27,0.9) 0%, rgba(15,15,18,0.7) 100%)",
-
+        "glass-dark": "linear-gradient(135deg, rgba(27,27,39,0.9) 0%, rgba(14,15,19,0.7) 100%)",
         video: "url('../images/video/video.png')",
       },
       content: {
@@ -345,20 +340,16 @@ module.exports = {
         "premium-lg": "0 8px 32px -8px rgba(0, 0, 0, 0.2), 0 16px 48px -16px rgba(0, 0, 0, 0.15)",
         "premium-xl": "0 16px 64px -16px rgba(0, 0, 0, 0.25), 0 24px 72px -24px rgba(0, 0, 0, 0.2)",
 
-        // Glow Effects
-        // Glow Effects - Electric
-        "glow-pink": "0 0 20px rgba(217, 70, 239, 0.35), 0 0 40px rgba(217, 70, 239, 0.1)",
-        "glow-purple": "0 0 20px rgba(139, 92, 246, 0.35), 0 0 40px rgba(139, 92, 246, 0.1)",
-        "glow-blue": "0 0 20px rgba(59, 130, 246, 0.35), 0 0 40px rgba(59, 130, 246, 0.1)",
-
-        // Glass Shadows
-        "glass": "0 8px 32px 0 rgba(31, 38, 135, 0.1)",
-        "glass-dark": "0 8px 32px 0 rgba(0, 0, 0, 0.3)",
+        "glow-pink": "0 10px 28px -18px rgba(151, 71, 255, 0.35)",
+        "glow-purple": "0 10px 28px -18px rgba(151, 71, 255, 0.35)",
+        "glow-blue": "0 10px 28px -18px rgba(0, 184, 255, 0.28)",
+        glass: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
+        "glass-dark": "0 8px 32px 0 rgba(0, 0, 0, 0.35)",
       },
       dropShadow: {
         1: "0px 1px 0px #E2E8F0",
         2: "0px 1px 4px rgba(0, 0, 0, 0.12)",
-        "glow": "0 0 8px rgba(233, 30, 99, 0.5)",
+        glow: "0 0 8px rgba(151, 71, 255, 0.35)",
       },
       keyframes: {
         rotating: {
@@ -404,13 +395,13 @@ module.exports = {
         "spin-1.5": "spin 1.5s linear infinite",
         "spin-2": "spin 2s linear infinite",
         "spin-3": "spin 3s linear infinite",
-        shimmer: "shimmer 2s infinite",
+        shimmer: "shimmer 1.4s linear infinite",
         float: "float 3s ease-in-out infinite",
         "pulse-slow": "pulse 3s ease-in-out infinite",
-        fadeIn: "fadeIn 0.5s ease-out forwards",
-        slideIn: "slideIn 0.3s ease-out forwards",
-        slideUp: "slideUp 0.4s ease-out forwards",
-        scaleIn: "scaleIn 0.3s ease-out forwards",
+        fadeIn: "fadeIn 0.25s cubic-bezier(0, 0, 0.2, 1) forwards",
+        slideIn: "slideIn 0.25s cubic-bezier(0, 0, 0.2, 1) forwards",
+        slideUp: "slideUp 0.25s cubic-bezier(0, 0, 0.2, 1) forwards",
+        scaleIn: "scaleIn 0.25s cubic-bezier(0, 0, 0.2, 1) forwards",
         gradient: "gradient 3s ease infinite",
       },
       backdropBlur: {

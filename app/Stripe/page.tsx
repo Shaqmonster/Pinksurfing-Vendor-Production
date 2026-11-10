@@ -1,56 +1,96 @@
 "use client";
-import React, { useEffect, useState } from 'react';
-import { getOnboardingUrl } from '@/api/account';
-import axios from 'axios';
 
+import React, { useState } from "react";
+import Link from "next/link";
+import { getOnboardingUrl } from "@/api/account";
+import { handleError, handleSuccess } from "@/utils/toast";
+import AuthLayout from "@/components/auth/AuthLayout";
+import { authBtnPrimary, authBtnSecondary, authLinkClass } from "@/components/auth/authTheme";
+import { FiCheckCircle, FiExternalLink } from "react-icons/fi";
+
+/**
+ * Legacy Stripe Connect onboarding handoff.
+ * API contract unchanged — UI only. Square Connect lives under Store Settings.
+ */
 const StripePage = () => {
-    const [onboardingUrl, setOnboardingUrl] = useState(null);
-  
-    const handleClick = async () => {
-      try {
-        const token = localStorage.getItem('access');
-        if (!token) {
-          console.error('Access token not found in localStorage');
-          return;
-        }
-  
-        const response = await getOnboardingUrl(token);
-  
-        const url = response?.url;
-        console.log('API Response:', response);
-  
-        if (!url) {
-          console.error('Onboarding URL not found in the API response');
-          return;
-        }
-  
-        console.log('Onboarding URL:', url);
-        setOnboardingUrl(url);
+  const [loading, setLoading] = useState(false);
+  const [opened, setOpened] = useState(false);
 
-        window.open(url, '_blank');
-      } catch (error) {
-        console.error('Error:', error);
- 
+  const handleClick = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("access");
+      if (!token) {
+        handleError("Please sign in again to continue payout setup.");
+        return;
       }
-    };
-  
-    useEffect(() => {
 
-    }, [onboardingUrl]);
-  
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-center">
-          <button
-            className="bg-blue-500 border border-blue-600 text-black px-8 py-4 rounded-lg text-xl hover:bg-blue-600"
-            onClick={handleClick}
-          >
-            Start Stripe Onboarding
-          </button>
-        </div>
-      </div>
-    );
+      const response = await getOnboardingUrl(token);
+      const url = response?.url;
+
+      if (!url) {
+        handleError("Onboarding link was not available. Try again or finish later in Store Settings.");
+        return;
+      }
+
+      window.open(url, "_blank", "noopener,noreferrer");
+      setOpened(true);
+      handleSuccess("Opened Stripe onboarding in a new tab.");
+    } catch (error) {
+      console.error("Error:", error);
+      handleError("Could not start Stripe onboarding. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
-  
-  export default StripePage;
-  
+
+  return (
+    <AuthLayout
+      title="Set up payouts"
+      subtitle="Connect Stripe so you can receive funds from sales. You can also connect Square later in Store Settings."
+      footer={
+        <p>
+          Prefer to do this later?{" "}
+          <Link href="/dashboard" className={authLinkClass}>
+            Go to dashboard
+          </Link>
+        </p>
+      }
+    >
+      <div className="space-y-5">
+        <ul className="space-y-3 text-sm text-slate-600 dark:text-surface-400">
+          <li className="flex items-start gap-3">
+            <FiCheckCircle className="w-5 h-5 text-success shrink-0 mt-0.5" aria-hidden />
+            <span>Takes a few minutes — business and bank details are collected by Stripe.</span>
+          </li>
+          <li className="flex items-start gap-3">
+            <FiCheckCircle className="w-5 h-5 text-success shrink-0 mt-0.5" aria-hidden />
+            <span>Square Connect (customer card payments) is managed separately under Store Settings.</span>
+          </li>
+        </ul>
+
+        <button
+          type="button"
+          className={authBtnPrimary}
+          onClick={handleClick}
+          disabled={loading}
+        >
+          {loading ? "Opening…" : opened ? "Reopen Stripe onboarding" : "Start Stripe onboarding"}
+          {!loading && <FiExternalLink className="inline ml-2 w-4 h-4 align-text-bottom" aria-hidden />}
+        </button>
+
+        <Link href="/settings" className={`${authBtnSecondary} inline-flex items-center justify-center`}>
+          Open Store Settings
+        </Link>
+
+        {opened ? (
+          <p className="text-xs text-surface-500 dark:text-surface-400 text-center">
+            After you finish in the Stripe tab, return here and continue to your dashboard.
+          </p>
+        ) : null}
+      </div>
+    </AuthLayout>
+  );
+};
+
+export default StripePage;

@@ -1,32 +1,29 @@
 import { toast } from "react-toastify";
 
-const handleError = (err: any) => {
-        console.error("Error occurred", err);
-        toast.error(err, {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "light",
-        });
-}
-const handleSuccess = (msg : string) => {
+const toastDefaults = {
+  position: "top-right" as const,
+  autoClose: 3000,
+  hideProgressBar: false,
+  closeOnClick: true,
+  pauseOnHover: true,
+  draggable: false,
+  theme: "dark" as const,
+};
 
-        console.log("success", msg);
-        toast.success(msg, {
-            position: "top-right",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "light",
-        });
-}
+const handleError = (err: unknown) => {
+  const message =
+    typeof err === "string"
+      ? err
+      : err instanceof Error
+        ? err.message
+        : "Something went wrong";
+  console.error("Error occurred", err);
+  toast.error(message, toastDefaults);
+};
 
+const handleSuccess = (msg: string) => {
+  console.log("success", msg);
+  toast.success(msg, toastDefaults);
+};
 
 export { handleError, handleSuccess };

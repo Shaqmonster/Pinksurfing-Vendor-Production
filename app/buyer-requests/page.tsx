@@ -22,6 +22,9 @@ import {
 import { getOpenRequests } from "@/api/buyerRequests";
 import { handleError } from "@/utils/toast";
 import { resolveVendorApiToken } from "@/utils/vendorAuth";
+import EmptyState from "@/components/ui/EmptyState";
+import { CardSkeleton } from "@/components/common/Loader";
+import { FiCamera } from "react-icons/fi";
 
 interface BuyerRequest {
   id: string;
@@ -197,22 +200,26 @@ export default function BuyerRequestsPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-2 border-primary-500/20 border-t-primary-500 rounded-full animate-spin" />
+        <div className="space-y-4" aria-busy="true">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="premium-card text-center py-20">
-          <Camera className="w-12 h-12 text-surface-300 dark:text-surface-600 mx-auto mb-4" />
-          <p className="text-surface-500 dark:text-surface-400 text-base font-medium">
-            {searchQuery || categoryFilter !== "all"
-              ? "No requests match your filters."
-              : "No open buyer requests right now."}
-          </p>
-          <p className="text-surface-400 dark:text-surface-500 text-sm mt-1">
-            {searchQuery || categoryFilter !== "all"
-              ? "Try adjusting your search or filters."
-              : "Check back soon \u2014 new requests from buyers appear here."}
-          </p>
+        <div className="premium-card">
+          <EmptyState
+            icon={FiCamera}
+            title={
+              searchQuery || categoryFilter !== "all"
+                ? "No requests match your filters"
+                : "No open buyer requests right now"
+            }
+            description={
+              searchQuery || categoryFilter !== "all"
+                ? "Try adjusting your search or filters."
+                : "New requests from buyers will appear here."
+            }
+          />
         </div>
       ) : (
         <div className="space-y-4">

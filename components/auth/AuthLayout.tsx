@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { FiBarChart2, FiPackage, FiShoppingBag } from "react-icons/fi";
 import { getStorefrontUrl } from "@/utils/storefrontUrl";
+import { PS_MOTION } from "@/lib/motion-tokens";
 
 const features = [
   {
@@ -40,16 +41,22 @@ export default function AuthLayout({
   wide = false,
 }: AuthLayoutProps) {
   const storefrontUrl = getStorefrontUrl();
+  const reduced = useReducedMotion();
 
   return (
-    <div className="min-h-screen flex bg-[#f8f9fc] dark:bg-dark-bg">
-      <div className="hidden lg:flex lg:w-[46%] xl:w-[50%] relative overflow-hidden bg-[#0c0f1a] text-white">
+    <div className="min-h-screen flex bg-light-bg dark:bg-dark-bg">
+      <div className="hidden lg:flex lg:w-[46%] xl:w-[50%] relative overflow-hidden bg-[#0e0f13] text-white">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-violet-600/30 blur-3xl" />
-          <div className="absolute top-1/3 -right-20 h-80 w-80 rounded-full bg-indigo-500/25 blur-3xl" />
-          <div className="absolute bottom-0 left-1/4 h-72 w-72 rounded-full bg-amber-500/10 blur-3xl" />
           <div
-            className="absolute inset-0 opacity-[0.07]"
+            className="absolute -top-32 -left-32 h-96 w-96 rounded-full blur-3xl opacity-30"
+            style={{ background: "var(--ps-primary)" }}
+          />
+          <div
+            className="absolute top-1/3 -right-20 h-80 w-80 rounded-full blur-3xl opacity-20"
+            style={{ background: "var(--ps-cyan)" }}
+          />
+          <div
+            className="absolute inset-0 opacity-[0.06]"
             style={{
               backgroundImage:
                 "linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)",
@@ -60,7 +67,7 @@ export default function AuthLayout({
 
         <div className="relative z-10 flex flex-col justify-between p-10 xl:p-14 w-full">
           <div>
-            <Link href="/" className="inline-flex items-center gap-3 w-fit">
+            <Link href="/" className="inline-flex items-center gap-3 w-fit min-h-[44px]">
               <Image
                 src="/logo.jpg"
                 alt="PinkSurfing"
@@ -72,7 +79,7 @@ export default function AuthLayout({
                 <span className="text-xl font-bold tracking-tight leading-tight">
                   PinkSurfing
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-300">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary-300">
                   Vendor Portal
                 </span>
               </div>
@@ -80,7 +87,7 @@ export default function AuthLayout({
           </div>
 
           <div className="max-w-md">
-            <p className="mb-3 inline-flex items-center rounded-full border border-violet-400/30 bg-violet-500/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-violet-300">
+            <p className="mb-3 inline-flex items-center rounded-lg border border-primary-500/30 bg-primary-500/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-primary-300">
               For sellers &amp; merchants
             </p>
             <h2 className="text-3xl xl:text-4xl font-bold leading-tight mb-4">
@@ -95,8 +102,8 @@ export default function AuthLayout({
           <ul className="space-y-4 max-w-md">
             {features.map(({ icon: Icon, title: featureTitle, description }) => (
               <li key={featureTitle} className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-violet-300">
-                  <Icon className="h-4 w-4" />
+                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-primary-300">
+                  <Icon className="h-4 w-4" aria-hidden />
                 </span>
                 <div>
                   <p className="font-semibold text-sm">{featureTitle}</p>
@@ -108,27 +115,32 @@ export default function AuthLayout({
 
           <a
             href={storefrontUrl}
-            className="text-sm text-white/45 hover:text-white/70 transition-colors w-fit"
+            className="text-sm text-white/45 hover:text-white/70 transition-colors w-fit min-h-[44px] inline-flex items-center"
           >
             ← Back to marketplace (shop as a buyer)
           </a>
         </div>
       </div>
 
-      <div className="flex flex-1 items-center justify-center p-4 sm:p-6 lg:p-10 overflow-y-auto">
+      <div className="flex flex-1 items-center justify-center p-4 sm:p-6 lg:p-10 overflow-y-auto safe-pad-x">
         <div className="fixed inset-0 pointer-events-none lg:hidden">
-          <div className="absolute -top-24 right-0 h-64 w-64 rounded-full bg-violet-500/10 blur-3xl" />
-          <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-indigo-600/10 blur-3xl" />
+          <div
+            className="absolute -top-24 right-0 h-64 w-64 rounded-full blur-3xl opacity-15"
+            style={{ background: "var(--ps-primary)" }}
+          />
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={reduced ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+          transition={{
+            duration: PS_MOTION.duration.normal,
+            ease: PS_MOTION.easing.enter,
+          }}
           className={`relative w-full ${wide ? "max-w-2xl" : "max-w-md"}`}
         >
           <div className="mb-6 flex items-center justify-between lg:hidden">
-            <Link href="/" className="inline-flex items-center gap-3">
+            <Link href="/" className="inline-flex items-center gap-3 min-h-[44px]">
               <Image
                 src="/logo.jpg"
                 alt="PinkSurfing"
@@ -140,16 +152,16 @@ export default function AuthLayout({
                 <span className="text-lg font-bold text-slate-900 dark:text-white block leading-tight">
                   PinkSurfing
                 </span>
-                <span className="text-[9px] font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-primary-500 dark:text-primary-300">
                   Vendor Portal
                 </span>
               </div>
             </Link>
           </div>
 
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-7 sm:p-9 shadow-xl shadow-slate-200/50 dark:border-dark-border dark:bg-dark-card dark:shadow-none">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-7 sm:p-9 shadow-premium-md dark:border-dark-border dark:bg-dark-card dark:shadow-none">
             <div className="mb-2">
-              <span className="inline-flex lg:hidden items-center rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-violet-700 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-300">
+              <span className="inline-flex lg:hidden items-center rounded-lg border border-primary-200 bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-700 dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-300">
                 Vendor account
               </span>
             </div>

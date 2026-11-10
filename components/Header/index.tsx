@@ -107,37 +107,46 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
 
   const getPageTitle = () => {
     if (pathname.includes("dashboard")) return "Dashboard";
-    if (pathname.includes("products")) return "Listings";
     if (pathname.includes("add_products")) return "Add Listing";
+    if (pathname.includes("edit-product") || pathname.includes("editProduct"))
+      return "Edit Listing";
+    if (pathname.includes("deal-supply")) return "Deal Supply";
+    if (pathname.includes("products")) return "Listings";
     if (pathname.includes("orders")) return "Orders";
     if (pathname.includes("profile")) return "Profile";
     if (pathname.includes("settings")) return "Store Settings";
+    if (pathname.includes("visit-requests")) return "Visit Requests";
+    if (pathname.includes("nda-requests")) return "Signed NDAs & Leads";
+    if (pathname.includes("buyer-requests")) return "Buyer Requests";
+    if (pathname.includes("identity")) return "Identity Verification";
+    if (pathname.includes("Stripe") || pathname.includes("square"))
+      return "Payout Setup";
     return "Welcome";
   };
 
   return (
     <>
       <motion.header
-        initial={{ y: -20, opacity: 0 }}
+        initial={{ y: -12, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        className="sticky top-0 z-40 w-full"
+        transition={{ duration: 0.25, ease: [0, 0, 0.2, 1] }}
+        className="sticky top-0 z-40 w-full safe-pad-top"
       >
         <div className="absolute inset-0 bg-white/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-light-border dark:border-dark-border" />
 
-        <div className="relative flex items-center justify-between px-4 py-3 md:px-6 lg:px-8">
+        <div className="relative flex items-center justify-between px-4 py-3 md:px-6 lg:px-8 safe-pad-x">
           {Logged ? (
             <>
               <div className="flex items-center gap-4">
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileTap={{ scale: 0.97 }}
                   aria-controls="sidebar"
+                  aria-label="Open navigation menu"
                   onClick={(e) => {
                     e.stopPropagation();
                     setSidebarOpen(!sidebarOpen);
                   }}
-                  className="flex lg:hidden items-center justify-center w-10 h-10 rounded-xl bg-surface-100 dark:bg-dark-surface hover:bg-surface-200 dark:hover:bg-dark-hover transition-colors"
+                  className="flex lg:hidden items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-surface-100 dark:bg-dark-surface hover:bg-surface-200 dark:hover:bg-dark-hover transition-colors"
                 >
                   <FiMenu className="w-5 h-5 text-surface-700 dark:text-surface-300" />
                 </motion.button>
