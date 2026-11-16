@@ -1142,7 +1142,7 @@ const EditProduct = () => {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="premium-card p-6">
-          <h4 className="font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2"><PackageIcon /> Product Information</h4>
+          <h4 className="font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2"><PackageIcon /> {shouldHideStock ? "Listing Information" : "Product Information"}</h4>
           <dl className="space-y-3">
             {[
               ["Category", selectedCategoryName],
@@ -1162,7 +1162,7 @@ const EditProduct = () => {
                 {hasDiscount && <span className="text-surface-400 line-through ml-2 text-sm">${productData.mrp}</span>}
               </dd>
             </div>
-            {productData.quantity && (
+            {productData.quantity && !shouldHideStock && (
               <div className="flex justify-between py-2">
                 <dt className="text-surface-500">Stock</dt>
                 <dd className="font-medium text-surface-900 dark:text-white">{productData.quantity} units</dd>

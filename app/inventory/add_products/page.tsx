@@ -1458,7 +1458,7 @@ const AddProducts = () => {
     <div className="space-y-6 animate-fadeIn">
       {/* Summary Header */}
       <div className="premium-card p-6  text-white">
-        <h3 className="text-xl font-bold mb-2">Review Your Product</h3>
+        <h3 className="text-xl font-bold mb-2">{shouldHideStock ? "Review Your Listing" : "Review Your Product"}</h3>
         <p className="text-white/80">Please check all details before submitting</p>
       </div>
 
@@ -1466,7 +1466,7 @@ const AddProducts = () => {
         {/* Product Info Summary */}
         <div className="premium-card p-6">
           <h4 className="font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2">
-            <PackageIcon /> Product Information
+            <PackageIcon /> {shouldHideStock ? "Listing Information" : "Product Information"}
           </h4>
           <dl className="space-y-3">
             <div className="flex justify-between py-2 border-b border-surface-100 dark:border-dark-border">
@@ -1496,10 +1496,13 @@ const AddProducts = () => {
                 )}
               </dd>
             </div>
-            <div className="flex justify-between py-2">
-              <dt className="text-surface-500">Stock</dt>
-              <dd className="font-medium text-surface-900 dark:text-white">{productData.quantity} units</dd>
-            </div>
+            {/* Property, business and vehicle listings have no stock to show. */}
+            {!shouldHideStock && (
+              <div className="flex justify-between py-2">
+                <dt className="text-surface-500">Stock</dt>
+                <dd className="font-medium text-surface-900 dark:text-white">{productData.quantity} units</dd>
+              </div>
+            )}
           </dl>
         </div>
 
