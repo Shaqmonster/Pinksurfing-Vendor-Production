@@ -36,6 +36,11 @@ import {
 import type { PendingNdaListingDoc } from "@/components/inventory/ProductNdaDocumentsSection";
 import { uploadPendingProductNdaDocuments } from "@/api/productNdaDocuments";
 import { prepareListingFeePayment } from "@/utils/listingPayment";
+import ListingFeeNotice, {
+  LISTING_FEE_LABEL,
+  isFeeWaived,
+  useListingFeeStatus,
+} from "@/components/inventory/ListingFeeNotice";
 import SearchableSelect from "@/components/SearchableSelect";
 import {
   OffMarketDealSection,
@@ -209,6 +214,7 @@ const CATEGORIES_WITHOUT_BRAND = [
 const AddProducts = () => {
   // Step management
   const [currentStep, setCurrentStep] = useState(1);
+  const listingFeeStatus = useListingFeeStatus();
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
   // Category states
@@ -2203,6 +2209,7 @@ const AddProducts = () => {
       {/* Step Content */}
       <div className="mb-8">
         {renderStepContent()}
+        {currentStep === 3 && <ListingFeeNotice status={listingFeeStatus} />}
       </div>
 
       {/* Navigation Buttons — hidden on Business for Sale step 2 (wizard has its own bar) */}
@@ -2256,7 +2263,12 @@ const AddProducts = () => {
               className="flex items-center gap-2 px-8 py-3 rounded-xl font-semibold transition-all duration-300 bg-gradient-pink text-white shadow-glow-pink hover:opacity-90"
             >
               <SparklesIcon />
-              <span>Create Listing</span>
+              <span>
+                Create Listing
+                {!listingFeeStatus.loading && !isFeeWaived(listingFeeStatus) && (
+                  <span className="ml-1 font-normal opacity-90">· {LISTING_FEE_LABEL} fee</span>
+                )}
+              </span>
             </button>
           )}
         </div>
