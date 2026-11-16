@@ -36,8 +36,10 @@ export type OffMarketDealFormState = {
   full_address: string;
 };
 
+// Off by default: a normal property listing must never become a paid-unlock pocket deal
+// unless the seller explicitly ticks the box.
 export const defaultOffMarketDealForm = (): OffMarketDealFormState => ({
-  is_off_market: true,
+  is_off_market: false,
   property_class: "residential",
   listing_intent: "for_sale",
   arv: "",

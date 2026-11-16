@@ -98,7 +98,22 @@ export function getPendingListing(productId: string): PendingListing | undefined
   return getPendingListings().find((item) => item.productId === productId);
 }
 
-/** Pay is only disabled while checkout is in flight or webhook is pending. */
+// How long we trust a "payment submitted, waiting for Square webhook" state before letting the
+// vendor try again. Square usually confirms within seconds; past this window the state is stale.
+const AWAITING_WEBHOOK_WINDOW_MS = 5 * 60 * 1000;
+
+function isAwaitingWebhookFresh(pending: PendingListing): boolean {
+  if (pending.state !== "AWAITING_WEBHOOK") return false;
+  const updated = Date.parse(pending.updatedAt);
+  if (Number.isNaN(updated)) return false;
+  return Date.now() - updated < AWAITING_WEBHOOK_WINDOW_MS;
+}
+
+/**
+ * Pay is disabled only while a payment link is being created, or for a short window after
+ * Square sent the vendor back with a submitted payment. A vendor who left the Square page
+ * (PAYMENT_REDIRECTED) can always click again to get a fresh link.
+ */
 export function isListingFeePayDisabled(
   productId: string,
   payingListingId: string
@@ -106,9 +121,7 @@ export function isListingFeePayDisabled(
   if (payingListingId === productId) return true;
   const pending = getPendingListing(productId);
   if (!pending) return false;
-  return (
-    pending.state === "PAYMENT_REDIRECTED" || pending.state === "AWAITING_WEBHOOK"
-  );
+  return isAwaitingWebhookFresh(pending);
 }
 
 export function listingFeePayButtonLabel(
@@ -118,8 +131,12 @@ export function listingFeePayButtonLabel(
 ): string {
   if (payingListingId === productId) return "Preparing…";
   const pending = getPendingListing(productId);
-  if (pending?.state === "PAYMENT_REDIRECTED") return "Continue to payment…";
-  if (pending?.state === "AWAITING_WEBHOOK") return "Confirming payment…";
-  const label = "Publish listing";
+  if (pending && isAwaitingWebhookFresh(pending)) return "Confirming payment…";
+  const label =
+    pending?.state === "PAYMENT_REDIRECTED"
+      ? "Continue to payment"
+      : pending?.state === "AWAITING_WEBHOOK" || pending?.state === "PAYMENT_FAILED"
+        ? "Retry payment"
+        : "Publish listing";
   return withArrow ? `${label} →` : label;
 }
