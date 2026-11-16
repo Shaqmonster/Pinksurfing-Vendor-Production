@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { removePendingListing, updatePendingListingState } from "@/utils/pendingListings";
 import { PS_MOTION, staggerDelay } from "@/lib/motion-tokens";
+import VendorOverview from "@/components/DashBoard/VendorOverview";
 
 const Dashboard: React.FC = () => {
   const [topProducts, setTopProducts] = useState<any[]>([]);
@@ -138,6 +139,10 @@ const Dashboard: React.FC = () => {
           </p>
         </motion.div>
       )}
+
+      <motion.div variants={itemVariants}>
+        <VendorOverview />
+      </motion.div>
 
       {!topProducts?.length && (
         <motion.div variants={itemVariants} className="premium-card">

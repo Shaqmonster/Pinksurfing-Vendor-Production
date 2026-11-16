@@ -505,11 +505,14 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                           >
                             <FiEdit2 className="w-4 h-4" />
                           </a>
+                          {/* Divider + gap so Delete isn't hit by mistake when reaching for Edit. */}
+                          <span aria-hidden="true" className="mx-1 h-6 w-px bg-surface-200 dark:bg-dark-border" />
                           <button
                             type="button"
                             onClick={() => openDeleteModal(product.id)}
                             className="p-2 rounded-lg bg-danger-light dark:bg-danger/20 text-danger hover:bg-danger/20 transition-colors"
                             title="Delete"
+                            aria-label={`Delete ${product.name || "listing"}`}
                           >
                             <FiTrash2 className="w-4 h-4" />
                           </button>
@@ -654,7 +657,11 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                               >
                                 <FiEdit2 className="w-4 h-4" />
                               </a>
+                              {/* Divider + gap so Delete isn't hit by mistake when reaching for Edit. */}
+                              <span aria-hidden="true" className="mx-2 h-8 w-px bg-surface-200 dark:bg-dark-border" />
                               <button
+                                type="button"
+                                aria-label={`Delete ${product.name || "listing"}`}
                                 onClick={() => openDeleteModal(product.id)}
                                 className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] p-2 rounded-lg bg-danger-light dark:bg-danger/20 text-danger hover:bg-danger/20 dark:hover:bg-danger/30 transition-colors"
                                 title="Delete listing"
