@@ -26,7 +26,6 @@ export type OffMarketDealFormState = {
   city: string;
   state: string;
   beds: string;
-  verification_score: string;
   teaser_summary: string;
   popular_tags: string[];
   unlock_fee: string;
@@ -47,7 +46,6 @@ export const defaultOffMarketDealForm = (): OffMarketDealFormState => ({
   city: "",
   state: "",
   beds: "",
-  verification_score: "85",
   teaser_summary: "",
   popular_tags: [],
   unlock_fee: "50",
@@ -90,6 +88,14 @@ export function OffMarketDealSection({ value, onChange }: Props) {
         />
         List as off-market deal (Deals Home)
       </label>
+
+      {value.is_off_market && (
+        <p className="mb-4 rounded-lg border border-surface-200 bg-white/60 px-3 py-2 text-xs text-surface-600 dark:border-dark-border dark:bg-dark-card dark:text-surface-300">
+          Buyers who unlock see the full address and your listing photos, so add clear photos
+          above. Share documents and comps (title, inspection, rent roll) in the deal room chat
+          once they unlock. The &quot;Verified&quot; badge is added by the PinkSurfing team after a check.
+        </p>
+      )}
 
       {!value.is_off_market ? (
         <p className="text-xs text-surface-500">
@@ -266,8 +272,6 @@ export function buildOffMarketPayload(productId: string, form: OffMarketDealForm
     city: form.city,
     state: form.state,
     beds: form.beds ? Number(form.beds) : null,
-    verification_score: Number(form.verification_score) || 0,
-    verification_label: Number(form.verification_score) >= 80 ? "verified" : "pending",
     teaser_summary: form.teaser_summary,
     popular_tags: form.popular_tags,
     unlock_fee: form.unlock_fee,

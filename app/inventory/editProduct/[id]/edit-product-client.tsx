@@ -370,8 +370,6 @@ const EditProduct = () => {
               city: d.city || "",
               state: d.state || "",
               beds: d.beds != null ? String(d.beds) : "",
-              verification_score:
-                d.verification_score != null ? String(d.verification_score) : "85",
               teaser_summary: d.teaser_summary || "",
               popular_tags: Array.isArray(d.popular_tags) ? d.popular_tags : [],
               unlock_fee: d.unlock_fee != null ? String(d.unlock_fee) : "50",
