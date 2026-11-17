@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { FiCheckCircle, FiCircle, FiArrowRight } from "react-icons/fi";
-import { getAllOrders, getProducts, getVendorProfile } from "@/api/products";
-import { getSquareStatus } from "@/api/square";
+import { getAllOrders, getProducts, getVendorProfile } from "@/lib/api/products";
+import { getSquareStatus } from "@/lib/api/square";
 import { resolveVendorApiToken } from "@/utils/vendorAuth";
 
 type Overview = {

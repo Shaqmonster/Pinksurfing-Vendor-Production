@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useContext } from "react";
 import { motion } from "framer-motion";
-import { persistAuthTokens, signIn } from "@/api/account";
+import { persistAuthTokens, signIn } from "@/lib/api/account";
 import { useRouter } from "next/navigation";
 import { MyContext } from "@/app/providers/context";
 import Loader from "@/components/common/Loader";

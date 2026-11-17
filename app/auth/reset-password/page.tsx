@@ -10,10 +10,10 @@ import React, {
 import Link from "next/link";
 import Image from "next/image";
 
-import { signIn } from "@/api/account";
+import { signIn } from "@/lib/api/account";
 import { useParams, useRouter } from "next/navigation";
 import { MyContext } from "@/app/providers/context";
-import { emailResetOtp, verifyOtp } from "@/api/auth";
+import { emailResetOtp, verifyOtp } from "@/lib/api/auth";
 import { Formik, Form, Field, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import PasswordRequirementsFeedback from "@/components/auth/PasswordRequirementsFeedback";

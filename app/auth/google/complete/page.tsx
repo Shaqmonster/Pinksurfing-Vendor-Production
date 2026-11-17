@@ -4,7 +4,7 @@ import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Loader from "@/components/common/Loader";
 import { MyContext } from "@/app/providers/context";
-import { signInWithSsoTokens } from "@/api/account";
+import { signInWithSsoTokens } from "@/lib/api/account";
 import {
   completeGoogleSignIn,
   getGoogleSignInErrorMessage,

@@ -6,7 +6,7 @@ import {
   listProductNdaDocuments,
   ProductNdaDocument,
   uploadProductNdaDocument,
-} from "@/api/productNdaDocuments";
+} from "@/lib/api/productNdaDocuments";
 import { buildNdaDocumentDisplayName } from "@/utils/ndaDocumentNaming";
 import {
   FINANCIAL_DOC_ACCEPT,

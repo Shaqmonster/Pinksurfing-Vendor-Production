@@ -2,7 +2,7 @@
 "use client";
 import React ,{useEffect}from "react";
 import dynamic from "next/dynamic";
-import { getMonthlySales } from "@/api/orders";
+import { getMonthlySales } from "@/lib/api/orders";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 import { getAccessToken } from "@/utils/cookies";
 interface GraphSectionProps {

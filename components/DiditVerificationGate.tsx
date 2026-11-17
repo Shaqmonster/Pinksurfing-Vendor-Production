@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { getKycStatus, launchKyc } from "@/api/kyc";
+import { getKycStatus, launchKyc } from "@/lib/api/kyc";
 import { handleError } from "@/utils/toast";
 
 const POLL_MS = 4000;

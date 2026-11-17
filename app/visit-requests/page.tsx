@@ -8,7 +8,7 @@ import {
   vendorAcceptVisit,
   vendorRejectVisit,
   vendorRescheduleVisit,
-} from "@/api/propertyVisits";
+} from "@/lib/api/propertyVisits";
 import EmptyState from "@/components/ui/EmptyState";
 import PageHeader from "@/components/ui/PageHeader";
 import { CardSkeleton } from "@/components/common/Loader";

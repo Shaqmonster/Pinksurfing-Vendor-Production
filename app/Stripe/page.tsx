@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { getOnboardingUrl } from "@/api/account";
+import { getOnboardingUrl } from "@/lib/api/account";
 import { handleError, handleSuccess } from "@/utils/toast";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { authBtnPrimary, authBtnSecondary, authLinkClass } from "@/components/auth/authTheme";

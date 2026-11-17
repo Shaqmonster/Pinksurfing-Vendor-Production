@@ -8,7 +8,7 @@ import {
   FiUsers,
   FiArrowRight,
 } from "react-icons/fi";
-import { checkProductLiveStatus, getTopSellingProducts } from "@/api/products";
+import { checkProductLiveStatus, getTopSellingProducts } from "@/lib/api/products";
 import OrderTable from "@/components/Tables/OrderTable";
 import EmptyState from "@/components/ui/EmptyState";
 import { getAccessToken } from "@/utils/cookies";
