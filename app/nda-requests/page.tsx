@@ -15,6 +15,7 @@ import {
 import EmptyState from "@/components/ui/EmptyState";
 import PageHeader from "@/components/ui/PageHeader";
 import { CardSkeleton } from "@/components/common/Loader";
+import DealUnlocksList from "@/components/deals/DealUnlocksList";
 
 const DOCUMENT_TYPE_OPTIONS = [
   { value: "pl_statement",        label: "P&L Statement" },
@@ -222,6 +223,13 @@ export default function NdaRequestsPage() {
   const [busyId, setBusyId]         = useState<string | null>(null);
   const [uploadOpen, setUploadOpen] = useState<string | null>(null);
   const [rejectDraft, setRejectDraft] = useState<Record<string, string>>({});
+  const [tab, setTab] = useState<"ndas" | "unlocks">("ndas");
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tab") === "unlocks") {
+      setTab("unlocks");
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -272,9 +280,35 @@ export default function NdaRequestsPage() {
     >
       <PageHeader
         title="Signed NDAs & leads"
-        description="Buyers who signed your NDA and paid to request business financials. Review agreements, share documents, and track leads."
+        description="Buyers who paid to see more of your listings: NDAs for business financials, and unlocks of your off-market deals."
       />
 
+      <div role="tablist" aria-label="Lead type" className="mb-6 inline-flex rounded-xl border border-light-border bg-white p-1 dark:border-dark-border dark:bg-dark-card">
+        {([
+          ["ndas", "Business NDAs"],
+          ["unlocks", "Deal unlocks"],
+        ] as const).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={tab === key}
+            onClick={() => setTab(key)}
+            className={`min-h-[40px] rounded-lg px-4 text-sm font-semibold transition-colors ${
+              tab === key
+                ? "bg-gradient-pink text-white"
+                : "text-surface-600 hover:text-surface-900 dark:text-surface-300 dark:hover:text-white"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "unlocks" ? (
+        <DealUnlocksList />
+      ) : (
+      <>
       {error && (
         <div className="mb-6 rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger" role="alert">
           {error}
@@ -441,6 +475,8 @@ export default function NdaRequestsPage() {
             </div>
           ))}
         </div>
+      )}
+      </>
       )}
     </motion.div>
   );
