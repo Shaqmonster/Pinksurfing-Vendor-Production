@@ -503,6 +503,9 @@ export default function RequestDetailPage() {
               )}
             </div>
           </div>
+          <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+            Sending an offer is free. You&apos;re paid when the buyer accepts it and checks out.
+          </p>
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-surface-200 dark:border-surface-700">
             <p className="text-sm text-surface-600 dark:text-surface-300 flex items-center gap-3">
               <span className="flex items-center gap-1">
