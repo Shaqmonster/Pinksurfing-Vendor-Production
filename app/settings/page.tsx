@@ -75,7 +75,8 @@ const Settings = () => {
     setLoading(true);
     try {
       const { data, error } = await getVendorProfile(token);
-      const legacyConnected = Boolean(data?.square_access_token);
+      // The profile no longer returns Square tokens; it reports square_connected instead.
+      const legacyConnected = Boolean(data?.square_connected || data?.square_access_token);
       if (!error && data) {
         setVendorId(data.id || "");
         setStoreName(data.store_name || "");
