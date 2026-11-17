@@ -103,7 +103,7 @@ const GridIcon = () => (
 // ============ STEP CONFIGURATION ============
 const STEPS = [
   { id: 1, name: "Category", description: "Select product type", icon: GridIcon },
-  { id: 2, name: "Details", description: "Product information", icon: PackageIcon },
+  { id: 2, name: "Details", description: "Listing details", icon: PackageIcon },
   { id: 3, name: "Review", description: "Final check", icon: SparklesIcon },
 ];
 
