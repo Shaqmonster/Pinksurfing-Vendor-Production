@@ -13,6 +13,9 @@ export type SquareHubStatus = {
   locationId?: string | null;
   currency?: string | null;
   oauthEnv?: string | null;
+  /** true: Square says a needed permission is missing; null: couldn't check. */
+  needsReconnect?: boolean | null;
+  missingScopes?: string[];
 };
 
 /** KYC-style: open hosted Connect page — no connect-session API from the browser. */

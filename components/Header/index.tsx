@@ -113,6 +113,8 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
     if (pathname.includes("deal-supply")) return "Deal Supply";
     if (pathname.includes("products")) return "Listings";
     if (pathname.includes("orders")) return "Orders";
+    if (pathname.includes("messages")) return "Messages";
+    if (pathname.includes("payouts")) return "Payouts";
     if (pathname.includes("profile")) return "Profile";
     if (pathname.includes("settings")) return "Store Settings";
     if (pathname.includes("visit-requests")) return "Visit Requests";

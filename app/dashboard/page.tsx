@@ -113,7 +113,7 @@ const Dashboard: React.FC = () => {
     { icon: FiPackage, label: "Add Listing", href: "/inventory/add_products" },
     { icon: FiShoppingBag, label: "View Orders", href: "/orders" },
     { icon: FiUsers, label: "Edit Profile", href: "/profile" },
-    { icon: FiDollarSign, label: "Payouts & Settings", href: "/settings" },
+    { icon: FiDollarSign, label: "Payouts", href: "/payouts" },
   ];
 
   return (

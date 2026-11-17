@@ -1,4 +1,5 @@
 "use client";
+import { missingRequiredAttributes } from "@/utils/requiredAttributes";
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   getSchemaCategories,
@@ -298,7 +299,6 @@ const AddProducts = () => {
     short_description: "",
     description: "",
     image: "",
-    deal_active_until: "",
     id: "",
     nda_lock_ebitda: false,
     nda_lock_full_financials: false,
@@ -565,6 +565,9 @@ const AddProducts = () => {
   };
 
   // Step navigation - Updated for 3 steps
+  // Required schema fields (e.g. a perfume's Concentration and Gender) left empty (retest N3.2).
+  const missingRequired = missingRequiredAttributes([...variantAttributes, ...nonVariantAttributes]);
+
   const canProceed = () => {
     switch (currentStep) {
       case 1:
@@ -572,7 +575,7 @@ const AddProducts = () => {
       case 2:
         if (isBusinessForSale) return false;
         // Details step: requires name, mrp, and at least 1 image (unless category hides media)
-        return productData.name && productData.mrp && (shouldHideMedia || files.length > 0);
+        return productData.name && productData.mrp && (shouldHideMedia || files.length > 0) && missingRequired.length === 0;
       case 3:
         return true; // Review step
       default:
@@ -587,6 +590,8 @@ const AddProducts = () => {
     } else if (!canProceed()) {
       if (currentStep === 2 && !shouldHideMedia && files.length === 0) {
         toast.error("Please upload at least one image");
+      } else if (currentStep === 2 && missingRequired.length > 0) {
+        toast.error(`Please fill in: ${missingRequired.join(", ")}`);
       } else {
         toast.error("Please complete all required fields");
       }
@@ -607,6 +612,11 @@ const AddProducts = () => {
 
   // Submit handler
   const handleSave = async () => {
+    if (missingRequired.length > 0) {
+      toast.error(`Please fill in: ${missingRequired.join(", ")}`);
+      setCurrentStep(2);
+      return;
+    }
     if (typeof window !== "undefined") {
       let token = await resolveVendorApiToken();
       let vendor_id = localStorage.getItem("vendor_id");
@@ -696,11 +706,7 @@ const AddProducts = () => {
             offMarketDeal.city &&
             offMarketDeal.state
           ) {
-            const omPayload = buildOffMarketPayload(
-              createdProductId,
-              offMarketDeal,
-              cleanedProductData.deal_active_until
-            );
+            const omPayload = buildOffMarketPayload(createdProductId, offMarketDeal);
             const omRes = await upsertOffMarketDealProfile(token, omPayload);
             if (!omRes.error) {
               toast.success("Off-market deal profile saved — visible on Deals Home.");
@@ -1456,6 +1462,18 @@ const AddProducts = () => {
   // Step 5: Review
   const renderReviewStep = () => (
     <div className="space-y-6 animate-fadeIn">
+      {missingRequired.length > 0 && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300"
+        >
+          <p className="font-semibold">Fill in these required fields before you publish:</p>
+          <p className="mt-1">{missingRequired.join(", ")}</p>
+          <button type="button" onClick={() => setCurrentStep(2)} className="mt-2 font-semibold underline">
+            Go back and edit
+          </button>
+        </div>
+      )}
       {/* Summary Header */}
       <div className="premium-card p-6  text-white">
         <h3 className="text-xl font-bold mb-2">{shouldHideStock ? "Review Your Listing" : "Review Your Product"}</h3>
@@ -1811,29 +1829,6 @@ const AddProducts = () => {
                     />
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* Deal Active Until (Real Estate Specific) */}
-            {(selectedCategoryName.toLowerCase().includes("real estate")) && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="premium-card p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-500/20 flex items-center justify-center">
-                      <svg className="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <label className="text-sm font-medium text-surface-700 dark:text-surface-300">Deal Active Until</label>
-                  </div>
-                  <input
-                    type="date"
-                    value={productData.deal_active_until ? productData.deal_active_until.split('T')[0] : ''}
-                    onChange={(e) => updateProductData("deal_active_until", e.target.value)}
-                    className="input-premium"
-                  />
-                  <p className="text-xs text-surface-500 mt-2">After this date, the deal will be automatically closed.</p>
-                </div>
               </div>
             )}
 
