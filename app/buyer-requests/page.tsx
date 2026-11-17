@@ -19,7 +19,7 @@ import {
   RefreshCw,
   ChevronDown,
 } from "lucide-react";
-import { getOpenRequests, listResults } from "@/api/buyerRequests";
+import { getOpenRequests, listResults } from "@/lib/api/buyerRequests";
 import { handleError } from "@/utils/toast";
 import { resolveVendorApiToken } from "@/utils/vendorAuth";
 import EmptyState from "@/components/ui/EmptyState";

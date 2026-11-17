@@ -1,4 +1,4 @@
-import { createSquareListingPaymentLink } from "@/api/products";
+import { createSquareListingPaymentLink } from "@/lib/api/products";
 import {
   PendingListing,
   updatePendingListingState,

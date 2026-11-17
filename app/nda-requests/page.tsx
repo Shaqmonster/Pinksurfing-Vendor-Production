@@ -11,7 +11,7 @@ import {
   vendorUploadDocument,
   type NdaDocument,
   type NdaRow,
-} from "@/api/ndaSignatures";
+} from "@/lib/api/ndaSignatures";
 import EmptyState from "@/components/ui/EmptyState";
 import PageHeader from "@/components/ui/PageHeader";
 import { CardSkeleton } from "@/components/common/Loader";

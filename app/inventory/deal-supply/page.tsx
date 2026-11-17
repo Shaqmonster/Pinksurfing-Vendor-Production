@@ -13,7 +13,7 @@ import {
   listSupplySubmissions,
   rejectSupplySubmission,
   updateSupplyInvite,
-} from "@/api/offMarketDeals";
+} from "@/lib/api/offMarketDeals";
 import { money } from "@/utils/money";
 
 function fmtDay(iso?: string | null) {

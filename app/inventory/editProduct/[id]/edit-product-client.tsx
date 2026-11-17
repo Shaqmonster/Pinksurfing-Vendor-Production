@@ -10,7 +10,7 @@ import {
   saveProducts,
   getSingleProduct,
   updateProducts,
-} from "@/api/products";
+} from "@/lib/api/products";
 import { Product } from "@/types/product";
 import { useParams, useRouter } from "next/navigation";
 import { resolveStaticRouteId } from "@/utils/staticRouteId";
@@ -47,7 +47,7 @@ import {
 import {
   fetchOffMarketProfile,
   upsertOffMarketDealProfile,
-} from "@/api/offMarketDeals";
+} from "@/lib/api/offMarketDeals";
 
 // ============ ICONS (identical to add_products) ============
 const CheckIcon = () => (

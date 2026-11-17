@@ -1,10 +1,10 @@
 "use client";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { getProfile } from "@/api/account";
+import { getProfile } from "@/lib/api/account";
 import { useContext, useEffect, useState } from "react";
-import { getProducts } from "@/api/products";
-import { getOrders } from "@/api/orders";
+import { getProducts } from "@/lib/api/products";
+import { getOrders } from "@/lib/api/orders";
 import { MyContext } from "../providers/context";
 import { useRouter } from "next/navigation";
 import { 

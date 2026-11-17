@@ -19,8 +19,8 @@ import { BsRobot } from "react-icons/bs";
 import { toast } from "react-toastify";
 import { useAIAgent } from "@/hooks/useAIAgent";
 import type { AgentProduct } from "@/hooks/useAIAgent";
-import { getSchemaCategories, getSchemaSubcategories, saveProducts } from "@/api/products";
-import { downloadImageAsFile, markAgentProductPosted } from "@/api/aiAgent";
+import { getSchemaCategories, getSchemaSubcategories, saveProducts } from "@/lib/api/products";
+import { downloadImageAsFile, markAgentProductPosted } from "@/lib/api/aiAgent";
 import { resolveVendorApiToken } from "@/utils/vendorAuth";
 import { PendingListing, upsertPendingListing } from "@/utils/pendingListings";
 

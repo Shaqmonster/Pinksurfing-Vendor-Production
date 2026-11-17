@@ -7,9 +7,9 @@ import {
   getProducts,
   getSubcategories,
   getVendorProfile,
-} from "@/api/products";
+} from "@/lib/api/products";
 import { Product } from "@/types/product";
-import { deleteProduct } from "@/api/products";
+import { deleteProduct } from "@/lib/api/products";
 import { money } from "@/utils/money";
 import React from "react";
 import Loader from "../common/Loader";

@@ -9,7 +9,7 @@ import {
   getShippingDetails,
   disputeReturn,
   approveReturn,
-} from "@/api/orders";
+} from "@/lib/api/orders";
 import { Package } from "@/types/package";
 import { staticDetailHref } from "@/utils/staticRouteId";
 import Loader from "../common/Loader";

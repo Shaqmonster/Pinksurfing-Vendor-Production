@@ -7,8 +7,8 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import { resolveVendorApiToken } from "@/utils/vendorAuth";
-import { getSingleOrder } from "@/api/products";
-import { changeStatus, disputeReturn, approveReturn } from "@/api/orders";
+import { getSingleOrder } from "@/lib/api/products";
+import { changeStatus, disputeReturn, approveReturn } from "@/lib/api/orders";
 import {
   FiArrowLeft,
   FiPackage,

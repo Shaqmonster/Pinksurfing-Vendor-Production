@@ -8,10 +8,10 @@ import React, {
 } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { getOnboardingUrl, sendOtp, isCustomer, customerLogin, customerVendorRegistration } from "@/api/account"; // Adjust the import path based on your file structure
+import { getOnboardingUrl, sendOtp, isCustomer, customerLogin, customerVendorRegistration } from "@/lib/api/account"; // Adjust the import path based on your file structure
 import { useRouter } from "next/navigation";
 
-import { signUp } from "@/api/account";
+import { signUp } from "@/lib/api/account";
 import { setCookie } from "@/utils/cookies";
 import { MyContext } from "@/app/providers/context";
 import { redirect } from "next/navigation";
@@ -35,9 +35,9 @@ import { MdEmail } from "react-icons/md";
 import { ToastContainer, toast } from "react-toastify";
 import Loader from "@/components/common/Loader";
 import { Country, State, City } from "country-state-city";
-import { getVendorProfile } from "@/api/products";
+import { getVendorProfile } from "@/lib/api/products";
 import { handleError, handleSuccess } from "@/utils/toast";
-import { identityVerifyPath } from "@/api/kyc";
+import { identityVerifyPath } from "@/lib/api/kyc";
 import PasswordRequirementsFeedback from "@/components/auth/PasswordRequirementsFeedback";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import AuthDivider from "@/components/auth/AuthDivider";

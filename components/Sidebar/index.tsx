@@ -22,8 +22,8 @@ import {
   FaMoneyBillWave,
   FaBriefcase,
 } from "react-icons/fa";
-import { getPropertyVisitCount } from "@/api/propertyVisits";
-import { getNdaCount } from "@/api/ndaSignatures";
+import { getPropertyVisitCount } from "@/lib/api/propertyVisits";
+import { getNdaCount } from "@/lib/api/ndaSignatures";
 import { getStorefrontUrl } from "@/utils/storefrontUrl";
 import { PS_MOTION, staggerDelay } from "@/lib/motion-tokens";
 

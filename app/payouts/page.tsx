@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { FiDollarSign } from "react-icons/fi";
-import { getPayouts, type PayoutStatus, type PayoutsPage } from "@/api/payouts";
+import { getPayouts, type PayoutStatus, type PayoutsPage } from "@/lib/api/payouts";
 import EmptyState from "@/components/ui/EmptyState";
 import PageHeader from "@/components/ui/PageHeader";
 import { CardSkeleton } from "@/components/common/Loader";

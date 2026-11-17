@@ -6,7 +6,7 @@ import {
   listDealUnlocks,
   sellerTransitionDealRoom,
   type DealUnlockRow,
-} from "@/api/offMarketDeals";
+} from "@/lib/api/offMarketDeals";
 import EmptyState from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/common/Loader";
 

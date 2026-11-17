@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 import Image from "next/image";
-import { getVendorProfile, updateVendorProfile } from "@/api/products";
+import { getVendorProfile, updateVendorProfile } from "@/lib/api/products";
 import { Loader2 } from "@/components/common/Loader";
 import { toast } from "react-toastify";
 import {
@@ -102,7 +102,7 @@ const Settings = () => {
       // Person-level Hub status (shared across PayChat / Vendor / GigHub)
       if (token) {
         try {
-          const { getSquareStatus } = await import("@/api/square");
+          const { getSquareStatus } = await import("@/lib/api/square");
           const hub = await getSquareStatus(token);
           setSquareConnected(Boolean(hub.connected || legacyConnected));
           setSquareNeedsReconnect(hub.connected ? hub.needsReconnect ?? null : null);
@@ -126,7 +126,7 @@ const Settings = () => {
     }
     setSaving(true);
     try {
-      const { openSquareConnectPage, pollSquareConnected } = await import("@/api/square");
+      const { openSquareConnectPage, pollSquareConnected } = await import("@/lib/api/square");
       const popup = openSquareConnectPage(token, "vendor");
       if (!popup) {
         toast.error("Popup blocked — allow popups to connect Square");

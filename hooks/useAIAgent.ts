@@ -12,7 +12,7 @@ import {
   agentFetch,
   updateAgentConfig,
   getAgentWsUrl,
-} from '@/api/aiAgent';
+} from '@/lib/api/aiAgent';
 
 export interface AgentStats {
   totalProducts: number;

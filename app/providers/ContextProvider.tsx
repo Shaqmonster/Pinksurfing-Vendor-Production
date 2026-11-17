@@ -13,7 +13,7 @@ import {
   checkVendorStatus,
   resolveVendorSession,
   storeVendorOnboardingFromJwt,
-} from "@/api/account";
+} from "@/lib/api/account";
 import { persistAuthSession } from "@/utils/ssoSession";
 
 const MyProvider = ({ children }: { children: React.ReactNode }) => {

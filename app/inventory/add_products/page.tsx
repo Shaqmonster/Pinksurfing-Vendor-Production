@@ -6,7 +6,7 @@ import {
   getSchemaSubcategories,
   getFormSchema,
   saveProducts,
-} from "@/api/products";
+} from "@/lib/api/products";
 import { Product } from "@/types/product";
 import { useRouter } from "next/navigation";
 import { ToastContainer, toast } from "react-toastify";
@@ -35,7 +35,7 @@ import {
   type BusinessForSaleListingWizardHandle,
 } from "@/components/inventory/BusinessForSaleListingWizard";
 import type { PendingNdaListingDoc } from "@/components/inventory/ProductNdaDocumentsSection";
-import { uploadPendingProductNdaDocuments } from "@/api/productNdaDocuments";
+import { uploadPendingProductNdaDocuments } from "@/lib/api/productNdaDocuments";
 import { prepareListingFeePayment } from "@/utils/listingPayment";
 import ListingFeeNotice, {
   LISTING_FEE_LABEL,
@@ -49,7 +49,7 @@ import {
   defaultOffMarketDealForm,
   type OffMarketDealFormState,
 } from "@/components/inventory/OffMarketDealSection";
-import { upsertOffMarketDealProfile } from "@/api/offMarketDeals";
+import { upsertOffMarketDealProfile } from "@/lib/api/offMarketDeals";
 
 // ============ ICONS ============
 const CheckIcon = () => (

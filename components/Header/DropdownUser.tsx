@@ -5,8 +5,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { MyContext } from "@/app/providers/context";
-import { getVendorProfile } from "@/api/products";
-import { signOut } from "@/api/account";
+import { getVendorProfile } from "@/lib/api/products";
+import { signOut } from "@/lib/api/account";
 import { getAccessToken } from "@/utils/cookies";
 import { 
   FiUser, 

@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { FaInfoCircle, FaChevronDown, FaFileAlt } from "react-icons/fa";
-import { getMonthlySales } from "@/api/orders";
+import { getMonthlySales } from "@/lib/api/orders";
 import { getAccessToken } from "@/utils/cookies";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 

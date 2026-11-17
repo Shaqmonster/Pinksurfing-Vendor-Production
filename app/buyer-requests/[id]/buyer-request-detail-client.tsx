@@ -23,7 +23,7 @@ import {
   getMyBids,
   getOpenRequestDetail,
   listResults,
-} from "@/api/buyerRequests";
+} from "@/lib/api/buyerRequests";
 import { handleError, handleSuccess } from "@/utils/toast";
 import { money } from "@/utils/money";
 import { resolveVendorApiToken } from "@/utils/vendorAuth";

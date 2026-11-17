@@ -5,7 +5,7 @@ import DropdownUser from "./DropdownUser";
 import Image from "next/image";
 import { MyContext } from "@/app/providers/context";
 import { usePathname } from "next/navigation";
-import { getProfile, refreshToken } from "@/api/account";
+import { getProfile, refreshToken } from "@/lib/api/account";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FiMenu } from "react-icons/fi";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getVendorProfile } from "@/api/products";
+import { getVendorProfile } from "@/lib/api/products";
 import { resolveVendorApiToken } from "@/utils/vendorAuth";
 
 // Fixed fee charged by the backend (payments/views.py square_create_listing_fee).

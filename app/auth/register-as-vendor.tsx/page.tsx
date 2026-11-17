@@ -7,8 +7,8 @@ import { Country, State } from "country-state-city";
 import AuthLayout from "@/components/auth/AuthLayout";
 import Loader from "@/components/common/Loader";
 import { MyContext } from "@/app/providers/context";
-import { createVendorFromSSO } from "@/api/account";
-import { identityVerifyPath } from "@/api/kyc";
+import { createVendorFromSSO } from "@/lib/api/account";
+import { identityVerifyPath } from "@/lib/api/kyc";
 import {
   authBtnPrimary,
   authBtnSecondary,

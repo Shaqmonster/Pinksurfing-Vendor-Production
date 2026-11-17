@@ -10,7 +10,7 @@ import {
   sendMessage,
   type ChatMessage,
   type Conversation,
-} from "@/api/chat";
+} from "@/lib/api/chat";
 import EmptyState from "@/components/ui/EmptyState";
 import PageHeader from "@/components/ui/PageHeader";
 import { CardSkeleton } from "@/components/common/Loader";

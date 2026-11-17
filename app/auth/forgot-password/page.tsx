@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { MyContext } from "@/app/providers/context";
-import { emailResetOtp } from "@/api/auth";
+import { emailResetOtp } from "@/lib/api/auth";
 import { Formik, Form, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import { toast, ToastContainer } from "react-toastify";
