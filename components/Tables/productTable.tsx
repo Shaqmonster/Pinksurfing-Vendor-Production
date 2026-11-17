@@ -59,6 +59,32 @@ const LISTING_STATUS = {
   },
 } as const;
 
+/** Demand on an off-market deal: views, paid unlocks, slots left and NDAs (retest N1.4). */
+function DealStatsLine({ product }: { product: any }) {
+  const st = product?.deal_stats;
+  if (!st) return null;
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  return (
+    <p className="mt-1 text-xs text-pink-600 dark:text-pink-300">
+      {plural(st.views ?? 0, "view")} · {plural(st.unlocks ?? 0, "unlock")} ·{" "}
+      {st.slots_remaining ?? 0} of {st.max_unlock_slots ?? 0} slots left
+      {st.ndas ? ` · ${plural(st.ndas, "NDA")}` : ""}
+      {st.unlocks > 0 && (
+        <>
+          {" · "}
+          <a
+            href="/nda-requests?tab=unlocks"
+            onClick={(e) => e.stopPropagation()}
+            className="font-semibold underline underline-offset-2"
+          >
+            See buyers
+          </a>
+        </>
+      )}
+    </p>
+  );
+}
+
 function ListingStatusBadge({ product, compact = false }: { product: any; compact?: boolean }) {
   const key = !product.is_active ? "unpaid" : product.is_off_market ? "offMarket" : "live";
   const s = LISTING_STATUS[key];
@@ -486,6 +512,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                           <p className="text-xs text-surface-400 dark:text-surface-500 mt-1">
                             {formatProductCategory(product)}
                           </p>
+                          <DealStatsLine product={product} />
                         </div>
                       </div>
 
@@ -609,6 +636,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                                 <p className="text-xs text-surface-400 dark:text-surface-500 mt-0.5 truncate">
                                   {formatProductCategory(product)}
                                 </p>
+                                <DealStatsLine product={product} />
                                 {product.is_active && (
                                   <span className="inline-flex items-center gap-1 text-xs text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity mt-0.5">
                                     <FiExternalLink className="w-3 h-3" />
