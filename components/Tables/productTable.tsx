@@ -10,6 +10,7 @@ import {
 } from "@/api/products";
 import { Product } from "@/types/product";
 import { deleteProduct } from "@/api/products";
+import { money } from "@/utils/money";
 import React from "react";
 import Loader from "../common/Loader";
 import { 
@@ -448,7 +449,13 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                   All Listings
                 </h2>
                 <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
-                  {products?.length || 0} listings in your inventory
+                  {(() => {
+                    // Live = on the public store. Off-market and unpaid listings are in your
+                    // inventory but not the store, which is why the store shows fewer (N2.7).
+                    const all = products || [];
+                    const live = all.filter((p: any) => p.is_active && !p.is_off_market).length;
+                    return `${live} live on your store · ${all.length} in your inventory`;
+                  })()}
                 </p>
               </div>
               
@@ -525,7 +532,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                       {/* Bottom row: price + actions */}
                       <div className="flex items-center justify-between pt-2 border-t border-surface-100 dark:border-dark-border">
                         <span className="text-base font-bold text-success dark:text-success">
-                          ${product.unit_price}
+                          ${money(product.unit_price)}
                         </span>
                         <div className="flex items-center gap-2">
                           {product.is_active ? (
@@ -691,7 +698,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                           {/* Price */}
                           <td className="px-5 xl:px-6 py-4 text-right">
                             <span className="text-sm xl:text-base font-bold text-success dark:text-success whitespace-nowrap">
-                              ${product.unit_price}
+                              ${money(product.unit_price)}
                             </span>
                           </td>
 

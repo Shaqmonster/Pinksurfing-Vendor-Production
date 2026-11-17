@@ -1,4 +1,5 @@
 "use client";
+import { missingRequiredAttributes } from "@/utils/requiredAttributes";
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { filterListingCategories } from "@/constants/listingCategories";
 import { filterVisibleAdvancedAttributes } from "@/constants/electronicsAdvancedFields";
@@ -647,6 +648,9 @@ const EditProduct = () => {
   // ============================================================
   // STEP NAVIGATION
   // ============================================================
+  // Required schema fields (e.g. a perfume's Concentration and Gender) left empty (retest N3.2).
+  const missingRequired = missingRequiredAttributes([...variantAttributes, ...nonVariantAttributes]);
+
   const canProceed = () => {
     switch (currentStep) {
       case 1: return selectedCategory && selectedSubcategory;
@@ -654,7 +658,7 @@ const EditProduct = () => {
         if (isBusinessForSale) return false; // wizard handles its own navigation
         // Images required unless category hides them OR existing images are present
         const hasImages = shouldHideMedia || files.length > 0 || existingImages.length > 0;
-        return productData.name && productData.mrp && hasImages;
+        return productData.name && productData.mrp && hasImages && missingRequired.length === 0;
       case 3: return true;
       default: return false;
     }
@@ -667,6 +671,8 @@ const EditProduct = () => {
     } else if (!canProceed()) {
       if (currentStep === 2 && !shouldHideMedia && files.length === 0 && existingImages.length === 0) {
         toast.error("Please upload at least one image");
+      } else if (currentStep === 2 && missingRequired.length > 0) {
+        toast.error(`Please fill in: ${missingRequired.join(", ")}`);
       } else {
         toast.error("Please complete all required fields");
       }
@@ -683,6 +689,11 @@ const EditProduct = () => {
   // SAVE HANDLER — calls updateProducts (edit) or saveProducts (add)
   // ============================================================
   const handleSave = async () => {
+    if (missingRequired.length > 0) {
+      toast.error(`Please fill in: ${missingRequired.join(", ")}`);
+      setCurrentStep(2);
+      return;
+    }
     if (typeof window === "undefined") return;
 
     const token = await resolveVendorApiToken();
@@ -1136,6 +1147,18 @@ const EditProduct = () => {
   // Review step
   const renderReviewStep = () => (
     <div className="space-y-6 animate-fadeIn">
+      {missingRequired.length > 0 && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-300"
+        >
+          <p className="font-semibold">Fill in these required fields before you publish:</p>
+          <p className="mt-1">{missingRequired.join(", ")}</p>
+          <button type="button" onClick={() => setCurrentStep(2)} className="mt-2 font-semibold underline">
+            Go back and edit
+          </button>
+        </div>
+      )}
       <div className="premium-card p-6 text-white">
         <h3 className="text-xl font-bold mb-2">Review Your Changes</h3>
         <p className="text-white/80">Please check all details before updating</p>

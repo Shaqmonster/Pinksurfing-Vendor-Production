@@ -9,7 +9,6 @@ import {
 } from "@/api/offMarketDeals";
 import EmptyState from "@/components/ui/EmptyState";
 import { CardSkeleton } from "@/components/common/Loader";
-import { getStorefrontUrl } from "@/utils/storefrontUrl";
 
 const STATE_LABEL: Record<string, string> = {
   unlocked: "Unlocked, not in room yet",
@@ -70,7 +69,6 @@ export default function DealUnlocksList() {
     setRows((r) => r.map((x) => (x.unlock_id === row.unlock_id ? { ...x, deal_room_state: state } : x)));
   }
 
-  const storefront = getStorefrontUrl();
 
   if (loading) {
     return (
@@ -128,9 +126,7 @@ export default function DealUnlocksList() {
                 <div className="flex min-w-[220px] flex-col gap-2">
                   {row.conversation_id && (
                     <a
-                      href={`${storefront}/gighub/messages?conversation=${row.conversation_id}`}
-                      target="_blank"
-                      rel="noreferrer"
+                      href={`/messages?c=${row.conversation_id}`}
                       className="rounded-xl bg-gradient-pink px-4 py-2.5 text-center text-sm font-semibold text-white shadow-glow-pink"
                     >
                       Message buyer

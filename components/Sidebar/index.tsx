@@ -18,6 +18,9 @@ import {
   FaFileContract,
   FaHandshake,
   FaUserFriends,
+  FaComments,
+  FaMoneyBillWave,
+  FaBriefcase,
 } from "react-icons/fa";
 import { getPropertyVisitCount } from "@/api/propertyVisits";
 import { getNdaCount } from "@/api/ndaSignatures";
@@ -117,6 +120,8 @@ const Sidebar = () => {
     { name: "Add Listing", href: "/inventory/add_products", icon: FaPlus },
     { name: "Deal Supply", href: "/inventory/deal-supply", icon: FaHandshake },
     { name: "Orders", href: "/orders", icon: FaClipboardList },
+    { name: "Messages", href: "/messages", icon: FaComments },
+    { name: "Payouts", href: "/payouts", icon: FaMoneyBillWave },
     { name: "Profile", href: "/profile", icon: FaUser },
     { name: "Store Settings", href: "/settings", icon: FaCog },
   ];
@@ -286,8 +291,17 @@ const Sidebar = () => {
         <div className="flex-1" />
 
         <a
-          href={getStorefrontUrl()}
+          href={`${getStorefrontUrl()}/gigs/jobs`}
+          target="_blank"
+          rel="noreferrer"
           className="mt-4 flex items-center gap-3 px-4 py-3 min-h-[44px] rounded-xl text-sm text-surface-500 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-dark-hover hover:text-primary-400 transition-colors"
+        >
+          <FaBriefcase className="w-4 h-4" aria-hidden />
+          <span>Find Jobs on GigHub</span>
+        </a>
+        <a
+          href={getStorefrontUrl()}
+          className="flex items-center gap-3 px-4 py-3 min-h-[44px] rounded-xl text-sm text-surface-500 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-dark-hover hover:text-primary-400 transition-colors"
         >
           <FaStore className="w-4 h-4" aria-hidden />
           <span>View marketplace</span>

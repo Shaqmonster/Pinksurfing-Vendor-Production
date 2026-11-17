@@ -91,21 +91,46 @@ export async function fetchOffMarketProfile(
   }
 }
 
+/** Rows from either a bare array or a {results: [...]} response. */
+function resultRows(data: any): any[] {
+  if (Array.isArray(data)) return data;
+  return Array.isArray(data?.results) ? data.results : [];
+}
+
 export async function listSupplyInvites(token: string | null) {
   if (!token) return { error: true, data: [] };
   try {
     const response = await axios.get(`${BASE_URL}/off-market-deals/supply/invites/`, {
       headers: authHeader(token),
     });
-    return { error: false, data: response.data?.results || [] };
+    return { error: false, data: resultRows(response.data) };
   } catch {
     return { error: true, data: [] };
   }
 }
 
+/** Revoke (is_active=false), reopen, or change an invite's expiry ("YYYY-MM-DD" or null). */
+export async function updateSupplyInvite(
+  token: string | null,
+  inviteId: string,
+  patch: { is_active?: boolean; expires_at?: string | null }
+) {
+  if (!token) return { error: true, data: null };
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/off-market-deals/supply/invites/${inviteId}/`,
+      patch,
+      { headers: authHeader(token) }
+    );
+    return { error: false, data: response.data };
+  } catch (error: any) {
+    return { error: true, data: error?.response?.data };
+  }
+}
+
 export async function createSupplyInvite(
   token: string | null,
-  payload: { label?: string; max_uses?: number } = {}
+  payload: { label?: string; max_uses?: number; expires_at?: string | null } = {}
 ) {
   if (!token) return { error: true, data: null };
   try {
@@ -133,7 +158,7 @@ export async function listSupplySubmissions(
         headers: authHeader(token),
       }
     );
-    return { error: false, data: response.data?.results || [] };
+    return { error: false, data: resultRows(response.data) };
   } catch {
     return { error: true, data: [] };
   }

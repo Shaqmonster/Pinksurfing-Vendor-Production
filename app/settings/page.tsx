@@ -66,6 +66,8 @@ const Settings = () => {
 
   const [vendorId, setVendorId] = useState("");
   const [squareConnected, setSquareConnected] = useState(false);
+  // Only stores whose Square permissions are actually missing are asked to reconnect.
+  const [squareNeedsReconnect, setSquareNeedsReconnect] = useState<boolean | null>(null);
 
   useEffect(() => {
     setToken(getAccessToken());
@@ -103,6 +105,7 @@ const Settings = () => {
           const { getSquareStatus } = await import("@/api/square");
           const hub = await getSquareStatus(token);
           setSquareConnected(Boolean(hub.connected || legacyConnected));
+          setSquareNeedsReconnect(hub.connected ? hub.needsReconnect ?? null : null);
         } catch {
           setSquareConnected(legacyConnected);
         }
@@ -614,9 +617,13 @@ const Settings = () => {
               </div>
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <p className="text-sm text-surface-600 dark:text-surface-400 max-w-2xl">
-                  {squareConnected
-                    ? "Square has been linked before, but merchants who connected prior to the permissions update should reconnect now so payments keep working."
-                    : "Connect Square so customers can pay you directly and funds can be deposited into your Square account."}
+                  {!squareConnected
+                    ? "Connect Square so customers can pay you directly and funds can be deposited into your Square account."
+                    : squareNeedsReconnect
+                      ? "Square is connected, but it's missing a permission PinkSurfing needs to take payments. Reconnect Square and approve the permissions to keep payments working."
+                      : squareNeedsReconnect === false
+                        ? "Square is connected with every permission PinkSurfing needs. You only need to reconnect if you switch Square accounts."
+                        : "Square is connected. If customer payments fail, reconnect Square and approve the permissions it asks for."}
                 </p>
                 <button
                   type="button"

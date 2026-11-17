@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { toast, ToastContainer } from "react-toastify";
 // @ts-ignore
@@ -12,7 +12,19 @@ import {
   listSupplyInvites,
   listSupplySubmissions,
   rejectSupplySubmission,
+  updateSupplyInvite,
 } from "@/api/offMarketDeals";
+import { money } from "@/utils/money";
+
+function fmtDay(iso?: string | null) {
+  if (!iso) return "";
+  try {
+    // Expiry is the end of the chosen day in UTC, so show that day.
+    return new Date(iso).toLocaleDateString(undefined, { dateStyle: "medium", timeZone: "UTC" });
+  } catch {
+    return "";
+  }
+}
 
 type Invite = {
   id: string;
@@ -22,6 +34,7 @@ type Invite = {
   max_uses: number;
   is_active: boolean;
   is_usable: boolean;
+  expires_at?: string | null;
   created_at?: string;
 };
 
@@ -45,29 +58,63 @@ export default function DealSupplyPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [statusFilter, setStatusFilter] = useState("pending");
   const [label, setLabel] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [expiry, setExpiry] = useState("");
+  const [invitesLoading, setInvitesLoading] = useState(true);
+  const [invitesError, setInvitesError] = useState<string | null>(null);
+  const [subsLoading, setSubsLoading] = useState(true);
+  const [subsError, setSubsError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  // Ignore responses from older requests (a slow first load used to wipe a newer one).
+  const invitesReq = useRef(0);
+  const subsReq = useRef(0);
 
-  const load = useCallback(async () => {
+  const loadInvites = useCallback(async () => {
+    const id = ++invitesReq.current;
+    setInvitesLoading(true);
+    setInvitesError(null);
     const token = await resolveVendorApiToken();
     if (!token) {
-      toast.error("Session expired. Please sign in again.");
-      setLoading(false);
+      if (id === invitesReq.current) {
+        setInvitesError("Session expired. Please sign in again.");
+        setInvitesLoading(false);
+      }
       return;
     }
-    setLoading(true);
-    const [invRes, subRes] = await Promise.all([
-      listSupplyInvites(token),
-      listSupplySubmissions(token, statusFilter),
-    ]);
-    setInvites(invRes.data || []);
-    setSubmissions(subRes.data || []);
-    setLoading(false);
+    const res = await listSupplyInvites(token);
+    if (id !== invitesReq.current) return;
+    if (res.error) setInvitesError("Could not load your invites.");
+    else setInvites(res.data || []);
+    setInvitesLoading(false);
+  }, []);
+
+  const loadSubmissions = useCallback(async () => {
+    const id = ++subsReq.current;
+    setSubsLoading(true);
+    setSubsError(null);
+    const token = await resolveVendorApiToken();
+    if (!token) {
+      if (id === subsReq.current) setSubsLoading(false);
+      return;
+    }
+    const res = await listSupplySubmissions(token, statusFilter);
+    if (id !== subsReq.current) return;
+    if (res.error) setSubsError("Could not load submissions.");
+    else setSubmissions(res.data || []);
+    setSubsLoading(false);
   }, [statusFilter]);
 
+  const load = useCallback(() => {
+    loadInvites();
+    loadSubmissions();
+  }, [loadInvites, loadSubmissions]);
+
   useEffect(() => {
-    load();
-  }, [load]);
+    loadInvites();
+  }, [loadInvites]);
+
+  useEffect(() => {
+    loadSubmissions();
+  }, [loadSubmissions]);
 
   const onCreateInvite = async () => {
     const token = await resolveVendorApiToken();
@@ -76,13 +123,15 @@ export default function DealSupplyPage() {
     const res = await createSupplyInvite(token, {
       label: label.trim() || undefined,
       max_uses: 50,
+      expires_at: expiry || null,
     });
     setBusyId(null);
     if (res.error) {
-      toast.error(res.data?.detail || "Could not create invite.");
+      toast.error(res.data?.expires_at || res.data?.detail || "Could not create invite.");
       return;
     }
     setLabel("");
+    setExpiry("");
     toast.success("Invite created — copy the share link.");
     if (res.data?.share_url && navigator.clipboard?.writeText) {
       try {
@@ -92,7 +141,22 @@ export default function DealSupplyPage() {
         /* ignore */
       }
     }
-    load();
+    loadInvites();
+  };
+
+  const setInviteActive = async (inv: Invite, active: boolean) => {
+    if (!active && !window.confirm("Revoke this invite? The link will stop working.")) return;
+    const token = await resolveVendorApiToken();
+    if (!token) return;
+    setBusyId(inv.id);
+    const res = await updateSupplyInvite(token, inv.id, { is_active: active });
+    setBusyId(null);
+    if (res.error) {
+      toast.error(res.data?.detail || "Could not update the invite.");
+      return;
+    }
+    setInvites((list) => list.map((x) => (x.id === inv.id ? { ...x, ...res.data } : x)));
+    toast.success(active ? "Invite reopened." : "Invite revoked.");
   };
 
   const copyLink = async (url: string) => {
@@ -153,6 +217,16 @@ export default function DealSupplyPage() {
             value={label}
             onChange={(e) => setLabel(e.target.value)}
           />
+          <label className="flex flex-col text-xs text-surface-500 sm:w-48">
+            Expires (optional)
+            <input
+              type="date"
+              className="input-premium mt-1"
+              value={expiry}
+              min={new Date().toISOString().split("T")[0]}
+              onChange={(e) => setExpiry(e.target.value)}
+            />
+          </label>
           <button
             type="button"
             onClick={onCreateInvite}
@@ -166,7 +240,14 @@ export default function DealSupplyPage() {
 
       <div className="premium-card p-5">
         <h2 className="text-sm font-bold text-surface-900 dark:text-white mb-3">Your invites</h2>
-        {loading && invites.length === 0 ? (
+        {invitesError ? (
+          <p className="text-sm text-red-600">
+            {invitesError}{" "}
+            <button type="button" onClick={loadInvites} className="font-semibold underline">
+              Try again
+            </button>
+          </p>
+        ) : invitesLoading && invites.length === 0 ? (
           <p className="text-sm text-surface-500">Loading…</p>
         ) : invites.length === 0 ? (
           <p className="text-sm text-surface-500">No invites yet.</p>
@@ -184,16 +265,31 @@ export default function DealSupplyPage() {
                   <div className="text-xs text-surface-500 truncate">{inv.share_url}</div>
                   <div className="text-xs text-surface-400 mt-1">
                     {inv.uses_count}/{inv.max_uses} uses ·{" "}
-                    {inv.is_usable ? "Active" : "Closed"}
+                    {!inv.is_active ? "Revoked" : inv.is_usable ? "Active" : "Closed"}
+                    {inv.expires_at ? ` · Expires ${fmtDay(inv.expires_at)}` : " · No expiry"}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => copyLink(inv.share_url)}
-                  className="text-sm font-semibold text-primary-500 whitespace-nowrap"
-                >
-                  Copy link
-                </button>
+                <div className="flex items-center gap-3">
+                  {inv.is_usable && (
+                    <button
+                      type="button"
+                      onClick={() => copyLink(inv.share_url)}
+                      className="min-h-[40px] text-sm font-semibold text-primary-500 whitespace-nowrap"
+                    >
+                      Copy link
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    disabled={busyId === inv.id}
+                    onClick={() => setInviteActive(inv, !inv.is_active)}
+                    className={`min-h-[40px] text-sm font-semibold whitespace-nowrap disabled:opacity-50 ${
+                      inv.is_active ? "text-red-600" : "text-surface-600 dark:text-surface-300"
+                    }`}
+                  >
+                    {inv.is_active ? "Revoke" : "Reopen"}
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -214,7 +310,16 @@ export default function DealSupplyPage() {
             <option value="all">All</option>
           </select>
         </div>
-        {submissions.length === 0 ? (
+        {subsError ? (
+          <p className="text-sm text-red-600">
+            {subsError}{" "}
+            <button type="button" onClick={loadSubmissions} className="font-semibold underline">
+              Try again
+            </button>
+          </p>
+        ) : subsLoading && submissions.length === 0 ? (
+          <p className="text-sm text-surface-500">Loading…</p>
+        ) : submissions.length === 0 ? (
           <p className="text-sm text-surface-500">No submissions in this filter.</p>
         ) : (
           <ul className="space-y-3">
@@ -232,7 +337,7 @@ export default function DealSupplyPage() {
                       {sub.submitter_name} · {sub.submitter_email}
                     </div>
                     <div className="text-xs text-surface-500 mt-1">
-                      {sub.city}, {sub.state} · Ask ${sub.asking_price} · ARV ${sub.arv}
+                      {sub.city}, {sub.state} · Ask ${money(sub.asking_price)} · ARV ${money(sub.arv)}
                     </div>
                   </div>
                   <span className="text-xs font-bold uppercase text-surface-400">

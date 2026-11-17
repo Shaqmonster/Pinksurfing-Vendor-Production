@@ -91,6 +91,13 @@ export function OffMarketDealSection({ value, onChange }: Props) {
         List as off-market deal (Deals Home)
       </label>
 
+      {!value.is_off_market ? (
+        <p className="text-xs text-surface-500">
+          Tick the box to list this as an off-market deal. It is then hidden from your store and
+          shown only on Deals, behind a paid unlock.
+        </p>
+      ) : (
+      <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="text-xs font-semibold text-surface-600">Property class</label>
@@ -183,13 +190,19 @@ export function OffMarketDealSection({ value, onChange }: Props) {
           />
         </div>
         <div>
-          <label className="text-xs font-semibold text-surface-600">Deadline</label>
+          <label className="text-xs font-semibold text-surface-600">
+            Close-of-escrow deadline
+          </label>
           <input
             type="date"
             className="input-premium w-full mt-1"
             value={value.deadline_at}
             onChange={(e) => set({ deadline_at: e.target.value })}
           />
+          <p className="mt-1 text-[11px] text-surface-500">
+            Ends at 11:59 PM UTC on this date. If the deal hasn&apos;t closed by then, buyers who
+            unlocked it are refunded.
+          </p>
         </div>
         <div className="md:col-span-2">
           <label className="text-xs font-semibold text-surface-600">
@@ -232,19 +245,16 @@ export function OffMarketDealSection({ value, onChange }: Props) {
           ))}
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }
 
-export function buildOffMarketPayload(
-  productId: string,
-  form: OffMarketDealFormState,
-  dealActiveUntil?: string
-) {
+export function buildOffMarketPayload(productId: string, form: OffMarketDealFormState) {
+  // One date decides when a deal ends: the close-of-escrow deadline (60 days if left blank).
   const deadline =
-    form.deadline_at ||
-    (dealActiveUntil ? dealActiveUntil.split("T")[0] : "") ||
-    new Date(Date.now() + 60 * 86400000).toISOString().split("T")[0];
+    form.deadline_at || new Date(Date.now() + 60 * 86400000).toISOString().split("T")[0];
 
   return {
     product_id: productId,

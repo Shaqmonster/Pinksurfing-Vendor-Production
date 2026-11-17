@@ -25,6 +25,7 @@ import {
   listResults,
 } from "@/api/buyerRequests";
 import { handleError, handleSuccess } from "@/utils/toast";
+import { money } from "@/utils/money";
 import { resolveVendorApiToken } from "@/utils/vendorAuth";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -77,12 +78,6 @@ const STATUS_STYLES: Record<string, string> = {
   REJECTED: "bg-red-500/15 text-red-600 dark:text-red-400",
 };
 
-const money = (v: string | number | null | undefined) => {
-  const n = Number(v);
-  return Number.isFinite(n)
-    ? n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : "0.00";
-};
 
 /** The API's own message (e.g. "This request is no longer open.") rather than "status code 400". */
 function apiMessage(err: unknown): string | unknown {
