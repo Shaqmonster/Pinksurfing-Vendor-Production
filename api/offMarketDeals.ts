@@ -12,8 +12,6 @@ export type OffMarketDealProfilePayload = {
   city: string;
   state: string;
   beds?: number | null;
-  verification_score?: number;
-  verification_label?: string;
   teaser_summary?: string;
   popular_tags?: string[];
   unlock_fee?: number | string;
