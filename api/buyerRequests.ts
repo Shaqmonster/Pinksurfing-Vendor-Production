@@ -39,6 +39,16 @@ export interface BidPayload {
   bid_amount: string | number;
   delivery_time_days: string | number;
   proposal: string;
+  shipping_cost?: string | number;
+  stock_available?: boolean;
+  condition?: "new" | "used" | "any";
+}
+
+/** DRF list endpoints are paginated ({results: [...]}); older code expected a bare array. */
+export function listResults<T>(data: unknown): T[] {
+  if (Array.isArray(data)) return data as T[];
+  const results = (data as { results?: unknown })?.results;
+  return Array.isArray(results) ? (results as T[]) : [];
 }
 
 export async function createBid(
@@ -51,6 +61,10 @@ export async function createBid(
   form.append("bid_amount", String(bidData.bid_amount));
   form.append("delivery_time_days", String(bidData.delivery_time_days));
   form.append("proposal", bidData.proposal);
+  if (bidData.shipping_cost !== undefined) form.append("shipping_cost", String(bidData.shipping_cost));
+  if (bidData.stock_available !== undefined)
+    form.append("stock_available", bidData.stock_available ? "true" : "false");
+  if (bidData.condition) form.append("condition", bidData.condition);
   images.forEach((img, i) => form.append(`image${i + 1}`, img));
 
   const response = await axios.post(

@@ -37,6 +37,42 @@ import { prepareListingFeePayment } from "@/utils/listingPayment";
 import ConfirmationModal from "../Modals/ConfirmDelete";
 import EmptyState from "@/components/ui/EmptyState";
 
+// Why a listing is or isn't on the public store (explains inventory vs store counts).
+const LISTING_STATUS = {
+  live: {
+    label: "Live",
+    title: "Shown on your public store",
+    cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400",
+    dot: "bg-emerald-500",
+  },
+  offMarket: {
+    label: "Off-market · Deals only",
+    title: "Hidden from your store and categories; shown only on Deals behind the paid unlock",
+    cls: "bg-pink-100 text-pink-700 dark:bg-pink-500/15 dark:text-pink-300",
+    dot: "bg-pink-500",
+  },
+  unpaid: {
+    label: "Not live · fee unpaid",
+    title: "Pay the listing fee to publish it on your store",
+    cls: "bg-surface-200 text-surface-600 dark:bg-dark-border dark:text-surface-300",
+    dot: "bg-surface-400 dark:bg-surface-500",
+  },
+} as const;
+
+function ListingStatusBadge({ product, compact = false }: { product: any; compact?: boolean }) {
+  const key = !product.is_active ? "unpaid" : product.is_off_market ? "offMarket" : "live";
+  const s = LISTING_STATUS[key];
+  return (
+    <span
+      title={s.title}
+      className={`${compact ? "flex-shrink-0 px-2.5 py-1" : "px-3 py-1.5"} inline-flex items-center gap-1.5 rounded-full text-xs font-semibold whitespace-nowrap ${s.cls}`}
+    >
+      <span className={`w-1.5 h-1.5 rounded-full inline-block ${s.dot}`} />
+      {s.label}
+    </span>
+  );
+}
+
 const ProductsTable = (props: { Products?: Product[] }) => {
   const rowRef = useRef<any>(null);
   const [categories, setCategories] = useState([]);
@@ -445,17 +481,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                             <p className="font-semibold text-surface-900 dark:text-white line-clamp-2 leading-snug">
                               {product.name}
                             </p>
-                            {product.is_active ? (
-                              <span className="flex-shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-                                Live
-                              </span>
-                            ) : (
-                              <span className="flex-shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold bg-surface-200 text-surface-500 dark:bg-dark-border dark:text-surface-400">
-                                <span className="w-1.5 h-1.5 rounded-full bg-surface-400 dark:bg-surface-500 inline-block" />
-                                Draft
-                              </span>
-                            )}
+                            <ListingStatusBadge product={product} compact />
                           </div>
                           <p className="text-xs text-surface-400 dark:text-surface-500 mt-1">
                             {formatProductCategory(product)}
@@ -601,10 +627,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                           <td className="px-5 xl:px-6 py-4">
                             {product.is_active ? (
                               <div className="flex items-center gap-2.5">
-                                <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
-                                  Live
-                                </span>
+                                <ListingStatusBadge product={product} />
                                 <button
                                   type="button"
                                   onClick={(e) => copyToClipboard(getProductUrl(product), e)}
@@ -617,10 +640,7 @@ const ProductsTable = (props: { Products?: Product[] }) => {
                               </div>
                             ) : (
                               <div className="flex items-center gap-2.5">
-                                <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold bg-surface-200 text-surface-500 dark:bg-dark-border dark:text-surface-400">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-surface-400 dark:bg-surface-500 inline-block" />
-                                  Draft
-                                </span>
+                                <ListingStatusBadge product={product} />
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); handlePayForProduct(product); }}

@@ -29,6 +29,7 @@ import {
   FiExternalLink
 } from "react-icons/fi";
 import EmptyState from "@/components/ui/EmptyState";
+import { paidOrderLines } from "@/utils/orderCounts";
 
 interface Order {
   id: string;
@@ -166,17 +167,10 @@ const OrderTable = ({ recentOrders }: any) => {
         "Order Request" in data.data
       ) {
         setLoading(false);
-        let orders = data.data["Order Request"];
-        orders = orders.filter(
-          (order: Order) => order.order_status !== "PENDING"
-        );
-        if (Array.isArray(orders) && orders.length) {
-          if (recentOrders) {
-            setOrders(orders.slice(0, 4));
-          } else {
-            setOrders(orders.slice(0, 10));
-          }
-        }
+        // Same rule as the profile's order count (utils/orderCounts).
+        const orders = paidOrderLines<Order>(data.data["Order Request"]);
+        // The dashboard widget shows the latest 4; the Orders page shows them all.
+        setOrders(recentOrders ? orders.slice(0, 4) : orders);
       }
     });
   }, [apiToken, recentOrders]);
@@ -317,7 +311,7 @@ const OrderTable = ({ recentOrders }: any) => {
                 <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
                   {recentOrders
                     ? "Your latest customer orders"
-                    : `Showing ${orders.length} orders`}
+                    : `Showing ${orders.length} paid orders. Unpaid checkouts are not counted.`}
                 </p>
               </div>
               {recentOrders && orders.length > 0 && (

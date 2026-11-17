@@ -21,6 +21,7 @@ import { FiMapPin, FiMail, FiPhone, FiGlobe, FiPackage, FiTrendingUp } from "rea
 import { getAccessToken } from "@/utils/cookies";
 import { resolveVendorApiToken } from "@/utils/vendorAuth";
 import Link from "next/link";
+import { paidOrderLines } from "@/utils/orderCounts";
 
 const Profile = () => {
   const [profile, setProfile] = useState<any>({
@@ -73,7 +74,7 @@ const Profile = () => {
 
       getOrders(access).then((data) => {
         if (data && "data" in data && "Order Request" in data.data) {
-          setOrders(data.data["Order Request"].length);
+          setOrders(paidOrderLines(data.data["Order Request"]).length);
         }
       });
     })();
@@ -94,7 +95,7 @@ const Profile = () => {
 
   const stats = [
     { icon: FiPackage, label: "Products", value: products, color: "primary" },
-    { icon: FiTrendingUp, label: "Orders", value: orders || 0, color: "purple" },
+    { icon: FiTrendingUp, label: "Paid orders", value: orders || 0, color: "purple" },
   ];
 
   return (

@@ -19,7 +19,7 @@ import {
   RefreshCw,
   ChevronDown,
 } from "lucide-react";
-import { getOpenRequests } from "@/api/buyerRequests";
+import { getOpenRequests, listResults } from "@/api/buyerRequests";
 import { handleError } from "@/utils/toast";
 import { resolveVendorApiToken } from "@/utils/vendorAuth";
 import EmptyState from "@/components/ui/EmptyState";
@@ -35,6 +35,8 @@ interface BuyerRequest {
   category_name: string | null;
   customer_first_name: string;
   customer_last_name: string;
+  quantity?: number;
+  condition?: "new" | "used" | "any";
   bids: any[];
   image1: string | null;
   image2: string | null;
@@ -67,7 +69,7 @@ export default function BuyerRequestsPage() {
     try {
       setLoading(true);
       const res = await getOpenRequests(token);
-      setRequests(res.data.results ?? res.data ?? []);
+      setRequests(listResults<BuyerRequest>(res.data));
     } catch (err) {
       handleError(err);
     } finally {
@@ -130,7 +132,7 @@ export default function BuyerRequestsPage() {
             Buyer <span className="gradient-text">Requests</span>
           </h1>
           <p className="text-surface-500 dark:text-surface-400 text-sm mt-0.5">
-            Browse open buyer requests and submit your offer
+            Products shoppers asked for. Send an offer with your price, shipping and delivery time.
           </p>
         </div>
         <button
@@ -185,7 +187,7 @@ export default function BuyerRequestsPage() {
             <option value="newest">Newest First</option>
             <option value="budget-high">Highest Budget</option>
             <option value="budget-low">Lowest Budget</option>
-            <option value="fewest-bids">Fewest Bids</option>
+            <option value="fewest-bids">Fewest Offers</option>
           </select>
           <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-surface-400 pointer-events-none" />
         </div>
@@ -286,6 +288,14 @@ function RequestCard({ request, index }: { request: BuyerRequest; index: number 
                     {request.category_name}
                   </span>
                 )}
+                {(request.quantity ?? 1) > 1 && (
+                  <span className="text-xs text-surface-500 dark:text-surface-400">Qty {request.quantity}</span>
+                )}
+                {request.condition && request.condition !== "any" && (
+                  <span className="text-xs text-surface-500 dark:text-surface-400 capitalize">
+                    {request.condition} only
+                  </span>
+                )}
                 <span className="flex items-center gap-1 text-xs text-surface-500 dark:text-surface-400">
                   <Clock className="w-3 h-3" />
                   {timeAgo(request.created_at)}
@@ -314,7 +324,10 @@ function RequestCard({ request, index }: { request: BuyerRequest; index: number 
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1 text-sm font-semibold text-surface-900 dark:text-white">
                 <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-emerald-600 dark:text-emerald-400">${request.budget}</span>
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  ${Number(request.budget).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                </span>
+                <span className="text-xs font-normal text-surface-500">per item</span>
               </span>
               {isVerifiedBuyer && (
                 <span className="flex items-center gap-1 text-xs text-primary-500">
@@ -326,7 +339,7 @@ function RequestCard({ request, index }: { request: BuyerRequest; index: number 
 
             <div className="flex items-center gap-3">
               <span className="text-xs text-surface-500 dark:text-surface-400">
-                {bidCount} bid{bidCount !== 1 ? "s" : ""}
+                {bidCount} offer{bidCount !== 1 ? "s" : ""}
               </span>
               <Link
                 href={staticDetailHref("/buyer-requests", request.id)}
