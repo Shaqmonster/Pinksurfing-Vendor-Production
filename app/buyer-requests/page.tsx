@@ -108,7 +108,7 @@ export default function BuyerRequestsPage() {
         list = [...list].sort((a, b) => parseFloat(a.budget) - parseFloat(b.budget));
         break;
       case "fewest-bids":
-        list = [...list].sort((a, b) => (a.bids?.length ?? 0) - (b.bids?.length ?? 0));
+        list = [...list].sort((a, b) => (a.bid_count ?? a.bids?.length ?? 0) - (b.bid_count ?? b.bids?.length ?? 0));
         break;
       case "newest":
       default:
@@ -240,7 +240,7 @@ function RequestCard({ request, index }: { request: BuyerRequest; index: number 
   const photoCount = [request.image1, request.image2, request.image3, request.image4].filter(
     Boolean
   ).length;
-  const bidCount = request.bids?.length ?? 0;
+  const bidCount = request.bid_count ?? request.bids?.length ?? 0;
   const isVerifiedBuyer = !!(request.customer_first_name && request.customer_last_name);
 
   return (
