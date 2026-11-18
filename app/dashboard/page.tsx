@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   FiShoppingBag,
@@ -17,9 +17,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { removePendingListing, updatePendingListingState } from "@/utils/pendingListings";
 import { PS_MOTION, staggerDelay } from "@/lib/motion-tokens";
 import VendorOverview from "@/components/DashBoard/VendorOverview";
+import { MyContext } from "@/app/providers/context";
 
 const Dashboard: React.FC = () => {
   const [topProducts, setTopProducts] = useState<any[]>([]);
+  // false until the top-sellers request has finished; until then show placeholders, not "no products".
+  const [topLoaded, setTopLoaded] = useState(false);
+  // null until the overview has counted this store's listings.
+  const [listingCounts, setListingCounts] = useState<{ live: number; drafts: number } | null>(null);
+  const { loggedIn, authReady } = useContext(MyContext);
   const [listingNotice, setListingNotice] = useState<string>("");
   const [listingNoticeType, setListingNoticeType] = useState<"info" | "success" | "warning">("info");
   const listingHandledRef = useRef(false);
@@ -27,16 +33,32 @@ const Dashboard: React.FC = () => {
   const searchParams = useSearchParams();
   const reduced = useReducedMotion();
 
-  useMemo(() => {
-    if (typeof window !== "undefined") {
-      const token = getAccessToken();
-      if (!token) return;
-      (async () => {
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      // The session can still be settling on the first visit: retry the token a few times.
+      let token = getAccessToken();
+      for (let i = 0; !token && i < 3 && !cancelled; i++) {
+        await new Promise((r) => setTimeout(r, 1000));
+        token = getAccessToken();
+      }
+      if (!token || cancelled) {
+        if (!cancelled) setTopLoaded(true);
+        return;
+      }
+      try {
         const res = await getTopSellingProducts(token);
-        setTopProducts(res.data || []);
-      })();
-    }
-  }, []);
+        if (!cancelled) setTopProducts(res.data || []);
+      } catch {
+        /* leave the list empty */
+      } finally {
+        if (!cancelled) setTopLoaded(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loggedIn, authReady]);
 
   useEffect(() => {
     const listingPaid = searchParams.get("listing_paid");
@@ -141,10 +163,11 @@ const Dashboard: React.FC = () => {
       )}
 
       <motion.div variants={itemVariants}>
-        <VendorOverview />
+        <VendorOverview onLoaded={setListingCounts} />
       </motion.div>
 
-      {!topProducts?.length && (
+      {/* Only a store with no listings at all gets the "get ready" card; never while still loading. */}
+      {topLoaded && listingCounts && listingCounts.live + listingCounts.drafts === 0 && (
         <motion.div variants={itemVariants} className="premium-card">
           <EmptyState
             icon={FiPackage}
@@ -197,6 +220,19 @@ const Dashboard: React.FC = () => {
                     </p>
                   </motion.div>
                 ))
+              ) : !topLoaded ? (
+                <div aria-busy="true" aria-label="Loading top products" className="space-y-3">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="h-14 animate-pulse rounded-xl bg-surface-100 dark:bg-dark-surface" />
+                  ))}
+                </div>
+              ) : listingCounts && listingCounts.live + listingCounts.drafts > 0 ? (
+                <EmptyState
+                  icon={FiPackage}
+                  title="No sales yet"
+                  description="Your best performing items will show up here once you make sales."
+                  className="py-6"
+                />
               ) : (
                 <EmptyState
                   icon={FiPackage}
