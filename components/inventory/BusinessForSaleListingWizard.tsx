@@ -430,6 +430,8 @@ export const BusinessForSaleListingWizard = forwardRef<
       return true;
     }
     if (step === 2) {
+      // Annual revenue can't be negative (EBITDA and SDE legitimately can).
+      if (finRevenue !== "" && Number(finRevenue) < 0) return false;
       return Boolean(productData.mrp);
     }
     if (step === 3) {
@@ -896,7 +898,7 @@ export const BusinessForSaleListingWizard = forwardRef<
               <div className="field-row">
                 <div className="field">
                   <label>Annual revenue (USD)</label>
-                  <input className="fi" type="number" min={0} value={finRevenue} onChange={(e) => setFinRevenue(e.target.value)} />
+                  <input className="fi" type="number" min={0} value={finRevenue} onChange={(e) => setFinRevenue(e.target.value.startsWith("-") ? e.target.value.replace(/^-+/, "") : e.target.value)} />
                 </div>
                 <div className="field">
                   <label>EBITDA (USD)</label>

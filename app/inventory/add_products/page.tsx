@@ -217,6 +217,7 @@ const AddProducts = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const listingFeeStatus = useListingFeeStatus();
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [showStepErrors, setShowStepErrors] = useState(false);
 
   // Category states
   const [categories, setCategories] = useState([]);
@@ -568,6 +569,30 @@ const AddProducts = () => {
   // Required schema fields (e.g. a perfume's Concentration and Gender) left empty (retest N3.2).
   const missingRequired = missingRequiredAttributes([...variantAttributes, ...nonVariantAttributes]);
 
+  /** What stops the person leaving the Details step, with where to find it. */
+  const stepBlockers: { label: string; focus: () => void }[] = [];
+  if (currentStep === 2 && !isBusinessForSale) {
+    const goTo = (selector: string) => () => {
+      const el = document.querySelector<HTMLElement>(selector);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      const input = el.matches("input,textarea,select,button") ? el : el.querySelector<HTMLElement>("input,textarea,select,button");
+      input?.focus({ preventScroll: true });
+    };
+    if (!productData.name) stepBlockers.push({ label: "Product name", focus: goTo("#field-name") });
+    if (!productData.mrp) stepBlockers.push({ label: "Price", focus: goTo("#field-mrp") });
+    if (!shouldHideMedia && files.length === 0) stepBlockers.push({ label: "At least one image", focus: goTo("#field-images") });
+    for (const name of missingRequired) {
+      stepBlockers.push({ label: name, focus: goTo(`[data-field-key="${name.replace(/"/g, '\\"')}"]`) });
+    }
+    for (const a of [...variantAttributes, ...nonVariantAttributes]) {
+      if (a?.data_type === "number" && a.value !== "" && Number(a.value) < 0) {
+        const n = String(a.name);
+        stepBlockers.push({ label: `${n} can't be negative`, focus: goTo(`[data-field-key="${n.replace(/"/g, '\\"')}"]`) });
+      }
+    }
+  }
+
   const canProceed = () => {
     switch (currentStep) {
       case 1:
@@ -575,7 +600,7 @@ const AddProducts = () => {
       case 2:
         if (isBusinessForSale) return false;
         // Details step: requires name, mrp, and at least 1 image (unless category hides media)
-        return productData.name && productData.mrp && (shouldHideMedia || files.length > 0) && missingRequired.length === 0;
+        return stepBlockers.length === 0;
       case 3:
         return true; // Review step
       default:
@@ -588,13 +613,9 @@ const AddProducts = () => {
       setCompletedSteps(prev => [...prev, currentStep]);
       setCurrentStep(prev => prev + 1);
     } else if (!canProceed()) {
-      if (currentStep === 2 && !shouldHideMedia && files.length === 0) {
-        toast.error("Please upload at least one image");
-      } else if (currentStep === 2 && missingRequired.length > 0) {
-        toast.error(`Please fill in: ${missingRequired.join(", ")}`);
-      } else {
-        toast.error("Please complete all required fields");
-      }
+      // Show exactly what is missing, each item jumping to its field (the button is no longer just greyed out).
+      setShowStepErrors(true);
+      stepBlockers[0]?.focus();
     }
   };
 
@@ -773,7 +794,12 @@ const AddProducts = () => {
     return fallbackIndex;
   };
 
-  const renderAttributeInput = (attr: any, isVariant: boolean, index: number) => {
+  // Each attribute input sits in a marked wrapper so the "fix these" list can scroll to and focus it.
+  const renderAttributeInput = (attr: any, isVariant: boolean, index: number) => (
+    <div data-field-key={attr.name}>{renderAttributeInputInner(attr, isVariant, index)}</div>
+  );
+
+  const renderAttributeInputInner = (attr: any, isVariant: boolean, index: number) => {
     const updateAttr = (value: any) => {
       if (isVariant) {
         setVariantAttributes(prev => {
@@ -853,7 +879,7 @@ const AddProducts = () => {
             <input
               type="number"
               value={attr.value}
-              onChange={(e) => updateAttr(e.target.value)}
+              onChange={(e) => updateAttr(attr.min !== undefined && attr.min >= 0 || attr.min === undefined ? e.target.value.replace(/^-+/, "") : e.target.value)}
               placeholder={attr.placeholder || `Enter ${attr.name.toLowerCase()}`}
               className={`${inputClasses} ${attr.suffix ? 'pl-7' : ''}`}
               min={attr.min !== undefined && attr.min >= 0 ? attr.min : 0}
@@ -1394,6 +1420,7 @@ const AddProducts = () => {
           onDrop={handleDrop}
         >
           <input
+            id="field-images"
             type="file"
             accept="image/*"
             multiple
@@ -1664,6 +1691,7 @@ const AddProducts = () => {
                     
                     <div className="relative">
                       <input
+                        id="field-name"
                         type="text"
                         value={productData.name}
                         onChange={(e) => updateProductData("name", e.target.value)}
@@ -1711,6 +1739,7 @@ const AddProducts = () => {
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-surface-400">$</span>
                   <input
+                    id="field-mrp"
                     type="number"
                     value={productData.mrp}
                     onChange={(e) => updateProductData("mrp", e.target.value)}
@@ -2207,6 +2236,23 @@ const AddProducts = () => {
       {/* Step Content */}
       <div className="mb-8">
         {renderStepContent()}
+        {currentStep === 2 && showStepErrors && stepBlockers.length > 0 && (
+          <div
+            role="alert"
+            className="mt-6 rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:border-red-500/40 dark:bg-red-900/20 dark:text-red-200"
+          >
+            <p className="font-semibold">Fix these to continue</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              {stepBlockers.map((b) => (
+                <li key={b.label}>
+                  <button type="button" onClick={b.focus} className="underline underline-offset-2 hover:opacity-80">
+                    {b.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {currentStep === 3 && <ListingFeeNotice status={listingFeeStatus} />}
       </div>
 
@@ -2245,7 +2291,7 @@ const AddProducts = () => {
             <button
               type="button"
               onClick={nextStep}
-              disabled={!canProceed()}
+              aria-disabled={!canProceed()}
               className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${canProceed()
                 ? "bg-gradient-pink text-white shadow-glow-pink hover:opacity-90"
                 : "opacity-50 cursor-not-allowed bg-surface-300 text-surface-500"

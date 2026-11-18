@@ -60,6 +60,14 @@ export function setupVendorAxios() {
       if (!isMarketplaceApiUrl(url)) {
         return Promise.reject(error);
       }
+      // A 401 from the token endpoints themselves (or a request that opted out) can never be fixed by
+      // refreshing: retrying here makes the refresh wait on itself and the app sits on "Loading…" forever.
+      if (
+        (originalRequest as { skipAuthRefresh?: boolean }).skipAuthRefresh ||
+        isSsoTokenMaintenanceUrl(url)
+      ) {
+        return Promise.reject(error);
+      }
 
       originalRequest._retry = true;
       try {

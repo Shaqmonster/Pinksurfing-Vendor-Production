@@ -120,6 +120,12 @@ export default function DealUnlocksList() {
                       <span className="font-medium">Email: </span>
                       {row.buyer_email}
                     </p>
+                    {row.buyer_company && (
+                      <p>
+                        <span className="font-medium">Company: </span>
+                        {row.buyer_company}
+                      </p>
+                    )}
                     <p className="text-xs text-surface-500">Unlocked {fmtDate(row.paid_at)}</p>
                   </div>
                 </div>
@@ -129,8 +135,11 @@ export default function DealUnlocksList() {
                       href={`/messages?c=${row.conversation_id}`}
                       className="rounded-xl bg-gradient-pink px-4 py-2.5 text-center text-sm font-semibold text-white shadow-glow-pink"
                     >
-                      Message buyer
+                      Open conversation
                     </a>
+                  )}
+                  {!row.conversation_id && (
+                    <p className="text-xs text-surface-500">No conversation yet. It starts when the buyer messages you.</p>
                   )}
                   {next && row.deal_room_id && (
                     <button

@@ -56,6 +56,8 @@ interface ProductRequest {
   deadline: string | null;
   category_name: string | null;
   customer_first_name: string;
+  /** True when the signed-in vendor is also the person who posted this request. */
+  is_own?: boolean;
   status: string;
   bids: VendorBid[];
   image1: string | null;
@@ -142,6 +144,14 @@ function RequestSummary({ request }: { request: ProductRequest }) {
           <dd className="font-semibold text-surface-900 dark:text-white flex items-center gap-1">
             <MapPin className="w-3 h-3" />
             {request.ship_to_zip || "Not given"}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs text-surface-500">Needed by</dt>
+          <dd className="font-semibold text-surface-900 dark:text-white">
+            {request.deadline
+              ? new Date(request.deadline).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+              : "No deadline"}
           </dd>
         </div>
       </dl>
@@ -364,6 +374,10 @@ export default function RequestDetailPage() {
               {deleting ? "Withdrawing…" : "Withdraw offer"}
             </button>
           )}
+        </div>
+      ) : request.is_own ? (
+        <div className="premium-card p-5 text-sm text-surface-600 dark:text-surface-300">
+          This is your request. Offers from other vendors appear in My Bids on pinksurfing.com.
         </div>
       ) : request.status !== "OPEN" ? (
         <div className="premium-card p-5 text-sm text-surface-600 dark:text-surface-300">

@@ -141,7 +141,13 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
 
     void (async () => {
       try {
-        await bootstrapAuth();
+        // Never let a stuck sign-in check hold the whole app on "Loading…": after 20 s, show sign-in.
+        await Promise.race([
+          bootstrapAuth(),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("auth bootstrap timed out")), 20_000)
+          ),
+        ]);
       } catch (error) {
         console.error("Vendor auth bootstrap failed:", error);
         if (!cancelled) setIsLoggedIn(false);
