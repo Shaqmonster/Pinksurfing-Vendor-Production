@@ -854,7 +854,7 @@ const EditProduct = () => {
         return (
           <div className="relative">
             {attr.suffix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-400 text-sm">{attr.suffix}</span>}
-            <input type="number" value={attr.value} onChange={(e) => updateAttr(e.target.value)} placeholder={attr.placeholder || `Enter ${attr.name.toLowerCase()}`} className={`${inputClasses} ${attr.suffix ? "pl-7" : ""}`} min={attr.min !== undefined && attr.min >= 0 ? attr.min : 0} max={attr.max} step={attr.step} />
+            <input type="number" value={attr.value} onChange={(e) => updateAttr(attr.min === undefined || attr.min >= 0 ? e.target.value.replace(/^-+/, "") : e.target.value)} placeholder={attr.placeholder || `Enter ${attr.name.toLowerCase()}`} className={`${inputClasses} ${attr.suffix ? "pl-7" : ""}`} min={attr.min !== undefined && attr.min >= 0 ? attr.min : 0} max={attr.max} step={attr.step} />
           </div>
         );
       case "textarea":

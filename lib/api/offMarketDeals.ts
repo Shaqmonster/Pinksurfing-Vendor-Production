@@ -197,7 +197,7 @@ export async function rejectSupplySubmission(
   }
 }
 
-// ── Seller view of paid deal unlocks (Signed NDAs & Leads → Deal unlocks) ─────
+// ── Seller view of paid deal unlocks (NDAs & Leads → Deal unlocks) ─────
 
 export type DealUnlockRow = {
   unlock_id: string;
@@ -206,6 +206,8 @@ export type DealUnlockRow = {
   listing_slug: string;
   buyer_name: string;
   buyer_email: string;
+  /** Buyer's company, when the API provides it. */
+  buyer_company?: string | null;
   status: string;
   paid_at: string | null;
   deal_room_id: string | null;

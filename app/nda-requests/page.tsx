@@ -279,7 +279,7 @@ export default function NdaRequestsPage() {
       className="mx-auto max-w-5xl"
     >
       <PageHeader
-        title="Signed NDAs & leads"
+        title="NDAs & leads"
         description="Buyers who paid to see more of your listings: NDAs for business financials, and unlocks of your off-market deals."
       />
 

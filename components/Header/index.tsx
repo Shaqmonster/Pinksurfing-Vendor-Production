@@ -118,7 +118,7 @@ const Header = (props: { loggedIn: boolean | undefined }) => {
     if (pathname.includes("profile")) return "Profile";
     if (pathname.includes("settings")) return "Store Settings";
     if (pathname.includes("visit-requests")) return "Visit Requests";
-    if (pathname.includes("nda-requests")) return "Signed NDAs & Leads";
+    if (pathname.includes("nda-requests")) return "NDAs & Leads";
     if (pathname.includes("buyer-requests")) return "Buyer Requests";
     if (pathname.includes("identity")) return "Identity Verification";
     if (pathname.includes("Stripe") || pathname.includes("square"))

@@ -46,7 +46,7 @@ export default function VendorOverview() {
 
       if (cancelled) return;
       setData({
-        live: products.filter((p) => p.is_active).length,
+        live: products.filter((p) => p.is_active && !p.is_off_market).length,
         drafts: products.filter((p) => !p.is_active).length,
         // Same rule as OrderTable: PENDING orders are unpaid checkouts, not real orders.
         orders: orderList ? orderList.filter((o) => o.order_status !== "PENDING").length : null,

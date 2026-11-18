@@ -99,7 +99,7 @@ const Sidebar = () => {
       show: visitRequestCount > 0,
     },
     {
-      name: "Signed NDAs & Leads",
+      name: "NDAs & Leads",
       href: "/nda-requests",
       icon: FaFileContract,
       count: ndaRequestCount,
