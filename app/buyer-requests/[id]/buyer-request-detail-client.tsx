@@ -57,7 +57,7 @@ interface ProductRequest {
   category_name: string | null;
   customer_first_name: string;
   /** True when the signed-in vendor is also the person who posted this request. */
-  is_own?: boolean;
+  is_owner?: boolean;
   status: string;
   bids: VendorBid[];
   image1: string | null;
@@ -375,7 +375,7 @@ export default function RequestDetailPage() {
             </button>
           )}
         </div>
-      ) : request.is_own ? (
+      ) : request.is_owner ? (
         <div className="premium-card p-5 text-sm text-surface-600 dark:text-surface-300">
           This is your request. Offers from other vendors appear in My Bids on pinksurfing.com.
         </div>
