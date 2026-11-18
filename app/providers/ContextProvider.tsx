@@ -25,14 +25,19 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const ssoSyncInflightRef = useRef(false);
 
-  const applyVendorSession = useCallback(async (access: string | null, retried = false) => {
+  const applyVendorSession = useCallback(async (
+    access: string | null,
+    retried = false,
+    // A vendor-session lookup already started in parallel by the caller (saves a sequential request).
+    prefetched?: ReturnType<typeof resolveVendorSession>
+  ) => {
     if (!access) {
       localStorage.removeItem("vendor_id");
       setIsLoggedIn(false);
       return false;
     }
 
-    const vendorSession = await resolveVendorSession(access);
+    const vendorSession = await (prefetched ?? resolveVendorSession(access));
     if (vendorSession.unauthorized) {
       if (!retried) {
         const session = await ensureSession();
@@ -82,6 +87,9 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     persistAuthSession(session.access, session.refresh);
+    // The two checks are independent: run them together instead of one after the other.
+    const vendorSessionPromise = resolveVendorSession(session.access);
+    vendorSessionPromise.catch(() => undefined); // handled where it is awaited below
     const vendorStatus = await checkVendorStatus(session.access);
 
     if (vendorStatus.unauthorized) {
@@ -98,7 +106,7 @@ const MyProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     if (vendorStatus.isVendor) {
-      await applyVendorSession(session.access);
+      await applyVendorSession(session.access, false, vendorSessionPromise);
       return;
     }
 
