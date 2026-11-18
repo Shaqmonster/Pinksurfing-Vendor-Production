@@ -38,15 +38,15 @@ export default function VendorOverview() {
       }
       if (!token || cancelled) return;
 
-      const profileRes = await getVendorProfile(token).catch(() => ({ error: true, data: null }));
-      const profile: any = profileRes?.data || {};
-
-      const [productsRes, ordersRes, square] = await Promise.all([
-        // The backend returns the signed-in vendor's full inventory regardless of slug.
-        getProducts(token, profile.slug || "inventory").catch(() => null),
+      // All four requests start together (the profile used to go first, adding a full round trip).
+      // The products endpoint returns the signed-in vendor's whole inventory regardless of the slug.
+      const [profileRes, productsRes, ordersRes, square] = await Promise.all([
+        getVendorProfile(token).catch(() => ({ error: true, data: null })),
+        getProducts(token, "inventory").catch(() => null),
         getAllOrders(token).catch(() => null),
         getSquareStatus(token).catch(() => null),
       ]);
+      const profile: any = (profileRes as any)?.data || {};
 
       const products: any[] = (productsRes as any)?.data?.Products || [];
       const orderList: any[] | null = Array.isArray((ordersRes as any)?.data?.["Order Request"])

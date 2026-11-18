@@ -133,7 +133,8 @@ const getStatusConfig = (status: string) => {
 
 const OrderTable = ({ recentOrders }: any) => {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(false);
+  // Starts true so the empty state never paints before the first load finishes.
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [labelUrls, setLabelUrls] = useState<{ [key: string]: string }>({});
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
@@ -153,7 +154,11 @@ const OrderTable = ({ recentOrders }: any) => {
   const [apiToken, setApiToken] = useState<string | null>(null);
 
   useEffect(() => {
-    void resolveVendorApiToken().then(setApiToken);
+    void resolveVendorApiToken().then((t) => {
+      setApiToken(t);
+      // No token (signed out): nothing will load, so stop showing the loading state.
+      if (!t) setLoading(false);
+    });
   }, []);
 
   useEffect(() => {
@@ -161,18 +166,21 @@ const OrderTable = ({ recentOrders }: any) => {
 
     setLoading(true);
     getOrders(apiToken).then((data: any) => {
+      // Whatever the answer, the first load is over.
+      setLoading(false);
       if (
+        data &&
         typeof data === "object" &&
         "data" in data &&
+        data.data &&
         "Order Request" in data.data
       ) {
-        setLoading(false);
         // Same rule as the profile's order count (utils/orderCounts).
         const orders = paidOrderLines<Order>(data.data["Order Request"]);
         // The dashboard widget shows the latest 4; the Orders page shows them all.
         setOrders(recentOrders ? orders.slice(0, 4) : orders);
       }
-    });
+    }).catch(() => setLoading(false));
   }, [apiToken, recentOrders]);
 
   useEffect(() => {
