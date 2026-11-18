@@ -582,6 +582,10 @@ const AddProducts = () => {
     if (!productData.name) stepBlockers.push({ label: "Product name", focus: goTo("#field-name") });
     if (!productData.mrp) stepBlockers.push({ label: "Price", focus: goTo("#field-mrp") });
     if (!shouldHideMedia && files.length === 0) stepBlockers.push({ label: "At least one image", focus: goTo("#field-images") });
+    // Marked required (*) on the form, so it belongs in the list too.
+    if (shortDescPlainLen === 0) {
+      stepBlockers.push({ label: "Short description", focus: goTo('[data-field-key="Short description"] .ql-editor') });
+    }
     for (const name of missingRequired) {
       stepBlockers.push({ label: name, focus: goTo(`[data-field-key="${name.replace(/"/g, '\\"')}"]`) });
     }
@@ -1881,7 +1885,7 @@ const AddProducts = () => {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Short Description */}
-                <div>
+                <div data-field-key="Short description">
                   <div className="flex items-center justify-between mb-3">
                     <label className="text-sm font-medium text-surface-700 dark:text-surface-300">
                       Short Description <span className="text-danger">*</span>

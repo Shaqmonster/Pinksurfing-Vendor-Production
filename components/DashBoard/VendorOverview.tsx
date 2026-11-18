@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import Link from "next/link";
 import { FiCheckCircle, FiCircle, FiArrowRight } from "react-icons/fi";
 import { getAllOrders, getProducts, getVendorProfile } from "@/lib/api/products";
 import { getSquareStatus } from "@/lib/api/square";
 import { resolveVendorApiToken } from "@/utils/vendorAuth";
+import { MyContext } from "@/app/providers/context";
 
 type Overview = {
   live: number;
@@ -22,12 +23,20 @@ type Overview = {
  */
 export default function VendorOverview() {
   const [data, setData] = useState<Overview | null>(null);
+  // The session may still be settling on the first visit; load again once it is ready.
+  const { loggedIn, authReady } = useContext(MyContext);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const token = await resolveVendorApiToken();
-      if (!token) return;
+      // A first load can race the sign-in bootstrap and get no token: retry a few times instead of
+      // silently showing no cards until the next reload.
+      let token = await resolveVendorApiToken();
+      for (let i = 0; !token && i < 3 && !cancelled; i++) {
+        await new Promise((r) => setTimeout(r, 1000));
+        token = await resolveVendorApiToken();
+      }
+      if (!token || cancelled) return;
 
       const profileRes = await getVendorProfile(token).catch(() => ({ error: true, data: null }));
       const profile: any = profileRes?.data || {};
@@ -59,9 +68,18 @@ export default function VendorOverview() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loggedIn, authReady]);
 
-  if (!data) return null;
+  if (!data) {
+    // Placeholder cards while loading, so the dashboard never looks empty.
+    return (
+      <div aria-hidden className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="h-24 animate-pulse rounded-2xl bg-surface-100 dark:bg-dark-surface" />
+        ))}
+      </div>
+    );
+  }
 
   const steps = [
     { done: data.profileComplete, label: "Complete your store profile", href: "/settings" },
