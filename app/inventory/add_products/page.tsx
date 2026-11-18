@@ -2296,10 +2296,8 @@ const AddProducts = () => {
               type="button"
               onClick={nextStep}
               aria-disabled={!canProceed()}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${canProceed()
-                ? "bg-gradient-pink text-white shadow-glow-pink hover:opacity-90"
-                : "opacity-50 cursor-not-allowed bg-surface-300 text-surface-500"
-                }`}
+              // Always looks clickable: with missing fields a click lists exactly what to fix.
+              className="flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 bg-gradient-pink text-white shadow-glow-pink hover:opacity-90"
             >
               <span className="hidden sm:inline">Next</span>
               <ChevronRightIcon />

@@ -21,7 +21,12 @@ type Overview = {
  * the dashboard had neither). Every source is optional: a failed call leaves that figure
  * out instead of breaking the dashboard.
  */
-export default function VendorOverview() {
+export default function VendorOverview({
+  onLoaded,
+}: {
+  /** Called once the figures are known, so the page can tell "no listings yet" from "still loading". */
+  onLoaded?: (counts: { live: number; drafts: number }) => void;
+}) {
   const [data, setData] = useState<Overview | null>(null);
   // The session may still be settling on the first visit; load again once it is ready.
   const { loggedIn, authReady } = useContext(MyContext);
@@ -54,6 +59,10 @@ export default function VendorOverview() {
         : null;
 
       if (cancelled) return;
+      onLoaded?.({
+        live: products.filter((p) => p.is_active && !p.is_off_market).length,
+        drafts: products.filter((p) => !p.is_active).length,
+      });
       setData({
         live: products.filter((p) => p.is_active && !p.is_off_market).length,
         drafts: products.filter((p) => !p.is_active).length,
